@@ -1,38 +1,77 @@
-# Mindset
+# mindset
 
-Bir mindset, paylaşılabilir bir katalog numarasıdır. `212. mindset` adresi
-`/m/212` olur.
+A mindset is a shareable catalog number. Number 212 lives at `/i/212`; if its
+owner picks a public alias, it also lives at `/a/<alias>`.
 
-Herkese açık olan şey bir ölçek sonucu değildir. Şu an, doğru bildiğin ve
-kendini nasıl anlattığın metin olarak profilde durur. Dört açık okuma
-(iş bende, bir aradayım, kuralım net, düze çıkıyor) bu metinlerin sabit
-Türkçe kutup cümlelerine yakınlığıdır.
+What is public is not a test result. Three open texts (right now, what I hold
+true, how I tell my story) appear on the profile as written. Four open readings
+(in charge, together, clear code, turns out fine) estimate how close those texts
+sit to fixed anchor sentences. Three closed texts (what I don't say out loud,
+desire, the side I'm ashamed of) and the four readings derived from them stay
+with their owner. They never reach lists, distributions or profiles.
 
-Dışarıda söylemediğin, arzu ve utandığın yan yalnız sendedir. Bu üç metin
-ve onlardan çıkan dört okuma listeye, dağılıma ve profile yazılmaz.
+Scoring runs in the browser with `multilingual-e5-small`. Text is never sent to
+a model or a server. The codebook, including the academic construct names,
+anchors and calibration, is in [`public/assets/lens-v2.js`](public/assets/lens-v2.js).
 
-Okuma tarayıcıda `multilingual-e5-small` ile yapılır. Metin bir modele
-gönderilmez. Kod sözlüğü [`public/assets/lens-v1.js`](public/assets/lens-v1.js)
-içindedir.
+The interface is English by default with a Turkish option
+([`public/assets/i18n.js`](public/assets/i18n.js)). People can write in either
+language: every anchor exists in English and Turkish, and a pole is the mean of
+both.
 
-## Yerel
+## Social layer
+
+- **Follow** works like a bookmark. No approval, nobody is notified, and only you
+  can see the list.
+- **Tribe** is mutual. You invite someone from their profile; they accept. Members
+  see each other's tribe-only alias and can read each other's tribe list.
+- **Alias** is optional: 3-20 lowercase letters, digits or `_`. Visibility is
+  either everyone or tribe only; the tribe always sees it.
+- **Similar** and **suggestions** use the open-reading bucket and its neighbors,
+  optionally narrowed by country or age range, then rank by score distance.
+
+## Demographics
+
+All optional. Age range, gender and country show on the profile and drive
+Explore filters and charts. City is stored on the private document and only
+feeds aggregate counts; Explore hides cities with fewer than five people.
+Accounts are for people aged 18 and over.
+
+## Data
+
+| Collection | Who reads | Holds |
+| --- | --- | --- |
+| `mindsets/{number}` | everyone if published, owner always | open texts, open readings, bucket, age range, gender, country, public alias |
+| `privateMindsets/{number}` | owner | closed texts, closed readings, city |
+| `aliases/{alias}`, `aliasOf/{number}` | everyone if public, owner, tribe | alias, visibility |
+| `follows/{uid}/items/{number}` | owner | bookmarks |
+| `tribeRequests/{from}_{to}` | both sides | pending invites |
+| `tribes/{uid}/members/{uid}` | owner and tribe | accepted members |
+| `stats/public` | everyone | histogram counts per axis, age range, gender, country, city |
+
+Rules live in [`firestore.rules`](firestore.rules). The project shares one
+Firestore database with other Collective Bucket apps, so the file keeps their
+`ads` and `trips` rules first and unchanged.
+
+## Sign-in
+
+Accounts use Firebase Auth inside the app (email and password, password reset,
+Google). They are shared with other Collective Bucket apps on the same Firebase
+project.
+
+## Local
 
 ```bash
 npm install
-npm run check
-npm run serve
+npm run check        # syntax, unit tests, i18n parity, rules allowlists
+npm run serve        # hosting emulator on http://127.0.0.1:5055
+npm run test:rules   # Firestore rules against the emulator (needs Java)
 ```
 
-## Yayın
+## Deploy
 
-Collective Bucket kalıbı: Firebase projesi `collective-bucket`, site
-`cbucket-mindset`, hedef `mindset`. Adımlar
-[collective-bucket/main katkı rehberinde](https://github.com/collective-bucket/main/blob/main/CONTRIBUTING.md).
+Pushing to `main` deploys hosting, rules and indexes through GitHub Actions
+(Workload Identity, service account `github-actions-deployer`). Firebase project
+`collective-bucket`, hosting site `cbucket-mindset`, target `mindset`.
 
-Canlı site: https://cbucket-mindset.web.app
-
-`mindset.collectivebucket.com` kaydı şu an `cmindset-auth.web.app` adresine
-bakıyor. Squarespace DNS’te bu CNAME `cbucket-mindset.web.app` olunca özel
-alan adı da açılır.
-
-Sosyal katman (takip, etiket, aynı bölge, öneri) bu sürümde yoktur.
+Live: https://mindset.collectivebucket.com

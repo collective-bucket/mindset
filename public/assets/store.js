@@ -1,210 +1,153 @@
 (function () {
   "use strict";
 
-  var db = function () {
+  var PAGE = 24;
+
+  function db() {
     return window.MindsetFirestore;
-  };
+  }
+
+  function reading() {
+    return window.MindsetReading;
+  }
 
   async function waitForAuth() {
-    var deadline = Date.now() + 10000;
-    while (!window.CollectiveBucketAuth) {
-      if (Date.now() > deadline) throw new Error("Oturum servisi yüklenemedi.");
+    var deadline = Date.now() + 15000;
+    while (!window.MindsetAuth) {
+      if (Date.now() > deadline) throw new Error("Auth did not load.");
       await new Promise(function (resolve) {
-        setTimeout(resolve, 50);
+        setTimeout(resolve, 40);
       });
     }
-    return window.CollectiveBucketAuth;
+    return window.MindsetAuth;
   }
 
   async function getOptionalSession() {
     try {
-      var client = await waitForAuth();
-      var current = client.getCurrentSession && client.getCurrentSession();
-      if (current && current.idToken) return current;
-      return await client.getSession({ forceRefresh: false });
+      var auth = await waitForAuth();
+      return await auth.session(false);
     } catch (error) {
       return null;
     }
   }
 
   async function requireSession() {
-    var client = await waitForAuth();
-    var session = await client.getSession({ forceRefresh: true });
-    if (!session || !session.idToken) throw new Error("Kaydetmek için giriş yap.");
+    var auth = await waitForAuth();
+    var session = await auth.session(true);
+    if (!session) {
+      var error = new Error("Sign in to continue.");
+      error.code = "login_required";
+      throw error;
+    }
     return session;
   }
 
-  function loginUrl() {
-    return (
-      window.MindsetConfig.authOrigin +
-      "/?returnTo=" +
-      encodeURIComponent(window.location.href)
-    );
-  }
-
-  function strip(doc) {
-    if (!doc) return null;
-    var copy = Object.assign({}, doc);
-    delete copy.id;
-    return copy;
-  }
-
   async function bumpCounter(token, atLeast) {
-    var firestore = db();
-    var counter = await firestore.getDocument("counters", "mindset", token);
+    var counter = await db().get("counters/mindset", token);
     if (!counter) {
       try {
-        await firestore.createDocument("counters", "mindset", { next: atLeast }, token);
+        await db().create("counters", "mindset", { next: atLeast }, token);
         return;
       } catch (error) {
-        if (!firestore.isConflict(error)) throw error;
-        counter = await firestore.getDocument("counters", "mindset", token);
+        if (!db().isConflict(error)) throw error;
+        counter = await db().get("counters/mindset", token);
       }
     }
     while (counter && counter.next < atLeast) {
-      var step = Math.min(atLeast, counter.next + 8);
-      counter = await firestore.updateDocument(
-        "counters",
-        "mindset",
-        { next: step },
+      counter = await db().update(
+        "counters/mindset",
+        { next: Math.min(atLeast, counter.next + 8) },
         token
       );
     }
   }
 
   async function writePrivate(number, privateDoc, token, existing) {
-    var firestore = db();
-    if (existing) {
-      return firestore.updateDocument(
-        "privateMindsets",
-        String(number),
-        privateDoc,
-        token
-      );
-    }
+    var path = "privateMindsets/" + number;
+    if (existing) return db().update(path, privateDoc, token);
     try {
-      return await firestore.createDocument(
-        "privateMindsets",
-        String(number),
-        privateDoc,
-        token
-      );
+      return await db().create("privateMindsets", String(number), privateDoc, token);
     } catch (error) {
-      if (!firestore.isConflict(error)) throw error;
-      return firestore.updateDocument(
-        "privateMindsets",
-        String(number),
-        privateDoc,
-        token
-      );
+      if (!db().isConflict(error)) throw error;
+      return db().update(path, privateDoc, token);
     }
   }
 
   async function ensureOwner(uid, number, token) {
-    var firestore = db();
-    var owner = await firestore.getDocument("owners", uid, token);
+    var owner = await db().get("owners/" + uid, token);
     if (owner && owner.number === number) return;
     if (owner) {
-      await firestore.updateDocument("owners", uid, { number: number }, token);
+      await db().update("owners/" + uid, { number: number }, token);
       return;
     }
     try {
-      await firestore.createDocument("owners", uid, { number: number }, token);
+      await db().create("owners", uid, { number: number }, token);
     } catch (error) {
-      if (!firestore.isConflict(error)) throw error;
-      await firestore.updateDocument("owners", uid, { number: number }, token);
+      if (!db().isConflict(error)) throw error;
+      await db().update("owners/" + uid, { number: number }, token);
     }
   }
 
   async function findOwn(uid, token) {
-    var firestore = db();
-    var owner = await firestore.getDocument("owners", uid, token);
+    var owner = await db().get("owners/" + uid, token);
     if (owner && owner.number) {
-      var owned = await firestore.getDocument("mindsets", String(owner.number), token);
+      var owned = await db().get("mindsets/" + owner.number, token);
       if (owned && owned.ownerUid === uid) {
-        var ownedPrivate = await firestore.getDocument(
-          "privateMindsets",
-          String(owner.number),
-          token
-        );
-        return { publicDoc: owned, privateDoc: ownedPrivate };
+        return {
+          publicDoc: owned,
+          privateDoc: await db().get("privateMindsets/" + owner.number, token)
+        };
       }
     }
-
-    var rows = await firestore.queryEquals("mindsets", "ownerUid", uid, token, 5);
-    if (!rows.length) return null;
-    var publicDoc = rows[0];
-    var privateDoc = await firestore.getDocument(
-      "privateMindsets",
-      publicDoc.id,
+    var rows = await db().runQuery(
+      {
+        from: [{ collectionId: "mindsets" }],
+        where: db().equals("ownerUid", uid),
+        limit: 1
+      },
       token
     );
+    if (!rows.length) return null;
+    var publicDoc = rows[0];
+    var privateDoc = await db().get("privateMindsets/" + publicDoc.id, token);
     await ensureOwner(uid, Number(publicDoc.id), token);
     return { publicDoc: publicDoc, privateDoc: privateDoc };
   }
 
-  function emptyStats() {
-    function buckets() {
-      return { b0: 0, b1: 0, b2: 0, b3: 0, b4: 0 };
-    }
+  function placementOf(publicDoc, privateDoc) {
+    if (!publicDoc) return null;
     return {
-      lens: "v1",
-      axes: {
-        agency: buckets(),
-        communion: buckets(),
-        codeClarity: buckets(),
-        redemption: buckets()
-      }
+      published: publicDoc.published === true,
+      scores: reading().scoresOf(publicDoc),
+      demo: reading().demoOf(publicDoc, privateDoc)
     };
   }
 
-  async function adjustHistogram(token, previous, next) {
-    var deltas = window.MindsetReading.histogramDelta(previous, next);
+  async function adjustStats(token, previous, next) {
+    var deltas = reading().histogramDelta(previous, next);
     if (!deltas.length) return;
-    var current = await db().getDocument("stats", "public", token);
+    var current = await db().get("stats/public", token);
     if (!current) {
       try {
-        await db().createDocument("stats", "public", emptyStats(), token);
+        await db().create("stats", "public", { lens: "v2", count: 0, axes: {} }, token);
       } catch (error) {
         if (!db().isConflict(error)) throw error;
       }
     }
-    await db().incrementFields("stats", "public", deltas, token);
+    await db().commit([db().writes.increment("stats/public", deltas)], token);
   }
 
-  function previousPlacement(doc) {
-    if (!doc) return null;
-    return {
-      published: doc.published === true,
-      scores: window.MindsetReading.scoresOf(doc)
-    };
-  }
-
-  async function allocate(uid, token, texts, scores, now) {
-    var firestore = db();
+  async function allocate(uid, token, texts, scores, demo, now) {
     var lastError = null;
     for (var attempt = 0; attempt < 8; attempt += 1) {
-      var counter = await firestore.getDocument("counters", "mindset", token);
+      var counter = await db().get("counters/mindset", token);
       var number = counter ? counter.next : 1;
-      var docs = window.MindsetReading.buildDocuments(
-        uid,
-        number,
-        texts,
-        scores,
-        true,
-        now,
-        now
-      );
+      var docs = reading().buildDocuments(uid, number, texts, scores, true, now, now, demo);
       try {
-        await firestore.createDocument(
-          "mindsets",
-          String(number),
-          docs.publicDoc,
-          token
-        );
+        await db().create("mindsets", String(number), docs.publicDoc, token);
       } catch (error) {
         lastError = error;
-        if (!firestore.isConflict(error)) throw error;
+        if (!db().isConflict(error)) throw error;
         await bumpCounter(token, number + 1);
         continue;
       }
@@ -213,49 +156,50 @@
       try {
         await bumpCounter(token, number + 1);
       } catch (error) {
-        // Numara belgede durur. Sayaç bir sonraki denemede ilerler.
+        // The number is already on the document; the next writer advances the counter.
       }
-      return { number: number, docs: docs, previous: null };
+      return { number: number, previous: null };
     }
-    throw lastError || new Error("Numara ayrılamadı.");
+    throw lastError || new Error("Couldn't allocate a number.");
   }
 
-  async function publish(session, texts, scores) {
+  async function publish(session, texts, scores, demo) {
     var token = session.idToken;
     var now = new Date().toISOString();
     var existing = await findOwn(session.uid, token);
     var saved;
     if (!existing) {
-      saved = await allocate(session.uid, token, texts, scores, now);
+      saved = await allocate(session.uid, token, texts, scores, demo, now);
     } else {
       var number = Number(existing.publicDoc.id);
-      var docs = window.MindsetReading.buildDocuments(
+      var docs = reading().buildDocuments(
         session.uid,
         number,
         texts,
         scores,
         true,
         existing.publicDoc.createdAt,
-        now
+        now,
+        demo
       );
-      await db().updateDocument("mindsets", String(number), docs.publicDoc, token);
+      await db().update("mindsets/" + number, docs.publicDoc, token);
       await writePrivate(number, docs.privateDoc, token, Boolean(existing.privateDoc));
       await ensureOwner(session.uid, number, token);
       saved = {
         number: number,
-        docs: docs,
-        previous: previousPlacement(existing.publicDoc)
+        previous: placementOf(existing.publicDoc, existing.privateDoc)
       };
     }
 
-    var warning = "";
+    var warning = false;
     try {
-      await adjustHistogram(token, saved.previous, {
+      await adjustStats(token, saved.previous, {
         published: true,
-        scores: scores
+        scores: scores,
+        demo: demo
       });
     } catch (error) {
-      warning = "Mindset kaydedildi. Dağılım güncellenemedi.";
+      warning = true;
     }
     return { number: saved.number, warning: warning };
   }
@@ -263,41 +207,27 @@
   async function setPublished(session, published) {
     var token = session.idToken;
     var existing = await findOwn(session.uid, token);
-    if (!existing) throw new Error("Mindsetin yok.");
+    if (!existing) {
+      var error = new Error("No mindset.");
+      error.i18n = "common.needMindset";
+      throw error;
+    }
     var number = Number(existing.publicDoc.id);
-    var scores = window.MindsetReading.scoresOf(existing.publicDoc);
-    var privateScores = window.MindsetReading.scoresOf(existing.privateDoc);
-    Object.keys(privateScores).forEach(function (key) {
-      if (window.MindsetReading.CLOSED_KEYS.indexOf(key) >= 0) {
-        scores[key] = privateScores[key];
-      }
-    });
-    var texts = {
-      currentPosition: existing.publicDoc.currentPosition || "",
-      personalCode: existing.publicDoc.personalCode || "",
-      selfNarrative: existing.publicDoc.selfNarrative || "",
-      unsayableAttitude: (existing.privateDoc && existing.privateDoc.unsayableAttitude) || "",
-      desireScript: (existing.privateDoc && existing.privateDoc.desireScript) || "",
-      disownedSelf: (existing.privateDoc && existing.privateDoc.disownedSelf) || ""
-    };
-    var docs = window.MindsetReading.buildDocuments(
-      session.uid,
-      number,
-      texts,
-      scores,
-      published,
-      existing.publicDoc.createdAt,
-      new Date().toISOString()
+    await db().update(
+      "mindsets/" + number,
+      { published: published, updatedAt: new Date().toISOString() },
+      token
     );
-    await db().updateDocument("mindsets", String(number), docs.publicDoc, token);
-    var warning = "";
+    var previous = placementOf(existing.publicDoc, existing.privateDoc);
+    var warning = false;
     try {
-      await adjustHistogram(token, previousPlacement(existing.publicDoc), {
+      await adjustStats(token, previous, {
         published: published,
-        scores: scores
+        scores: previous.scores,
+        demo: previous.demo
       });
     } catch (error) {
-      warning = "Yayın durumu değişti. Dağılım güncellenemedi.";
+      warning = true;
     }
     return { number: number, warning: warning };
   }
@@ -306,60 +236,111 @@
     var token = session.idToken;
     var existing = await findOwn(session.uid, token);
     if (!existing) return;
-    var scores = window.MindsetReading.scoresOf(existing.publicDoc);
+    var number = existing.publicDoc.id;
     try {
-      await adjustHistogram(token, previousPlacement(existing.publicDoc), {
-        published: false,
-        scores: scores
-      });
+      await adjustStats(token, placementOf(existing.publicDoc, existing.privateDoc), null);
     } catch (error) {
-      // Silme, dağılım hatasında da sürer.
+      // Deleting continues even if the distribution can't be updated.
     }
-    if (existing.privateDoc) {
-      await db().deleteDocument("privateMindsets", existing.publicDoc.id, token);
-    }
-    await db().deleteDocument("mindsets", existing.publicDoc.id, token);
-    await db().deleteDocument("owners", session.uid, token);
+    await window.MindsetSocial.cleanup(session, number);
+    if (existing.privateDoc) await db().remove("privateMindsets/" + number, token);
+    await db().remove("mindsets/" + number, token);
+    await db().remove("owners/" + session.uid, token);
   }
 
-  async function listPublic(axis, min) {
-    var filters = [
-      {
-        fieldFilter: {
-          field: { fieldPath: "published" },
-          op: "EQUAL",
-          value: { booleanValue: true }
-        }
-      }
-    ];
+  function publishedFilter() {
+    return db().equals("published", true);
+  }
+
+  async function listPublic(options) {
+    options = options || {};
+    var filters = [publishedFilter()];
+    if (options.sliceField && options.sliceValue) {
+      filters.push(db().equals(options.sliceField, options.sliceValue));
+    }
     var orderField = "number";
-    if (axis) {
-      filters.push({
-        fieldFilter: {
-          field: { fieldPath: axis },
-          op: "GREATER_THAN_OR_EQUAL",
-          value: { integerValue: String(min) }
-        }
-      });
-      orderField = axis;
+    if (options.axis && reading().OPEN_KEYS.indexOf(options.axis) >= 0) {
+      filters.push(db().atLeast(options.axis, Number(options.min || 0)));
+      orderField = options.axis;
     }
     return db().runQuery({
       from: [{ collectionId: "mindsets" }],
-      where: { compositeFilter: { op: "AND", filters: filters } },
+      where: db().where(filters),
       orderBy: [{ field: { fieldPath: orderField }, direction: "DESCENDING" }],
-      limit: 24
+      limit: options.limit || PAGE
     });
+  }
+
+  async function byNumbers(numbers, token) {
+    var unique = numbers
+      .map(Number)
+      .filter(function (value, index, list) {
+        return value > 0 && list.indexOf(value) === index;
+      });
+    var rows = [];
+    for (var index = 0; index < unique.length; index += 30) {
+      var chunk = unique.slice(index, index + 30);
+      var found = await db().runQuery(
+        {
+          from: [{ collectionId: "mindsets" }],
+          where: db().where([publishedFilter(), db().inList("number", chunk)]),
+          limit: chunk.length
+        },
+        token
+      );
+      rows = rows.concat(found);
+    }
+    return rows.sort(function (left, right) {
+      return right.number - left.number;
+    });
+  }
+
+  async function similar(doc, options) {
+    options = options || {};
+    if (!doc || !doc.bucket || /^u{4}$/.test(doc.bucket)) return [];
+    var filters = [
+      publishedFilter(),
+      db().inList("bucket", reading().neighborBuckets(doc.bucket).slice(0, 30))
+    ];
+    if (options.country) filters.push(db().equals("country", options.country));
+    if (options.ageBand) filters.push(db().equals("ageBand", options.ageBand));
+    var rows = await db().runQuery({
+      from: [{ collectionId: "mindsets" }],
+      where: db().where(filters),
+      limit: PAGE
+    });
+    var exclude = options.exclude || {};
+    var mine = reading().scoresOf(doc);
+    return rows
+      .filter(function (row) {
+        return row.id !== doc.id && !exclude[row.id];
+      })
+      .map(function (row) {
+        return { row: row, distance: reading().scoreDistance(mine, reading().scoresOf(row)) };
+      })
+      .sort(function (left, right) {
+        return left.distance - right.distance;
+      })
+      .slice(0, options.limit || 6)
+      .map(function (item) {
+        return item.row;
+      });
+  }
+
+  function getStats() {
+    return db().get("stats/public");
   }
 
   window.MindsetStore = {
     getOptionalSession: getOptionalSession,
     requireSession: requireSession,
-    loginUrl: loginUrl,
     findOwn: findOwn,
     publish: publish,
     setPublished: setPublished,
     remove: remove,
     listPublic: listPublic,
-    strip: strip
+    byNumbers: byNumbers,
+    similar: similar,
+    getStats: getStats
   };
 })();

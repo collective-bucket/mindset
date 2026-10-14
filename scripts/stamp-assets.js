@@ -11,7 +11,9 @@ var version = (
 ).slice(0, 12);
 
 var publicDir = path.join(__dirname, "..", "public");
-var files = ["index.html", "yeni.html", "profil.html", "liste.html", "ben.html"];
+var files = fs.readdirSync(publicDir).filter(function (file) {
+  return file.endsWith(".html");
+});
 
 files.forEach(function (file) {
   var filePath = path.join(publicDir, file);

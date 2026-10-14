@@ -1,114 +1,253 @@
 (function () {
   "use strict";
 
+  var ui = window.MindsetUi;
+  var store = window.MindsetStore;
+  var social = window.MindsetSocial;
+  var db = window.MindsetFirestore;
+  var math = window.MindsetReading;
+  var i18n = window.MindsetI18n;
+  var t = i18n.t;
+
+  function parsePath() {
+    var parts = window.location.pathname.split("/").filter(Boolean);
+    return { kind: parts[0] || "", key: decodeURIComponent(parts[1] || "").toLowerCase() };
+  }
+
+  async function fetchMindset(number, session) {
+    try {
+      var open = await db.get("mindsets/" + number);
+      if (open) return open;
+      return null;
+    } catch (error) {
+      if (!db.isPermission(error)) throw error;
+    }
+    if (!session) return { hidden: true };
+    try {
+      return (await db.get("mindsets/" + number, session.idToken)) || null;
+    } catch (error) {
+      if (db.isPermission(error)) return { hidden: true };
+      throw error;
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     var status = document.querySelector("#page-status");
-    var parts = window.location.pathname.split("/").filter(Boolean);
-    var number = parts[0] === "m" ? parts[1] : "";
+    var actionStatus = document.querySelector("#action-status");
+    var followButton = document.querySelector("#follow");
+    var tribeButton = document.querySelector("#tribe");
+    var shareButton = document.querySelector("#share");
+    var route = parsePath();
+    var doc = null;
+    var alias = "";
+    var session = null;
+    var following = false;
+    var relation = "none";
+
     var warning = sessionStorage.getItem("mindset-warning");
     if (warning) {
       sessionStorage.removeItem("mindset-warning");
-      window.MindsetUi.setStatus(status, warning, "error");
+      ui.setStatus(status, t(warning), "error");
     }
 
-    if (!/^\d+$/.test(number)) {
-      window.MindsetUi.setStatus(status, "Bu numara yok.", "error");
-      return;
+    function shareUrl() {
+      var base = window.location.origin;
+      if (doc && doc.alias) return base + "/a/" + doc.alias;
+      return base + "/i/" + doc.id;
     }
-
-    var copyButton = document.querySelector("#copy-link");
-    var shareButton = document.querySelector("#share-link");
-    var shareUrl = window.location.origin + "/m/" + number;
-    if (navigator.share) shareButton.hidden = false;
-
-    function shareData() {
-      return {
-        title: number + ". mindset",
-        text: number + ". mindset",
-        url: shareUrl
-      };
-    }
-
-    copyButton.addEventListener("click", function () {
-      navigator.clipboard.writeText(shareUrl).then(
-        function () {
-          window.MindsetUi.setStatus(status, "Link kopyalandı.");
-        },
-        function () {
-          window.MindsetUi.setStatus(status, shareUrl);
-        }
-      );
-    });
 
     shareButton.addEventListener("click", function () {
-      navigator.share(shareData()).catch(function (error) {
-        if (error && error.name === "AbortError") return;
-        window.MindsetUi.setStatus(status, "Paylaşım açılamadı.", "error");
-      });
+      var url = shareUrl();
+      var title = t("common.mindset", { n: doc.id });
+      if (navigator.share) {
+        navigator.share({ title: title, text: title, url: url }).catch(function (error) {
+          if (error && error.name === "AbortError") return;
+          ui.setStatus(actionStatus, t("profile.shareFailed"), "error");
+        });
+        return;
+      }
+      navigator.clipboard.writeText(url).then(
+        function () {
+          ui.setStatus(actionStatus, t("profile.copied"));
+        },
+        function () {
+          ui.setStatus(actionStatus, url);
+        }
+      );
     });
 
-    function showProfile(doc, session) {
-      document.querySelector("#title").textContent = doc.id + ". mindset";
-      document.title = doc.id + ". mindset";
-      var when = window.MindsetUi.formatWhen(doc.updatedAt);
+    function renderAlias() {
+      var node = document.querySelector("#alias");
+      node.hidden = !alias;
+      node.textContent = alias ? "@" + alias : "";
+      if (alias) document.title = "@" + alias + " · mindset";
+    }
+
+    function showProfile() {
+      var scores = math.scoresOf(doc);
+      document.querySelector("#profile").hidden = false;
+      document.querySelector("#avatar").innerHTML = ui.avatar(doc.id, "lg");
+      document.querySelector("#title").textContent = t("common.mindset", { n: doc.id });
+      document.title = t("common.mindset", { n: doc.id }) + " · mindset";
+      if (!alias && doc.alias) alias = doc.alias;
+      renderAlias();
+      document.querySelector("#badges").innerHTML = ui.badges(doc);
+      var when = ui.formatWhen(doc.updatedAt);
       document.querySelector("#meta").textContent =
-        "Yaklaşık okuma" + (when ? " · son okuma " + when : "");
-      var scores = window.MindsetReading.scoresOf(doc);
-      document.querySelector("#summary").textContent =
-        window.MindsetReading.summary(doc.id, scores);
-      window.MindsetUi.renderRadar(document.querySelector("#radar"), scores);
-      window.MindsetUi.renderBars(
-        document.querySelector("#bars"),
-        scores,
-        window.MindsetReading.OPEN_KEYS
-      );
-      window.MindsetUi.renderOpenTexts(document.querySelector("#texts"), doc);
-      document.querySelector("#share-actions").hidden = false;
-      if (session && doc.ownerUid === session.uid) {
-        document.querySelector("#owner-link").hidden = false;
+        t("common.approx") + (when ? " · " + t("common.lastRead", { date: when }) : "");
+      document.querySelector("#summary").textContent = math.summary(doc.id, scores, i18n.lang);
+      ui.renderRadar(document.querySelector("#radar"), scores);
+      ui.renderBars(document.querySelector("#bars"), scores, math.OPEN_KEYS);
+      ui.renderOpenTexts(document.querySelector("#texts"), doc);
+      if (doc.published === false) ui.setStatus(status, t("profile.onlyYou"));
+    }
+
+    function renderFollow() {
+      followButton.hidden = false;
+      followButton.textContent = t(following ? "profile.following" : "profile.follow");
+      followButton.className = "btn " + (following ? "btn-ghost" : "btn-primary");
+      followButton.setAttribute("aria-pressed", String(following));
+    }
+
+    function renderTribe() {
+      tribeButton.hidden = false;
+      var key = {
+        none: "profile.addTribe",
+        outgoing: "profile.requested",
+        incoming: "profile.accept",
+        member: "profile.inTribe"
+      }[relation];
+      tribeButton.textContent = t(key);
+      tribeButton.disabled = relation === "member";
+      tribeButton.className = "btn " + (relation === "incoming" ? "btn-primary" : "btn-ghost");
+    }
+
+    function needLogin() {
+      window.location.assign(ui.loginHref());
+    }
+
+    followButton.addEventListener("click", function () {
+      if (!session) return needLogin();
+      followButton.disabled = true;
+      var action = following ? social.unfollow(session, doc.id) : social.follow(session, doc.id);
+      action
+        .then(function () {
+          following = !following;
+          renderFollow();
+        })
+        .catch(function (error) {
+          ui.setStatus(actionStatus, ui.errorText(error), "error");
+        })
+        .finally(function () {
+          followButton.disabled = false;
+        });
+    });
+
+    tribeButton.addEventListener("click", function () {
+      if (!session) return needLogin();
+      tribeButton.disabled = true;
+      var action;
+      if (relation === "incoming") {
+        action = social.accept(session, doc.ownerUid).then(function () {
+          relation = "member";
+        });
+      } else if (relation === "outgoing") {
+        action = social.cancel(session, doc.ownerUid).then(function () {
+          relation = "none";
+        });
+      } else {
+        action = store.findOwn(session.uid, session.idToken).then(function (own) {
+          if (!own) {
+            var error = new Error("needs mindset");
+            error.i18n = "profile.tribeNeedsMindset";
+            throw error;
+          }
+          return social.invite(session, own.publicDoc.id, doc.ownerUid, doc.id).then(function () {
+            relation = "outgoing";
+          });
+        });
       }
-      if (doc.published === false) {
-        window.MindsetUi.setStatus(status, "Bu mindset yayında değil. Yalnız sen görürsün.");
+      action
+        .then(function () {
+          ui.setStatus(actionStatus, "");
+          renderTribe();
+        })
+        .catch(function (error) {
+          ui.setStatus(actionStatus, ui.errorText(error), "error");
+          renderTribe();
+        });
+    });
+
+    async function loadSocial() {
+      if (!session) {
+        renderFollow();
+        renderTribe();
+        return;
+      }
+      if (doc.ownerUid === session.uid) {
+        document.querySelector("#edit").hidden = false;
+        document.querySelector("#manage").hidden = false;
+      } else {
+        following = await social.isFollowing(session, doc.id);
+        renderFollow();
+        relation = await social.relation(session, doc.ownerUid);
+        renderTribe();
+      }
+      if (!alias) {
+        var entry = await social.aliasOf(doc.id, session.idToken);
+        if (entry && entry.alias) {
+          alias = entry.alias;
+          renderAlias();
+        }
       }
     }
 
-    var loaded = null;
+    async function loadSimilar() {
+      var rows = await store.similar(doc, { limit: 6 });
+      if (!rows.length) return;
+      document.querySelector("#similar-section").hidden = false;
+      ui.renderCards(document.querySelector("#similar"), rows);
+    }
 
-    window.MindsetFirestore.getDocument("mindsets", number)
-      .then(function (doc) {
-        if (!doc) {
-          window.MindsetUi.setStatus(status, "Bu numara yok.", "error");
-          return null;
+    async function load() {
+      var number = "";
+      if (route.kind === "i" && /^\d+$/.test(route.key)) {
+        number = route.key;
+      } else if (route.kind === "a" && social.ALIAS_PATTERN.test(route.key)) {
+        session = await store.getOptionalSession();
+        var entry = await social.resolveAlias(route.key, session && session.idToken);
+        if (entry) {
+          number = String(entry.number);
+          alias = route.key;
         }
-        loaded = doc;
-        showProfile(doc, null);
-        return window.MindsetStore.getOptionalSession();
-      })
-      .then(function (session) {
-        if (session && loaded && loaded.ownerUid === session.uid) {
-          document.querySelector("#owner-link").hidden = false;
-        }
-      })
-      .catch(function (error) {
-        if (loaded) return;
-        if (!window.MindsetUi.isPermission(error)) {
-          window.MindsetUi.setStatus(status, error.message || "Profil açılamadı.", "error");
-          return;
-        }
-        window.MindsetUi.setStatus(status, "Bu mindset yayında değil.");
-        window.MindsetStore.getOptionalSession()
-          .then(function (session) {
-            if (!session) return null;
-            return window.MindsetFirestore.getDocument("mindsets", number, session.idToken);
-          })
-          .then(function (doc) {
-            if (!doc) return;
-            showProfile(doc, { uid: doc.ownerUid });
-            if (doc.published !== false) window.MindsetUi.setStatus(status, "");
-          })
-          .catch(function () {
-            window.MindsetUi.setStatus(status, "Bu mindset yayında değil.");
-          });
-      });
+      }
+      if (!number) {
+        ui.setStatus(status, t("common.notFound"), "error");
+        return;
+      }
+
+      var found = await fetchMindset(number, session);
+      if (found && found.hidden && !session) {
+        session = await store.getOptionalSession();
+        if (session) found = await fetchMindset(number, session);
+      }
+      if (!found) {
+        ui.setStatus(status, t("common.notFound"), "error");
+        return;
+      }
+      if (found.hidden) {
+        ui.setStatus(status, t("profile.notPublished"));
+        return;
+      }
+      doc = found;
+      showProfile();
+      if (!session) session = await store.getOptionalSession();
+      await Promise.all([loadSocial(), loadSimilar()]);
+    }
+
+    load().catch(function (error) {
+      if (doc) return;
+      ui.setStatus(status, ui.errorText(error), "error");
+    });
   });
 })();

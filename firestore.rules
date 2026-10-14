@@ -84,12 +84,29 @@ service cloud.firestore {
       allow delete: if isTripOwner();
     }
 
+    // ---------------------------------------------------------------------
+    // mindset
+    // ---------------------------------------------------------------------
+
     function signedIn() {
       return request.auth != null;
     }
 
     function isMindsetOwner(uid) {
       return signedIn() && request.auth.uid == uid;
+    }
+
+    function docPath(collection, id) {
+      return /databases/$(database)/documents/$(collection)/$(id);
+    }
+
+    function inTribeOf(uid) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/tribes/$(uid)/members/$(request.auth.uid));
+    }
+
+    function ownsMindset(number) {
+      return get(docPath('mindsets', string(number))).data.ownerUid == request.auth.uid;
     }
 
     function score(value) {
@@ -100,71 +117,93 @@ service cloud.firestore {
       return value is string && value.size() <= 1200;
     }
 
+    function isoTime(value) {
+      return value is string && value.size() >= 20 && value.size() <= 40;
+    }
+
+    function aliasName(value) {
+      return value is string && value.matches('^[a-z0-9_]{3,20}$');
+    }
+
     function buckets(value) {
-      return value.keys().hasOnly(['b0', 'b1', 'b2', 'b3', 'b4'])
-        && value.b0 is int && value.b0 >= 0
-        && value.b1 is int && value.b1 >= 0
-        && value.b2 is int && value.b2 >= 0
-        && value.b3 is int && value.b3 >= 0
-        && value.b4 is int && value.b4 >= 0;
+      return value.keys().hasOnly(['b0', 'b1', 'b2', 'b3', 'b4']);
+    }
+
+    function validDemographics(data) {
+      return data.get('ageBand', '') in ['', '18-24', '25-34', '35-44', '45-54', '55-64', '65+']
+        && data.get('gender', '') in ['', 'woman', 'man', 'nonbinary', 'other']
+        && data.get('country', '') is string
+        && data.get('country', '').matches('^([A-Z]{2})?$');
+    }
+
+    // A public alias on the mindset must be backed by an alias document the
+    // writer owns and has marked public, evaluated after the whole batch.
+    function validPublicAlias(data) {
+      return data.get('alias', '') == ''
+        || (
+          aliasName(data.alias)
+          && getAfter(docPath('aliases', data.alias)).data.ownerUid == request.auth.uid
+          && getAfter(docPath('aliases', data.alias)).data.visibility == 'public'
+        );
     }
 
     function validPublic(mindsetId) {
-      return request.resource.data.keys().hasOnly([
+      let data = request.resource.data;
+      return data.keys().hasOnly([
           'ownerUid', 'number', 'numberKey', 'published', 'createdAt', 'updatedAt',
           'lens', 'agency', 'communion', 'codeClarity', 'redemption', 'known', 'bucket',
+          'ageBand', 'gender', 'country', 'alias',
           'currentPosition', 'personalCode', 'selfNarrative'
         ])
-        && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.number is int
-        && request.resource.data.number > 0
+        && data.ownerUid == request.auth.uid
+        && data.number is int
+        && data.number > 0
         && mindsetId.matches('^\\d+$')
-        && request.resource.data.numberKey == mindsetId
-        && request.resource.data.published is bool
-        && request.resource.data.lens == 'v1'
-        && request.resource.data.createdAt is string
-        && request.resource.data.createdAt.size() >= 20
-        && request.resource.data.createdAt.size() <= 40
-        && request.resource.data.updatedAt is string
-        && request.resource.data.updatedAt.size() >= 20
-        && request.resource.data.updatedAt.size() <= 40
-        && score(request.resource.data.agency)
-        && score(request.resource.data.communion)
-        && score(request.resource.data.codeClarity)
-        && score(request.resource.data.redemption)
-        && request.resource.data.known is list
-        && request.resource.data.known.size() <= 4
-        && request.resource.data.known.hasOnly(['agency', 'communion', 'codeClarity', 'redemption'])
-        && request.resource.data.bucket is string
-        && request.resource.data.bucket.matches('^[0-4u]{4}$')
-        && shortText(request.resource.data.currentPosition)
-        && shortText(request.resource.data.personalCode)
-        && request.resource.data.personalCode.size() > 0
-        && shortText(request.resource.data.selfNarrative);
+        && data.numberKey == mindsetId
+        && data.published is bool
+        && data.lens in ['v1', 'v2']
+        && isoTime(data.createdAt)
+        && isoTime(data.updatedAt)
+        && score(data.agency)
+        && score(data.communion)
+        && score(data.codeClarity)
+        && score(data.redemption)
+        && data.known is list
+        && data.known.size() <= 4
+        && data.known.hasOnly(['agency', 'communion', 'codeClarity', 'redemption'])
+        && data.bucket is string
+        && data.bucket.matches('^[0-4u]{4}$')
+        && validDemographics(data)
+        && validPublicAlias(data)
+        && shortText(data.currentPosition)
+        && shortText(data.personalCode)
+        && data.personalCode.size() > 0
+        && shortText(data.selfNarrative);
     }
 
     function validPrivate(privateId) {
-      return request.resource.data.keys().hasOnly([
-          'ownerUid', 'number', 'numberKey', 'lens', 'updatedAt',
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'ownerUid', 'number', 'numberKey', 'lens', 'updatedAt', 'city',
           'unsayableAttitude', 'desireScript', 'disownedSelf',
           'codeGap', 'authorityLean', 'desireSplit', 'shadowDistance'
         ])
-        && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.number is int
-        && request.resource.data.number > 0
+        && data.ownerUid == request.auth.uid
+        && data.number is int
+        && data.number > 0
         && privateId.matches('^\\d+$')
-        && request.resource.data.numberKey == privateId
-        && request.resource.data.lens == 'v1'
-        && request.resource.data.updatedAt is string
-        && request.resource.data.updatedAt.size() >= 20
-        && request.resource.data.updatedAt.size() <= 40
-        && shortText(request.resource.data.unsayableAttitude)
-        && shortText(request.resource.data.desireScript)
-        && shortText(request.resource.data.disownedSelf)
-        && score(request.resource.data.codeGap)
-        && score(request.resource.data.authorityLean)
-        && score(request.resource.data.desireSplit)
-        && score(request.resource.data.shadowDistance);
+        && data.numberKey == privateId
+        && data.lens in ['v1', 'v2']
+        && isoTime(data.updatedAt)
+        && data.get('city', '') is string
+        && data.get('city', '').size() <= 60
+        && shortText(data.unsayableAttitude)
+        && shortText(data.desireScript)
+        && shortText(data.disownedSelf)
+        && score(data.codeGap)
+        && score(data.authorityLean)
+        && score(data.desireSplit)
+        && score(data.shadowDistance);
     }
 
     match /mindsets/{mindsetId} {
@@ -239,15 +278,139 @@ service cloud.firestore {
 
       allow create, update: if signedIn()
         && statId == 'public'
-        && request.resource.data.keys().hasOnly(['lens', 'axes'])
-        && request.resource.data.lens == 'v1'
+        && request.resource.data.keys().hasOnly([
+          'lens', 'count', 'axes', 'byAge', 'byGender', 'byCountry', 'cities'
+        ])
+        && request.resource.data.lens in ['v1', 'v2']
+        && request.resource.data.get('count', 0) is int
         && request.resource.data.axes.keys().hasOnly(['agency', 'communion', 'codeClarity', 'redemption'])
-        && buckets(request.resource.data.axes.agency)
-        && buckets(request.resource.data.axes.communion)
-        && buckets(request.resource.data.axes.codeClarity)
-        && buckets(request.resource.data.axes.redemption);
+        && (!('agency' in request.resource.data.axes) || buckets(request.resource.data.axes.agency))
+        && (!('communion' in request.resource.data.axes) || buckets(request.resource.data.axes.communion))
+        && (!('codeClarity' in request.resource.data.axes) || buckets(request.resource.data.axes.codeClarity))
+        && (!('redemption' in request.resource.data.axes) || buckets(request.resource.data.axes.redemption))
+        && request.resource.data.get('byAge', {}).keys().hasOnly([
+          'a18_24', 'a25_34', 'a35_44', 'a45_54', 'a55_64', 'a65p'
+        ])
+        && request.resource.data.get('byGender', {}).keys().hasOnly([
+          'woman', 'man', 'nonbinary', 'other'
+        ])
+        && request.resource.data.get('byCountry', {}).size() <= 260
+        && request.resource.data.get('cities', {}).size() <= 5000;
 
       allow delete: if false;
+    }
+
+    // Alias ids are the alias itself, so uniqueness comes from the document id.
+    match /aliases/{aliasId} {
+      allow get: if resource == null
+        || resource.data.visibility == 'public'
+        || (signedIn() && resource.data.ownerUid == request.auth.uid)
+        || inTribeOf(resource.data.ownerUid);
+      allow list: if false;
+
+      allow create, update: if signedIn()
+        && aliasName(aliasId)
+        && (resource == null || resource.data.ownerUid == request.auth.uid)
+        && request.resource.data.keys().hasOnly(['ownerUid', 'number', 'visibility'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.number is int
+        && request.resource.data.visibility in ['public', 'tribe']
+        && ownsMindset(request.resource.data.number)
+        && getAfter(docPath('aliasOf', string(request.resource.data.number))).data.alias == aliasId;
+
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /aliasOf/{numberId} {
+      allow get: if resource == null
+        || resource.data.visibility == 'public'
+        || (signedIn() && resource.data.ownerUid == request.auth.uid)
+        || inTribeOf(resource.data.ownerUid);
+      allow list: if false;
+
+      allow create, update: if signedIn()
+        && numberId.matches('^\\d+$')
+        && (resource == null || resource.data.ownerUid == request.auth.uid)
+        && request.resource.data.keys().hasOnly(['ownerUid', 'alias', 'visibility'])
+        && request.resource.data.ownerUid == request.auth.uid
+        && aliasName(request.resource.data.alias)
+        && request.resource.data.visibility in ['public', 'tribe']
+        && ownsMindset(numberId)
+        && getAfter(docPath('aliases', request.resource.data.alias)).data.ownerUid == request.auth.uid;
+
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Following is a private bookmark list: no approval, nobody else can read it.
+    match /follows/{uid}/items/{itemId} {
+      allow read: if isMindsetOwner(uid);
+
+      allow create, update: if isMindsetOwner(uid)
+        && itemId.matches('^\\d+$')
+        && request.resource.data.keys().hasOnly(['number', 'createdAt'])
+        && request.resource.data.number == int(itemId)
+        && isoTime(request.resource.data.createdAt);
+
+      allow delete: if isMindsetOwner(uid);
+    }
+
+    // Request ids are "{fromUid}_{toUid}". Uids are alphanumeric.
+    match /tribeRequests/{requestId} {
+      allow get: if signedIn()
+        && (
+          requestId.matches('^' + request.auth.uid + '_[A-Za-z0-9]+$')
+          || requestId.matches('^[A-Za-z0-9]+_' + request.auth.uid + '$')
+        );
+      allow list: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'createdAt'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.to is string
+        && request.resource.data.to != request.auth.uid
+        && requestId == request.resource.data.from + '_' + request.resource.data.to
+        && request.resource.data.fromNumber is int
+        && request.resource.data.toNumber is int
+        && ownsMindset(request.resource.data.fromNumber)
+        && get(docPath('mindsets', string(request.resource.data.toNumber))).data.ownerUid == request.resource.data.to
+        && !exists(/databases/$(database)/documents/tribes/$(request.auth.uid)/members/$(request.resource.data.to))
+        && isoTime(request.resource.data.createdAt);
+
+      allow update: if false;
+
+      allow delete: if signedIn()
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+    }
+
+    // Membership is mutual. The person accepting writes both sides in one batch;
+    // get()/exists() see the request as it was before that batch deletes it.
+    match /tribes/{uid}/members/{otherUid} {
+      allow get: if signedIn()
+        && (request.auth.uid == uid || request.auth.uid == otherUid || inTribeOf(uid));
+      allow list: if signedIn() && (request.auth.uid == uid || inTribeOf(uid));
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'number', 'since'])
+        && request.resource.data.uid == otherUid
+        && request.resource.data.number is int
+        && isoTime(request.resource.data.since)
+        && (
+          (
+            request.auth.uid == uid
+            && exists(docPath('tribeRequests', otherUid + '_' + uid))
+            && request.resource.data.number == get(docPath('tribeRequests', otherUid + '_' + uid)).data.fromNumber
+          )
+          || (
+            request.auth.uid == otherUid
+            && exists(docPath('tribeRequests', uid + '_' + otherUid))
+            && request.resource.data.number == get(docPath('tribeRequests', uid + '_' + otherUid)).data.toNumber
+          )
+        );
+
+      allow update: if false;
+
+      allow delete: if signedIn() && (request.auth.uid == uid || request.auth.uid == otherUid);
     }
   }
 }

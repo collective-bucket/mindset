@@ -1,11 +1,16 @@
 (function () {
   "use strict";
 
+  var ui = window.MindsetUi;
+  var store = window.MindsetStore;
+  var math = window.MindsetReading;
+  var i18n = window.MindsetI18n;
+  var t = i18n.t;
+
   document.addEventListener("DOMContentLoaded", function () {
     var form = document.querySelector("#mindset-form");
     var status = document.querySelector("#form-status");
     var loginHint = document.querySelector("#login-hint");
-    var loginLink = document.querySelector("#login-link");
     var preview = document.querySelector("#preview");
     var dialog = document.querySelector("#publish-dialog");
     var readButton = document.querySelector("#read");
@@ -14,59 +19,41 @@
     var dirty = true;
     var existingNumber = null;
 
-    window.MindsetUi.renderForm(
-      document.querySelector("#open-fields"),
-      document.querySelector("#closed-fields")
-    );
-
-    function watchCounts() {
-      window.MindsetLens.fields.forEach(function (field) {
-        window.MindsetUi.updateCount(form, field.key);
-      });
-    }
+    ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
+    ui.renderDemoForm(document.querySelector("#demo-fields"));
+    ui.closeOnBackdrop(dialog);
+    document.querySelector("#login-link").href = ui.loginHref();
 
     form.addEventListener("input", function (event) {
-      dirty = true;
-      reading = null;
-      preview.hidden = true;
-      if (event.target && event.target.id) {
-        window.MindsetUi.updateCount(form, event.target.id);
+      var id = event.target && event.target.id;
+      if (window.MindsetLens.fields.some(function (field) { return field.key === id; })) {
+        dirty = true;
+        reading = null;
+        preview.hidden = true;
+        ui.updateCount(form, id);
       }
     });
 
-    dialog.addEventListener("click", function (event) {
-      if (event.target === dialog) dialog.close("cancel");
-    });
-
     function showPreview(scores) {
-      var label = existingNumber || "Önizleme";
-      document.querySelector("#preview-summary").textContent =
-        window.MindsetReading.summary(label, scores);
-      window.MindsetUi.renderRadar(document.querySelector("#preview-radar"), scores);
-      window.MindsetUi.renderBars(
-        document.querySelector("#preview-open"),
-        scores,
-        window.MindsetReading.OPEN_KEYS
-      );
-      window.MindsetUi.renderBars(
-        document.querySelector("#preview-closed"),
-        scores,
-        window.MindsetReading.CLOSED_KEYS
-      );
+      var label = existingNumber || t("common.preview");
+      document.querySelector("#preview-summary").textContent = math.summary(label, scores, i18n.lang);
+      ui.renderRadar(document.querySelector("#preview-radar"), scores);
+      ui.renderBars(document.querySelector("#preview-open"), scores, math.OPEN_KEYS);
+      ui.renderBars(document.querySelector("#preview-closed"), scores, math.CLOSED_KEYS);
       preview.hidden = false;
     }
 
     async function runRead() {
-      var texts = window.MindsetUi.collectTexts(form);
+      var texts = ui.collectTexts(form);
       readButton.disabled = true;
       publishButton.disabled = true;
-      window.MindsetUi.setStatus(status, "Okunuyor");
+      ui.setStatus(status, t("create.reading"));
       reading = await window.MindsetScore.read(texts, function (message) {
-        window.MindsetUi.setStatus(status, message);
+        ui.setStatus(status, message);
       });
       dirty = false;
       showPreview(reading);
-      window.MindsetUi.setStatus(status, "Yaklaşık okuma hazır. İstersen yayınla.");
+      ui.setStatus(status, t("create.ready"));
       return texts;
     }
 
@@ -74,11 +61,7 @@
       loginHint.hidden = true;
       runRead()
         .catch(function (error) {
-          window.MindsetUi.setStatus(
-            status,
-            error.message || "Okuma yapılamadı.",
-            "error"
-          );
+          ui.setStatus(status, ui.errorText(error, "error.read_failed"), "error");
         })
         .finally(function () {
           readButton.disabled = false;
@@ -89,15 +72,16 @@
     publishButton.addEventListener("click", function () {
       loginHint.hidden = true;
       publishButton.disabled = true;
-      var prepare = !reading || dirty ? runRead() : Promise.resolve(window.MindsetUi.collectTexts(form));
+      var prepare = !reading || dirty ? runRead() : Promise.resolve(ui.collectTexts(form));
       prepare
         .then(function () {
           dialog.showModal();
         })
         .catch(function (error) {
-          window.MindsetUi.setStatus(status, error.message || "Okuma yapılamadı.", "error");
+          ui.setStatus(status, ui.errorText(error, "error.read_failed"), "error");
         })
         .finally(function () {
+          readButton.disabled = false;
           publishButton.disabled = false;
         });
     });
@@ -106,62 +90,68 @@
       if (dialog.returnValue !== "confirm" || !reading) return;
       var texts;
       try {
-        texts = window.MindsetUi.collectTexts(form);
+        texts = ui.collectTexts(form);
       } catch (error) {
-        window.MindsetUi.setStatus(status, error.message, "error");
+        ui.setStatus(status, ui.errorText(error), "error");
         return;
       }
+      var demo = ui.collectDemo(form);
       publishButton.disabled = true;
-      window.MindsetUi.setStatus(status, "Kaydediliyor");
-      window.MindsetStore.requireSession()
+      ui.setStatus(status, t("common.saving"));
+      store
+        .requireSession()
         .then(function (session) {
-          return window.MindsetStore.publish(session, texts, reading);
+          return store.publish(session, texts, reading, demo);
         })
         .then(function (result) {
-          if (result.warning) sessionStorage.setItem("mindset-warning", result.warning);
-          window.location.assign("/m/" + result.number);
+          if (result.warning) sessionStorage.setItem("mindset-warning", "create.publishWarning");
+          window.location.assign("/i/" + result.number);
         })
         .catch(function (error) {
           publishButton.disabled = false;
-          window.MindsetUi.setStatus(status, error.message || "Kaydedilemedi.", "error");
-          if (/giriş/i.test(error.message || "")) {
-            loginLink.href = window.MindsetStore.loginUrl();
-            loginHint.hidden = false;
-          }
+          ui.setStatus(status, ui.errorText(error, "error.save_failed"), "error");
+          if (error && error.code === "login_required") loginHint.hidden = false;
         });
     });
 
-    window.MindsetStore.getOptionalSession()
+    store
+      .getOptionalSession()
       .then(function (session) {
-        if (!session) return null;
-        return window.MindsetStore.findOwn(session.uid, session.idToken);
+        return session ? store.findOwn(session.uid, session.idToken) : null;
       })
       .then(function (own) {
         if (!own) return;
         existingNumber = own.publicDoc.id;
-        document.querySelector("h1").textContent = existingNumber + ". mindset";
-        window.MindsetUi.fillTexts(form, {
-          currentPosition: own.publicDoc.currentPosition || "",
-          personalCode: own.publicDoc.personalCode || "",
-          selfNarrative: own.publicDoc.selfNarrative || "",
-          unsayableAttitude: (own.privateDoc && own.privateDoc.unsayableAttitude) || "",
-          desireScript: (own.privateDoc && own.privateDoc.desireScript) || "",
-          disownedSelf: (own.privateDoc && own.privateDoc.disownedSelf) || ""
+        document.querySelector("#heading").textContent = t("create.edit", { n: existingNumber });
+        var privateDoc = own.privateDoc || {};
+        ui.fillTexts(form, {
+          currentPosition: own.publicDoc.currentPosition,
+          personalCode: own.publicDoc.personalCode,
+          selfNarrative: own.publicDoc.selfNarrative,
+          unsayableAttitude: privateDoc.unsayableAttitude,
+          desireScript: privateDoc.desireScript,
+          disownedSelf: privateDoc.disownedSelf
         });
-        var scores = window.MindsetReading.scoresOf(own.publicDoc);
-        var closed = window.MindsetReading.scoresOf(own.privateDoc);
-        window.MindsetReading.CLOSED_KEYS.forEach(function (key) {
+        ui.fillDemo(form, math.demoOf(own.publicDoc, own.privateDoc));
+        var scores = math.scoresOf(own.publicDoc);
+        var closed = math.scoresOf(own.privateDoc);
+        math.CLOSED_KEYS.forEach(function (key) {
           scores[key] = closed[key];
         });
-        reading = scores;
-        dirty = false;
+        // v1 readings used different poles; force a fresh read before republishing.
+        if (own.publicDoc.lens === window.MindsetLens.version) {
+          reading = scores;
+          dirty = false;
+        }
         showPreview(scores);
-        window.MindsetUi.setStatus(status, "Son okuma yüklendi. Metin değişirse yeniden okunur.");
+        ui.setStatus(status, t("create.loaded"));
       })
       .catch(function (error) {
-        window.MindsetUi.setStatus(status, error.message || "Mindset yüklenemedi.", "error");
+        ui.setStatus(status, ui.errorText(error), "error");
       });
 
-    watchCounts();
+    window.MindsetLens.fields.forEach(function (field) {
+      ui.updateCount(form, field.key);
+    });
   });
 })();

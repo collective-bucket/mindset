@@ -3,18 +3,27 @@
 
   var PROJECT = window.MindsetConfig.projectId;
   var API_KEY = window.MindsetConfig.apiKey;
-  var ROOT =
-    "https://firestore.googleapis.com/v1/projects/" +
-    PROJECT +
-    "/databases/(default)/documents";
+  var DB = "projects/" + PROJECT + "/databases/(default)";
+  var ROOT = "https://firestore.googleapis.com/v1/" + DB + "/documents";
 
   function withKey(url) {
     var sep = url.indexOf("?") >= 0 ? "&" : "?";
     return url + sep + "key=" + encodeURIComponent(API_KEY);
   }
 
+  function encodePath(path) {
+    return String(path)
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/");
+  }
+
+  function docName(path) {
+    return DB + "/documents/" + path;
+  }
+
   function encodeValue(value) {
-    if (value === null) return { nullValue: null };
+    if (value === null || value === undefined) return { nullValue: null };
     if (typeof value === "boolean") return { booleanValue: value };
     if (typeof value === "number") {
       return Number.isInteger(value)
@@ -26,13 +35,9 @@
       return { arrayValue: { values: value.map(encodeValue) } };
     }
     if (typeof value === "object") {
-      var fields = {};
-      Object.keys(value).forEach(function (key) {
-        fields[key] = encodeValue(value[key]);
-      });
-      return { mapValue: { fields: fields } };
+      return { mapValue: { fields: encodeFields(value) } };
     }
-    throw new Error("Desteklenmeyen alan tipi");
+    throw new Error("Unsupported field type");
   }
 
   function decodeValue(node) {
@@ -59,13 +64,12 @@
 
   function decodeDocument(doc) {
     if (!doc || !doc.name) return null;
-    var id = doc.name.split("/").pop();
     var data = {};
     var fields = doc.fields || {};
     Object.keys(fields).forEach(function (key) {
       data[key] = decodeValue(fields[key]);
     });
-    data.id = id;
+    data.id = doc.name.split("/").pop();
     return data;
   }
 
@@ -78,12 +82,15 @@
     return fields;
   }
 
+  function fieldMask(data) {
+    return Object.keys(data).filter(function (key) {
+      return key !== "id";
+    });
+  }
+
   async function request(path, options) {
     options = options || {};
-    var headers = Object.assign(
-      { "Content-Type": "application/json" },
-      options.headers || {}
-    );
+    var headers = { "Content-Type": "application/json" };
     if (options.token) headers.Authorization = "Bearer " + options.token;
 
     var url = path.indexOf("http") === 0 ? path : ROOT + path;
@@ -99,10 +106,10 @@
     var json = text ? JSON.parse(text) : null;
     if (!response.ok) {
       var rowError = Array.isArray(json) && json[0] && json[0].error;
-    var message =
-      (json && json.error && json.error.message) ||
-      (rowError && rowError.message) ||
-      "Firestore isteği başarısız (" + response.status + ")";
+      var message =
+        (json && json.error && json.error.message) ||
+        (rowError && rowError.message) ||
+        "Firestore request failed (" + response.status + ")";
       var error = new Error(message);
       error.status = response.status;
       throw error;
@@ -117,15 +124,20 @@
     );
   }
 
-  async function getDocument(collection, id, token) {
-    var doc = await request("/" + collection + "/" + encodeURIComponent(id), {
-      token: token
-    });
-    return decodeDocument(doc);
+  function isPermission(error) {
+    return Boolean(
+      error &&
+        (error.status === 403 || /permission/i.test(String(error.message || "")))
+    );
   }
 
-  async function runQuery(structuredQuery, token) {
-    var rows = await request(":runQuery", {
+  async function get(path, token) {
+    return decodeDocument(await request("/" + encodePath(path), { token: token }));
+  }
+
+  async function runQuery(structuredQuery, token, parentPath) {
+    var prefix = parentPath ? "/" + encodePath(parentPath) : "";
+    var rows = await request(prefix + ":runQuery", {
       method: "POST",
       token: token,
       body: { structuredQuery: structuredQuery }
@@ -138,104 +150,116 @@
       .filter(Boolean);
   }
 
-  async function queryEquals(collection, field, value, token, limit) {
-    var encoded =
-      typeof value === "boolean"
-        ? { booleanValue: value }
-        : { stringValue: String(value) };
-    return runQuery(
-      {
-        from: [{ collectionId: collection }],
-        where: {
-          fieldFilter: {
-            field: { fieldPath: field },
-            op: "EQUAL",
-            value: encoded
-          }
-        },
-        limit: limit || 20
-      },
-      token
-    );
+  function equals(field, value) {
+    return {
+      fieldFilter: { field: { fieldPath: field }, op: "EQUAL", value: encodeValue(value) }
+    };
   }
 
-  async function createDocument(collection, id, data, token) {
-    var doc = await request(
-      "/" + collection + "?documentId=" + encodeURIComponent(id),
-      {
-        method: "POST",
-        token: token,
-        body: { fields: encodeFields(data) }
+  function inList(field, values) {
+    return {
+      fieldFilter: {
+        field: { fieldPath: field },
+        op: "IN",
+        value: { arrayValue: { values: values.map(encodeValue) } }
       }
+    };
+  }
+
+  function atLeast(field, value) {
+    return {
+      fieldFilter: {
+        field: { fieldPath: field },
+        op: "GREATER_THAN_OR_EQUAL",
+        value: encodeValue(value)
+      }
+    };
+  }
+
+  function where(filters) {
+    if (filters.length === 1) return filters[0];
+    return { compositeFilter: { op: "AND", filters: filters } };
+  }
+
+  async function create(collectionPath, id, data, token) {
+    var doc = await request(
+      "/" + encodePath(collectionPath) + "?documentId=" + encodeURIComponent(id),
+      { method: "POST", token: token, body: { fields: encodeFields(data) } }
     );
     return decodeDocument(doc);
   }
 
-  async function updateDocument(collection, id, data, token) {
-    var keys = Object.keys(data).filter(function (key) {
-      return key !== "id";
-    });
-    var mask = keys
+  async function update(path, data, token) {
+    var mask = fieldMask(data)
       .map(function (key) {
         return "updateMask.fieldPaths=" + encodeURIComponent(key);
       })
       .join("&");
-    var doc = await request(
-      "/" + collection + "/" + encodeURIComponent(id) + (mask ? "?" + mask : ""),
-      {
-        method: "PATCH",
-        token: token,
-        body: { fields: encodeFields(data) }
-      }
-    );
+    var doc = await request("/" + encodePath(path) + (mask ? "?" + mask : ""), {
+      method: "PATCH",
+      token: token,
+      body: { fields: encodeFields(data) }
+    });
     return decodeDocument(doc);
   }
 
-  async function deleteDocument(collection, id, token) {
-    await request("/" + collection + "/" + encodeURIComponent(id), {
-      method: "DELETE",
-      token: token
-    });
+  async function remove(path, token) {
+    await request("/" + encodePath(path), { method: "DELETE", token: token });
   }
 
-  async function incrementFields(collection, id, deltas, token) {
-    if (!deltas.length) return;
-    var name =
-      "projects/" +
-      PROJECT +
-      "/databases/(default)/documents/" +
-      collection +
-      "/" +
-      id;
-    await request(":commit", {
-      method: "POST",
-      token: token,
-      body: {
-        writes: [
-          {
-            transform: {
-              document: name,
-              fieldTransforms: deltas.map(function (delta) {
-                return {
-                  fieldPath: delta.path,
-                  increment: { integerValue: String(delta.by) }
-                };
-              })
-            }
-          }
-        ]
-      }
-    });
+  var writes = {
+    create: function (path, data) {
+      return {
+        update: { name: docName(path), fields: encodeFields(data) },
+        currentDocument: { exists: false }
+      };
+    },
+    set: function (path, data) {
+      return { update: { name: docName(path), fields: encodeFields(data) } };
+    },
+    patch: function (path, data) {
+      return {
+        update: { name: docName(path), fields: encodeFields(data) },
+        updateMask: { fieldPaths: fieldMask(data) },
+        currentDocument: { exists: true }
+      };
+    },
+    remove: function (path) {
+      return { delete: docName(path) };
+    },
+    increment: function (path, deltas) {
+      return {
+        transform: {
+          document: docName(path),
+          fieldTransforms: deltas.map(function (delta) {
+            return {
+              fieldPath: delta.path,
+              increment: { integerValue: String(delta.by) }
+            };
+          })
+        }
+      };
+    }
+  };
+
+  async function commit(list, token) {
+    if (!list.length) return;
+    await request(":commit", { method: "POST", token: token, body: { writes: list } });
   }
 
   window.MindsetFirestore = {
-    getDocument: getDocument,
-    queryEquals: queryEquals,
+    get: get,
     runQuery: runQuery,
-    createDocument: createDocument,
-    updateDocument: updateDocument,
-    deleteDocument: deleteDocument,
-    incrementFields: incrementFields,
-    isConflict: isConflict
+    equals: equals,
+    inList: inList,
+    atLeast: atLeast,
+    where: where,
+    create: create,
+    update: update,
+    remove: remove,
+    writes: writes,
+    commit: commit,
+    isConflict: isConflict,
+    isPermission: isPermission
   };
 })();

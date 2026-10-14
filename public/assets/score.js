@@ -1,11 +1,17 @@
 (function () {
   "use strict";
 
+  // Runs only in the browser. Text never leaves the device.
   var MODEL = "Xenova/multilingual-e5-small";
   var CDN = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm";
+  var CHUNK = 480;
   var extractor = null;
   var loading = null;
   var poleCache = {};
+
+  function t(key, vars) {
+    return window.MindsetI18n.t(key, vars);
+  }
 
   function asVector(output) {
     var list = output && output.tolist ? output.tolist() : output;
@@ -15,9 +21,8 @@
 
   function meanNormalize(vectors) {
     var dim = vectors[0].length;
-    var acc = [];
+    var acc = new Array(dim).fill(0);
     var index;
-    for (index = 0; index < dim; index += 1) acc[index] = 0;
     vectors.forEach(function (vector) {
       for (index = 0; index < dim; index += 1) acc[index] += vector[index];
     });
@@ -39,19 +44,15 @@
 
   function chunks(text) {
     var clean = text.replace(/\s+/g, " ").trim();
-    var size = 480;
     var parts = [];
-    for (var index = 0; index < clean.length; index += size) {
-      parts.push(clean.slice(index, index + size));
+    for (var index = 0; index < clean.length; index += CHUNK) {
+      parts.push(clean.slice(index, index + CHUNK));
     }
     return parts;
   }
 
   async function embedRaw(text) {
-    var output = await extractor("query: " + text, {
-      pooling: "mean",
-      normalize: true
-    });
+    var output = await extractor("query: " + text, { pooling: "mean", normalize: true });
     return asVector(output);
   }
 
@@ -65,9 +66,34 @@
     return vectors.length === 1 ? vectors[0] : meanNormalize(vectors);
   }
 
-  async function embedPole(text) {
-    if (!poleCache[text]) poleCache[text] = await embedDocument(text);
-    return poleCache[text];
+  async function embedPole(anchors) {
+    var list = anchors.en.concat(anchors.tr);
+    var key = list.join("\n");
+    if (!poleCache[key]) {
+      var vectors = [];
+      for (var index = 0; index < list.length; index += 1) {
+        vectors.push(await embedRaw(list[index]));
+      }
+      poleCache[key] = meanNormalize(vectors);
+    }
+    return poleCache[key];
+  }
+
+  async function startModel(onProgress) {
+    var transformers = await import(CDN);
+    if (transformers.env) transformers.env.allowLocalModels = false;
+    extractor = await transformers.pipeline("feature-extraction", MODEL, {
+      dtype: "q8",
+      progress_callback: function (update) {
+        if (!onProgress || !update) return;
+        if (update.status === "progress" && update.progress != null) {
+          onProgress(t("model.downloading", { p: Math.round(update.progress) }));
+          return;
+        }
+        if (update.status === "initiate") onProgress(t("model.preparing"));
+      }
+    });
+    if (onProgress) onProgress(t("model.reading"));
   }
 
   async function load(onProgress) {
@@ -79,23 +105,6 @@
       });
     }
     await loading;
-  }
-
-  async function startModel(onProgress) {
-    var transformers = await import(CDN);
-    if (transformers.env) transformers.env.allowLocalModels = false;
-    extractor = await transformers.pipeline("feature-extraction", MODEL, {
-      dtype: "q8",
-      progress_callback: function (update) {
-        if (!onProgress) return;
-        if (update && update.status === "progress" && update.progress != null) {
-          onProgress("Model indiriliyor: %" + Math.round(update.progress));
-          return;
-        }
-        if (update && update.status === "initiate") onProgress("Model hazırlanıyor");
-      }
-    });
-    if (onProgress) onProgress("Metin okunuyor");
   }
 
   async function read(texts, onProgress) {
@@ -110,9 +119,9 @@
         var source = math.joinFields(texts, axis.sources);
         if (!source) continue;
         var vector = await embedDocument(source);
-        var low = await embedPole(axis.lowPole);
-        var high = await embedPole(axis.highPole);
-        scores[axis.key] = math.polarityScore(dot(vector, low), dot(vector, high));
+        var low = await embedPole(axis.lowAnchors);
+        var high = await embedPole(axis.highAnchors);
+        scores[axis.key] = math.polarityScore(dot(vector, low), dot(vector, high), axis.calibration);
         continue;
       }
       var leftText = math.joinFields(texts, axis.left);
@@ -123,11 +132,9 @@
       scores[axis.key] = math.distanceScore(dot(left, right));
     }
 
-    if (onProgress) onProgress("Okuma hazır");
+    if (onProgress) onProgress(t("model.ready"));
     return scores;
   }
 
-  window.MindsetScore = {
-    read: read
-  };
+  window.MindsetScore = { read: read };
 })();

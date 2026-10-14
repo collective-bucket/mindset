@@ -1,50 +1,53 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mindset | Collective Bucket</title>
-  <meta name="description" content="Mindsetini bir numarayla paylaş. Yaklaşık bir okuma, test sonucu değil." />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>mindset</title>
+  <meta name="description" content="Your mindset as a shareable number. An approximate reading, not a test result." />
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/assets/styles.css" />
-  <link rel="stylesheet" href="https://collectivebucket.com/assets/shell.css" />
 </head>
-<body>
-  <header data-cb-shell="header">
-    <nav data-cb-shell-nav>
-      <a href="/liste">Liste</a>
-      <a href="/ben">Benimki</a>
-    </nav>
-    <div data-cb-shell-cta>
-      <a class="btn btn-primary" href="/yeni">Yaz</a>
-    </div>
-  </header>
-
-  <main>
-    <div class="wrap">
-      <h1>Mindset</h1>
-      <p class="lead">Mindsetin bir numara olsun. 212. mindset gibi. Numaranı paylaş.</p>
-      <p class="lead">Şu an, doğru bildiğin ve kendini nasıl anlattığın profilde durur. Dışarıda söylemediğin, arzu ve utandığın yan yalnız sende kalır.</p>
-      <p class="lead">Bu bir test sonucu değildir.</p>
+<body data-tab="home">
+  <main class="page">
+    <section id="hero" class="hero" hidden>
+      <h1 data-i18n="home.title">Your mindset as a number</h1>
+      <p class="lead" data-i18n="home.lead">Write what you hold true and how you tell your story. Get a number like 212. Share it.</p>
+      <p class="lead" data-i18n="home.private">What you don't say out loud, your desire and your shadow stay with you.</p>
       <div class="actions">
-        <a class="btn btn-primary" href="/yeni">Yaz</a>
-        <a class="btn btn-ghost" href="/liste">Liste</a>
+        <a class="btn btn-primary" href="/new" data-i18n="home.write">Write yours</a>
+        <a class="btn btn-ghost" href="/explore" data-i18n="home.explore">Explore</a>
       </div>
-      <p id="mine" class="meta" hidden></p>
+      <p class="fineprint" data-i18n="common.notTest">This is not a test result. It's an approximate reading.</p>
+    </section>
+
+    <p id="mine" class="mine" hidden></p>
+
+    <section id="similar-section" class="section" hidden>
+      <h2 data-i18n="feed.similar">Similar to you</h2>
+      <div id="similar" class="rail"></div>
+    </section>
+
+    <div class="segmented" role="tablist">
+      <button type="button" role="tab" data-feed="latest" aria-selected="true" data-i18n="feed.latest">Latest</button>
+      <button type="button" role="tab" data-feed="following" aria-selected="false" data-i18n="feed.following">Following</button>
+      <button type="button" role="tab" data-feed="tribe" aria-selected="false" data-i18n="feed.tribe">Tribe</button>
     </div>
+    <p id="feed-status" class="status" hidden></p>
+    <div id="feed" class="feed"></div>
   </main>
 
-  <footer data-cb-shell="footer"></footer>
-  <script src="https://collectivebucket.com/assets/shell.js" defer></script>
-  <script src="https://auth.collectivebucket.com/client.js" defer></script>
   <script src="/assets/config.js" defer></script>
-  <script src="/assets/lens-v1.js" defer></script>
+  <script src="/assets/i18n.js" defer></script>
+  <script src="/assets/demographics.js" defer></script>
+  <script src="/assets/lens-v2.js" defer></script>
   <script src="/assets/reading.js" defer></script>
   <script src="/assets/firestore.js" defer></script>
+  <script type="module" src="/assets/auth.js"></script>
   <script src="/assets/store.js" defer></script>
+  <script src="/assets/social.js" defer></script>
+  <script src="/assets/ui.js" defer></script>
   <script src="/assets/home.js" defer></script>
 </body>
 </html>
