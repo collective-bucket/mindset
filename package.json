@@ -1,0 +1,15 @@
+{
+  "name": "collective-bucket-mindset",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Collective Bucket — mindset numarası, açık okuma ve kapalı ayna.",
+  "scripts": {
+    "serve": "firebase emulators:start --only hosting",
+    "deploy": "firebase deploy --only hosting:mindset,firestore:rules,firestore:indexes",
+    "stamp": "node scripts/stamp-assets.js",
+    "check": "node --check public/assets/lens-v1.js && node --check public/assets/reading.js && node --check public/assets/firestore.js && node --check public/assets/store.js && node --check public/assets/score.js && node --check public/assets/ui.js && node --check public/assets/home.js && node --check public/assets/edit.js && node --check public/assets/profile.js && node --check public/assets/list.js && node --check public/assets/mine.js && node tests/reading.test.js"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.26.0"
+  }
+}

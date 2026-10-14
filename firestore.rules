@@ -1,0 +1,253 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /ads/{adId} {
+      function validAd() {
+        return request.resource.data.keys().hasAll([
+            'ownerUid', 'title', 'body', 'links', 'noteColor',
+            'published', 'createdAt', 'updatedAt'
+          ])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 120
+          && request.resource.data.body is string
+          && request.resource.data.body.size() <= 2000
+          && request.resource.data.noteColor in [
+            'yellow', 'mint', 'pink', 'blue', 'lilac'
+          ]
+          && request.resource.data.published is bool
+          && request.resource.data.links is list
+          && request.resource.data.links.size() <= 10;
+      }
+
+      allow read: if resource.data.published == true
+        || (request.auth != null && request.auth.uid == resource.data.ownerUid);
+
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && validAd();
+
+      allow update: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validAd();
+
+      allow delete: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /trips/{tripId} {
+      function isTripOwner() {
+        return request.auth != null
+          && request.auth.uid == resource.data.ownerUid;
+      }
+
+      function validTrip() {
+        return request.resource.data.keys().hasAll([
+            'ownerUid', 'title', 'note', 'people', 'expenses',
+            'createdAt', 'updatedAt'
+          ])
+          && request.resource.data.ownerUid is string
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 120
+          && request.resource.data.note is string
+          && request.resource.data.note.size() <= 500
+          && request.resource.data.people is list
+          && request.resource.data.people.size() <= 30
+          && request.resource.data.expenses is list
+          && request.resource.data.expenses.size() <= 200
+          && (
+            !request.resource.data.keys().hasAny(['paidPayments'])
+            || (
+              request.resource.data.paidPayments is list
+              && request.resource.data.paidPayments.size() <= 30
+            )
+          )
+          && request.resource.data.createdAt is string
+          && request.resource.data.updatedAt is string;
+      }
+
+      allow get: if true;
+
+      allow list: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && validTrip();
+
+      allow update: if isTripOwner()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && validTrip();
+
+      allow delete: if isTripOwner();
+    }
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMindsetOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function score(value) {
+      return value is int && value >= -1 && value <= 100;
+    }
+
+    function shortText(value) {
+      return value is string && value.size() <= 1200;
+    }
+
+    function buckets(value) {
+      return value.keys().hasOnly(['b0', 'b1', 'b2', 'b3', 'b4'])
+        && value.b0 is int && value.b0 >= 0
+        && value.b1 is int && value.b1 >= 0
+        && value.b2 is int && value.b2 >= 0
+        && value.b3 is int && value.b3 >= 0
+        && value.b4 is int && value.b4 >= 0;
+    }
+
+    function validPublic(mindsetId) {
+      return request.resource.data.keys().hasOnly([
+          'ownerUid', 'number', 'numberKey', 'published', 'createdAt', 'updatedAt',
+          'lens', 'agency', 'communion', 'codeClarity', 'redemption', 'known', 'bucket',
+          'currentPosition', 'personalCode', 'selfNarrative'
+        ])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.number is int
+        && request.resource.data.number > 0
+        && mindsetId.matches('^\\d+$')
+        && request.resource.data.numberKey == mindsetId
+        && request.resource.data.published is bool
+        && request.resource.data.lens == 'v1'
+        && request.resource.data.createdAt is string
+        && request.resource.data.createdAt.size() >= 20
+        && request.resource.data.createdAt.size() <= 40
+        && request.resource.data.updatedAt is string
+        && request.resource.data.updatedAt.size() >= 20
+        && request.resource.data.updatedAt.size() <= 40
+        && score(request.resource.data.agency)
+        && score(request.resource.data.communion)
+        && score(request.resource.data.codeClarity)
+        && score(request.resource.data.redemption)
+        && request.resource.data.known is list
+        && request.resource.data.known.size() <= 4
+        && request.resource.data.known.hasOnly(['agency', 'communion', 'codeClarity', 'redemption'])
+        && request.resource.data.bucket is string
+        && request.resource.data.bucket.matches('^[0-4u]{4}$')
+        && shortText(request.resource.data.currentPosition)
+        && shortText(request.resource.data.personalCode)
+        && request.resource.data.personalCode.size() > 0
+        && shortText(request.resource.data.selfNarrative);
+    }
+
+    function validPrivate(privateId) {
+      return request.resource.data.keys().hasOnly([
+          'ownerUid', 'number', 'numberKey', 'lens', 'updatedAt',
+          'unsayableAttitude', 'desireScript', 'disownedSelf',
+          'codeGap', 'authorityLean', 'desireSplit', 'shadowDistance'
+        ])
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.number is int
+        && request.resource.data.number > 0
+        && privateId.matches('^\\d+$')
+        && request.resource.data.numberKey == privateId
+        && request.resource.data.lens == 'v1'
+        && request.resource.data.updatedAt is string
+        && request.resource.data.updatedAt.size() >= 20
+        && request.resource.data.updatedAt.size() <= 40
+        && shortText(request.resource.data.unsayableAttitude)
+        && shortText(request.resource.data.desireScript)
+        && shortText(request.resource.data.disownedSelf)
+        && score(request.resource.data.codeGap)
+        && score(request.resource.data.authorityLean)
+        && score(request.resource.data.desireSplit)
+        && score(request.resource.data.shadowDistance);
+    }
+
+    match /mindsets/{mindsetId} {
+      allow read: if resource.data.published == true
+        || (signedIn() && request.auth.uid == resource.data.ownerUid);
+
+      allow create: if signedIn() && validPublic(mindsetId);
+
+      allow update: if signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.number == resource.data.number
+        && request.resource.data.numberKey == resource.data.numberKey
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validPublic(mindsetId);
+
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /privateMindsets/{privateId} {
+      allow get: if signedIn() && request.auth.uid == resource.data.ownerUid;
+      allow list: if false;
+
+      allow create: if signedIn() && validPrivate(privateId);
+
+      allow update: if signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.number == resource.data.number
+        && request.resource.data.numberKey == resource.data.numberKey
+        && validPrivate(privateId);
+
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /owners/{uid} {
+      allow get: if isMindsetOwner(uid);
+      allow list: if false;
+
+      allow create, update: if isMindsetOwner(uid)
+        && request.resource.data.keys().hasOnly(['number'])
+        && request.resource.data.number is int
+        && request.resource.data.number > 0;
+
+      allow delete: if isMindsetOwner(uid);
+    }
+
+    match /counters/{counterId} {
+      allow get: if signedIn() && counterId == 'mindset';
+      allow list: if false;
+
+      allow create: if signedIn()
+        && counterId == 'mindset'
+        && request.resource.data.keys().hasOnly(['next'])
+        && request.resource.data.next is int
+        && request.resource.data.next > 0
+        && request.resource.data.next < 10000000;
+
+      allow update: if signedIn()
+        && counterId == 'mindset'
+        && request.resource.data.keys().hasOnly(['next'])
+        && request.resource.data.next is int
+        && request.resource.data.next > resource.data.next
+        && request.resource.data.next <= resource.data.next + 8;
+
+      allow delete: if false;
+    }
+
+    match /stats/{statId} {
+      allow get: if statId == 'public';
+      allow list: if false;
+
+      allow create, update: if signedIn()
+        && statId == 'public'
+        && request.resource.data.keys().hasOnly(['lens', 'axes'])
+        && request.resource.data.lens == 'v1'
+        && request.resource.data.axes.keys().hasOnly(['agency', 'communion', 'codeClarity', 'redemption'])
+        && buckets(request.resource.data.axes.agency)
+        && buckets(request.resource.data.axes.communion)
+        && buckets(request.resource.data.axes.codeClarity)
+        && buckets(request.resource.data.axes.redemption);
+
+      allow delete: if false;
+    }
+  }
+}

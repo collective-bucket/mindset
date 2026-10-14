@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Yaz | Mindset</title>
+  <meta name="description" content="Mindsetini yaz. Okuma tarayıcıda kalır." />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="https://collectivebucket.com/assets/shell.css" />
+</head>
+<body>
+  <header data-cb-shell="header">
+    <nav data-cb-shell-nav>
+      <a href="/liste">Liste</a>
+      <a href="/ben">Benimki</a>
+    </nav>
+    <div data-cb-shell-cta>
+      <a class="btn btn-primary" href="/yeni">Yaz</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <h1>Yaz</h1>
+      <p class="lead">Bu bir test sonucu değildir. Yaklaşık bir okumadır. İlk okumada model tarayıcına iner; metin dışarı gönderilmez.</p>
+      <form id="mindset-form">
+        <p class="hint">Bu üçü profilde görünür. Yayınlamak için doğru bildiğin bir cümle yeter.</p>
+        <div id="open-fields"></div>
+        <div class="closed-block">
+          <h2>Yalnız sende kalır</h2>
+          <p class="hint">Dışarıda söylemediğin, arzu ve utandığın yan kimseye gitmez. Onların okuması da yalnız sende kalır.</p>
+          <div id="closed-fields"></div>
+        </div>
+        <div class="actions">
+          <button type="button" id="read" class="btn btn-ghost">Oku</button>
+          <button type="button" id="publish" class="btn btn-primary">Yayınla</button>
+        </div>
+        <p id="form-status" class="status" hidden></p>
+        <p id="login-hint" hidden><a id="login-link" href="#">Giriş yap</a></p>
+      </form>
+
+      <section id="preview" hidden>
+        <h2>Yaklaşık okuma</h2>
+        <p id="preview-summary" class="summary"></p>
+        <div id="preview-radar"></div>
+        <div id="preview-open"></div>
+        <h2>Yalnız sana</h2>
+        <div id="preview-closed"></div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="publish-dialog" class="modal">
+    <form method="dialog">
+      <h2>Yayınla</h2>
+      <p>Şu an, doğru bildiğin ve kendini nasıl anlattığın profilde görünür. Hikaye seni veya başkasını ele verebilir.</p>
+      <p>Dışarıda söylemediğin, arzu ve utandığın yan kimseye gitmez. Onların okuması da yalnız sende kalır.</p>
+      <p>Bu bir ölçek değildir.</p>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" value="cancel">Vazgeç</button>
+        <button class="btn btn-primary" value="confirm">Yayınla</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer data-cb-shell="footer"></footer>
+  <script src="https://collectivebucket.com/assets/shell.js" defer></script>
+  <script src="https://auth.collectivebucket.com/client.js" defer></script>
+  <script src="/assets/config.js" defer></script>
+  <script src="/assets/lens-v1.js" defer></script>
+  <script src="/assets/reading.js" defer></script>
+  <script src="/assets/firestore.js" defer></script>
+  <script src="/assets/store.js" defer></script>
+  <script src="/assets/ui.js" defer></script>
+  <script src="/assets/score.js" defer></script>
+  <script src="/assets/edit.js" defer></script>
+</body>
+</html>

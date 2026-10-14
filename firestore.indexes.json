@@ -1,0 +1,45 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "mindsets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "published", "order": "ASCENDING" },
+        { "fieldPath": "number", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mindsets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "published", "order": "ASCENDING" },
+        { "fieldPath": "agency", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mindsets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "published", "order": "ASCENDING" },
+        { "fieldPath": "communion", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mindsets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "published", "order": "ASCENDING" },
+        { "fieldPath": "codeClarity", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mindsets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "published", "order": "ASCENDING" },
+        { "fieldPath": "redemption", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

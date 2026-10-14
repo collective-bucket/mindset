@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "collective-bucket"
+  },
+  "targets": {
+    "collective-bucket": {
+      "hosting": {
+        "mindset": [
+          "cbucket-mindset"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
