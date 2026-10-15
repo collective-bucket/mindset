@@ -134,10 +134,7 @@
           "</button>"
         );
       }).join("") +
-      "</span>" +
-      '<a class="top-action" id="top-action" href="/login">' +
-      escapeHtml(t("top.signIn")) +
-      "</a></div>";
+      "</span></div>";
     body.insertBefore(top, body.firstChild);
     top.addEventListener("click", function (event) {
       var button = event.target.closest("[data-lang]");
@@ -167,13 +164,62 @@
     body.appendChild(nav);
 
     window.MindsetStore.getOptionalSession().then(function (session) {
-      var action = document.querySelector("#top-action");
-      if (action && session) action.hidden = true;
       if (session) {
         nav.hidden = false;
         body.classList.add("has-gamebar");
       }
     });
+  }
+
+  function authWallHtml() {
+    var openAxes = window.MindsetLens.axes
+      .filter(function (axis) {
+        return axis.open;
+      })
+      .map(function (axis) {
+        return (
+          "<li><strong>" +
+          escapeHtml(i18n.pick(axis.label)) +
+          '</strong> <span class="hint">(' +
+          escapeHtml(axis.code.replace(/_/g, " ")) +
+          ")</span> — " +
+          escapeHtml(axisHint(axis) || i18n.pick(axis.lowLabel) + " ↔ " + i18n.pick(axis.highLabel)) +
+          "</li>"
+        );
+      })
+      .join("");
+    return (
+      "<h1>" +
+      escapeHtml(t("gate.title")) +
+      '</h1><p class="lead">' +
+      escapeHtml(t("gate.lead")) +
+      '</p><ul class="plain-list gate-points">' +
+      "<li>" +
+      escapeHtml(t("gate.point1")) +
+      "</li><li>" +
+      escapeHtml(t("gate.point2")) +
+      "</li><li>" +
+      escapeHtml(t("gate.point3")) +
+      '</li></ul><div class="actions">' +
+      '<a class="btn btn-primary" data-auth-login href="' +
+      loginHref() +
+      '">' +
+      escapeHtml(t("gate.enter")) +
+      '</a><a class="btn" href="/register">' +
+      escapeHtml(t("auth.submitRegister")) +
+      "</a></div>" +
+      '<details class="how-to-read gate-schema"><summary>' +
+      escapeHtml(t("gate.schemaTitle")) +
+      '</summary><p class="hint">' +
+      escapeHtml(t("gate.method")) +
+      '</p><ul class="plain-list">' +
+      openAxes +
+      '</ul><p class="hint">' +
+      escapeHtml(t("gate.closedNote")) +
+      '</p><p class="hint">' +
+      escapeHtml(t("common.notTest")) +
+      "</p></details>"
+    );
   }
 
   async function requireAuth() {
@@ -187,9 +233,8 @@
     }
     if (gated) gated.hidden = true;
     if (wall) {
+      wall.innerHTML = authWallHtml();
       wall.hidden = false;
-      var login = wall.querySelector("[data-auth-login]");
-      if (login) login.href = loginHref();
     }
     return null;
   }

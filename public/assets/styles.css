@@ -6,6 +6,7 @@
   --muted: #5c5c5c;
   --hair: #dcdcd6;
   --accent: #2f9a7c;
+  --accent-strong: #237e65;
   --accent-soft: #eafbf5;
   --warn: #8a5300;
   --danger: #b3261e;
@@ -332,8 +333,15 @@ a.head-side {
 }
 
 .btn-primary {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #ffffff;
 }
 
 .btn-small {
@@ -1341,6 +1349,14 @@ input[type="checkbox"] {
 }
 
 .auth-wall {
+  margin-top: 24px;
+}
+
+.auth-wall .gate-points {
+  margin: 12px 0 20px;
+}
+
+.auth-wall .gate-schema {
   margin-top: 24px;
 }
 

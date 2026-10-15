@@ -44,7 +44,7 @@ Object.keys(used).forEach(function (key) {
 });
 
 assert.strictEqual(i18n.t("common.mindset", { n: 212 }), "212");
-assert.strictEqual(i18n.t("brand.name"), "mindset bucket");
+assert.strictEqual(i18n.t("brand.name"), "Mindset Bucket");
 assert.strictEqual(i18n.pick({ en: "A", tr: "B" }), "A");
 
 console.log("i18n.test.js passed");
