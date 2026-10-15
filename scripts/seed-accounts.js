@@ -1,12 +1,11 @@
 "use strict";
 
 /**
- * Creates 100 seed mindsets (skipping taken numbers such as 1 and 4).
- * Login: ms{N}@mindsetbucket.com / ms{NNNN}
- * Each public doc has seed:true so the UI can tell them apart.
+ * Creates 100 seed mindsets numbered 2–101.
+ * Login: {N}@ms.com / monkey{N}
+ * Open texts are Turkish. Each public doc has seed:true.
  *
- * Usage: node scripts/seed-accounts.js
- * Needs network for Identity Toolkit, Firestore, and the embedding model.
+ * Usage: NODE_PATH=/tmp/mindset-seed/node_modules node scripts/seed-accounts.js
  */
 
 var fs = require("fs");
@@ -17,7 +16,8 @@ var lens = require("../public/assets/lens-v2.js");
 var API_KEY = "AIzaSyDJsuk_SaPUJkzP9gnlpB6qet0TUQJ5uZA";
 var PROJECT = "collective-bucket";
 var TARGET = 100;
-var CACHE = path.join("/tmp", "mindset-seed-cache.json");
+var FIRST = 2;
+var CACHE = path.join("/tmp", "mindset-seed-cache-tr.json");
 var AUTH = "https://identitytoolkit.googleapis.com/v1";
 var DB = "https://firestore.googleapis.com/v1/projects/" + PROJECT + "/databases/(default)/documents";
 
@@ -26,15 +26,15 @@ var GENDER = ["woman", "woman", "woman", "man", "man", "man", "nonbinary", "othe
 var PLACES = [
   { country: "TR", cities: ["İstanbul", "Ankara", "İzmir", "Bursa", "Antalya", "Eskişehir"] },
   { country: "TR", cities: ["İstanbul", "Ankara", "İzmir"] },
-  { country: "DE", cities: ["Berlin", "Munich", "Hamburg"] },
+  { country: "DE", cities: ["Berlin", "Münih", "Hamburg"] },
   { country: "US", cities: ["Austin", "Seattle", "Chicago"] },
-  { country: "GB", cities: ["London", "Manchester", "Bristol"] },
+  { country: "GB", cities: ["Londra", "Manchester", "Bristol"] },
   { country: "NL", cities: ["Amsterdam", "Utrecht"] },
   { country: "FR", cities: ["Paris", "Lyon"] },
   { country: "ES", cities: ["Madrid", "Barcelona"] },
-  { country: "IT", cities: ["Milan", "Rome"] },
+  { country: "IT", cities: ["Milano", "Roma"] },
   { country: "SE", cities: ["Stockholm"] },
-  { country: "PL", cities: ["Warsaw"] },
+  { country: "PL", cities: ["Varşova"] },
   { country: "BR", cities: ["São Paulo"] },
   { country: "JP", cities: ["Tokyo"] },
   { country: "CA", cities: ["Toronto"] },
@@ -43,70 +43,70 @@ var PLACES = [
 
 var POSITIONS = {
   highAgency: [
-    "I run my own studio and decide who I work with. Money is tight some months, but the choices are mine.",
-    "I manage a small team and own the roadmap. When things break, I fix them or say no.",
-    "I left a safer job last year. I plan the week, I chase invoices, and I do not wait for permission.",
-    "I am between contracts on purpose. I set the rate and I walk if the brief is wrong."
+    "Kendi stüdyomu yönetiyorum; kiminle çalışacağıma ben karar veriyorum. Para bazı aylar dar, ama seçimler bende.",
+    "Küçük bir ekibi yönetiyorum ve yol haritası bende. Bir şey kırılınca ya ben düzeltiyorum ya da hayır diyorum.",
+    "Geçen yıl daha güvenli işi bıraktım. Haftayı ben planlıyorum, faturaların peşine ben düşüyorum, izin beklemiyorum.",
+    "Bilerek sözleşmeler arasında boşluk bıraktım. Ücreti ben koyuyorum; brief yanlışsa yürüyorum."
   ],
   lowAgency: [
-    "Work arrives and I take it. My manager sets the hours and I adjust around family.",
-    "I am waiting on a visa and a landlord. Most weeks other people decide the next step.",
-    "The company reorganized again. I keep my head down and hope the reorg leaves my desk alone.",
-    "I care for someone at home, so my calendar is not really mine. I fit work into the gaps."
+    "İş geliyor, ben alıyorum. Saatleri müdürüm belirliyor; ben aileye göre ayarlıyorum.",
+    "Vize ve ev sahibini bekliyorum. Çoğu hafta bir sonraki adımı başkaları kararlaştırıyor.",
+    "Şirket yine yeniden düzenlendi. Başımı eğip masamın kalmasını umuyorum.",
+    "Evde birine bakıyorum; takvim gerçekten benim değil. İşi boşluklara sıkıştırıyorum."
   ],
   midAgency: [
-    "I freelanced for years and now I am back on payroll. I still negotiate, but less than before.",
-    "Some projects I lead; some I just ship. It depends on who is louder that month.",
-    "I share a flat and a shop with a partner. We split decisions, and sometimes that slows everything."
+    "Yıllarca freelance çalıştım, şimdi yine bordrodayım. Hâlâ pazarlık ederim ama eskisi kadar değil.",
+    "Bazı işleri ben yönetirim, bazılarını sadece teslim ederim. O ay kim daha gürültülüyse ona kalır.",
+    "Evi ve dükkânı bir ortakla paylaşıyorum. Kararları bölüşüyoruz; bazen her şey yavaşlıyor."
   ]
 };
 
 var CODES = {
   clear: [
-    "I keep my word. If I say Friday, it is Friday. I do not gossip about people who trust me.",
-    "No lying to clients. No taking credit for someone else's work. Those two lines do not move.",
-    "I pay what I owe before I buy anything fun. Debt for toys is a line I will not cross.",
-    "I tell the hard thing early. Softening bad news later costs more than honesty on day one."
+    "Sözüm sözdür. Cuma dedimse cumadır. Bana güvenenlerin arkasından konuşmam.",
+    "Müşteriye yalan yok. Başkasının işine sahip çıkmak yok. Bu iki çizgi kıpırdamaz.",
+    "Eğlenceye para basmadan önce borcumu öderim. Oyuncak için borç çizgim değildir.",
+    "Zor olanı erken söylerim. Kötü haberi yumuşatmak birinci günden pahalıya patlar."
   ],
   loose: [
-    "Rules bend when people need them to. I care more about keeping the room calm than being exact.",
-    "I change my mind when the room changes. Consistency matters less than not burning bridges.",
-    "I promise what the moment needs and sort the details later. Rigid plans make me itchy.",
-    "I borrow and lend without counting too carefully. Keeping score ruins friendship."
+    "Kurallar gerektiğinde esner. Doğru olmaktan çok odanın sakin kalmasını önemserim.",
+    "Ortam değişince fikrim de değişir. Köprü yakmamak tutarlılıktan önemli.",
+    "Anın istediğini söz veririm, ayrıntıyı sonra çözerim. Katı planlar beni kaşındırır.",
+    "Ödünç alıp verirken fazla saymam. Hesap tutmak dostluğu bozar."
   ],
   mid: [
-    "I try to be reliable, but I leave room for mood. Some weeks the rulebook is thicker.",
-    "I keep a few hard lines around money and leave the rest flexible with people I like."
+    "Güvenilir olmaya çalışırım ama ruh haline yer bırakırım. Bazı haftalar kural kitabı kalınlaşır.",
+    "Parada birkaç sert çizgim var; sevdiğim insanlarda geri kalanı esnek bırakırım."
   ]
 };
 
 var STORIES = {
   redeemed: [
-    "The worst year taught me I can rebuild. I lost the job, then built a quieter practice that fits.",
-    "I burned out hard, rested longer than I wanted, and came back with clearer limits. The story turns toward repair.",
-    "A friendship ended badly. We talked years later and it did not fix everything, but it closed the loop.",
-    "I failed a launch in public. I wrote what I learned and the next one shipped smaller and cleaner."
+    "En kötü yıl yeniden kurabileceğimi öğretti. İşi kaybettim, sonra bana uyan daha sakin bir düzen kurdum.",
+    "Sert bir tükenmişlik yaşadım, istediğimden uzun dinlendim, daha net sınırlarla döndüm. Hikâye onarıma dönüyor.",
+    "Bir dostluk kötü bitti. Yıllar sonra konuştuk; her şeyi düzeltmedi ama döngüyü kapattı.",
+    "Bir lansmanı herkesin önünde batırdım. Öğrendiklerimi yazdım; sonraki daha küçük ve temiz çıktı."
   ],
   unresolved: [
-    "It started well and then the company folded. I still tell that story as a warning more than a lesson.",
-    "A caretaking season never really ended. I am proud and tired, and I do not see a neat ending yet.",
-    "I moved countries and never felt settled. The plot keeps restarting without a clear arc.",
-    "I kept waiting for someone else to apologize. That wait became the whole chapter."
+    "İyi başladı, sonra şirket battı. O hikâyeyi dersten çok uyarı gibi anlatıyorum.",
+    "Bakım dönemi hiç bitmedi. Gururluyum ve yorgunum; düzgün bir son görmüyorum.",
+    "Ülke değiştirdim, hiç yerleşmedim. Konu net bir yay olmadan yeniden başlıyor.",
+    "Birinin özür dilemesini bekledim. O bekleme bütün bölüm oldu."
   ],
   mixed: [
-    "Some chapters resolved; some still sit open. I hold both without forcing a moral.",
-    "I tell the comeback version at parties and the messier version to two friends. Both are true."
+    "Bazı bölümler kapandı, bazıları hâlâ açık. Zorla ahlak çıkarmadan ikisini birden tutuyorum.",
+    "Partilerde toparlanma versiyonunu, iki arkadaşa daha dağınık olanı anlatırım. İkisi de doğru."
   ]
 };
 
 var COMMUNION = {
   us: [
-    "I check on people. Dinner with the same three friends is a standing ritual.",
-    "I am happiest when a project has a we. Solo wins feel thin after a week."
+    "İnsanları ararım. Aynı üç arkadaşla yemek ayakta bir ritüel.",
+    "Bir işte biz olunca en mutluyum. Tek başıma zafer bir haftada inceliyor."
   ],
   alone: [
-    "I keep to myself after work. Groups drain me faster than deadlines.",
-    "I prefer one deep conversation to a room of acquaintances."
+    "İşten sonra kendi başıma kalırım. Gruplar beni teslim tarihlerinden çabuk tüketir.",
+    "Tanıdık dolu bir odadan çok tek derin sohbeti tercih ederim."
   ]
 };
 
@@ -443,22 +443,26 @@ async function takenNumbers() {
 }
 
 function passwordFor(n) {
-  return "ms" + String(n).padStart(4, "0");
+  return "monkey" + n;
 }
 
 function aliasFor(n) {
-  return "ms" + String(n).padStart(4, "0");
+  return "ms" + n;
 }
 
 function emailFor(n) {
-  return "ms" + n + "@mindsetbucket.com";
+  return n + "@ms.com";
 }
 
 async function main() {
   var taken = await takenNumbers();
   var numbers = [];
-  for (var n = 2; numbers.length < TARGET; n += 1) {
-    if (!taken[n]) numbers.push(n);
+  for (var n = FIRST; numbers.length < TARGET; n += 1) {
+    if (taken[n]) {
+      console.log("skip taken #" + n);
+      continue;
+    }
+    numbers.push(n);
   }
   console.log("will seed numbers", numbers[0] + "…" + numbers[numbers.length - 1], "(" + numbers.length + ")");
 
