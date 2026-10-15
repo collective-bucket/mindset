@@ -176,6 +176,10 @@
       "profile.edit": "Edit",
       "profile.manage": "Manage",
       "profile.similar": "Fish nearby",
+      "profile.details": "Reading",
+      "profile.tribeTab": "Tribe",
+      "profile.tribeTabEmpty": "Join their tribe to see this school.",
+      "profile.tribeTabSolo": "You're the only one here for now.",
       "profile.shareFailed": "Couldn't open sharing.",
       "profile.tribeNeedsMindset": "Cast your own line to build a tribe.",
 
@@ -460,6 +464,10 @@
       "profile.edit": "Düzenle",
       "profile.manage": "Yönet",
       "profile.similar": "Yakındaki balıklar",
+      "profile.details": "Okuma",
+      "profile.tribeTab": "Kabile",
+      "profile.tribeTabEmpty": "Bu okulu görmek için kabilelerine katıl.",
+      "profile.tribeTabSolo": "Şimdilik burada yalnız sensin.",
       "profile.shareFailed": "Paylaşım açılamadı.",
       "profile.tribeNeedsMindset": "Kabile kurmak için önce kendi oltanı at.",
 

@@ -772,6 +772,59 @@ input[type="checkbox"] {
   font-size: 12px;
 }
 
+.card-face {
+  margin-top: 8px;
+}
+
+.card-headline {
+  margin: 0 0 8px;
+  font-size: clamp(26px, 6vw, 34px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.card-blurb {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 0 16px;
+}
+
+.card-meta #badges:not(:empty) + .card-when:not(:empty)::before {
+  content: "·";
+  margin-right: 14px;
+  color: var(--muted);
+}
+
+.radar-mini {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 18px;
+}
+
+.radar-compact {
+  width: 140px;
+  max-width: 140px;
+  margin: 0;
+}
+
+.radar-compact .radar-ring,
+.radar-compact .radar-spoke {
+  stroke-width: 1.2;
+}
+
+.radar-compact .radar-shape {
+  stroke-width: 2.2;
+}
+
 .bar-row {
   margin: 14px 0;
 }

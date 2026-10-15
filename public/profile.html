@@ -15,23 +15,20 @@
 
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
-    <section id="profile" hidden>
-      <div class="head">
-        <div>
-          <p class="eyebrow" data-i18n="profile.fish">Fish</p>
-          <h1 id="title" class="number visually-hidden">mindset</h1>
-          <p id="headline" class="entry-headline" hidden></p>
-          <p id="alias" class="alias" hidden></p>
-        </div>
-        <span class="head-side" id="meta"></span>
-      </div>
-      <p id="badges" class="meta"></p>
-      <p id="summary" class="summary"></p>
+    <section id="profile" class="card-face" hidden>
+      <h1 id="title" class="number visually-hidden">mindset</h1>
+      <p id="headline" class="card-headline"></p>
+      <p id="alias" class="alias" hidden></p>
+      <p id="summary" class="card-blurb summary"></p>
+      <p class="card-meta meta"><span id="badges"></span><span id="meta" class="card-when"></span></p>
+
+      <div id="radar-mini" class="radar-mini"></div>
 
       <div class="actions">
         <button type="button" id="follow" class="btn btn-primary" hidden aria-pressed="false" data-i18n="profile.follow">Hook</button>
         <button type="button" id="tribe" class="btn" hidden data-i18n="profile.addTribe">Invite to tribe</button>
         <button type="button" id="share" class="btn" data-i18n="profile.share">Share</button>
+        <button type="button" id="open-sheet" class="btn" data-i18n="profile.details">Reading</button>
         <a id="edit" class="btn" href="/new" hidden data-i18n="profile.edit">Edit</a>
         <a id="manage" class="btn" href="/me" hidden data-i18n="profile.manage">Manage</a>
       </div>
@@ -47,30 +44,42 @@
         </div>
       </form>
       <p id="action-status" class="status" role="status" hidden></p>
-
-      <section id="timeline" class="section" hidden>
-        <h2 data-i18n="history.timeline">Change over time</h2>
-        <div id="trend"></div>
-        <label class="field timeline-field" for="timeline-range">
-          <span class="timeline-when"><span id="timeline-when"></span><span id="timeline-count" class="hint"></span></span>
-          <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
-        </label>
-        <p id="timeline-note" class="hint"></p>
-      </section>
-
-      <section class="section">
-        <div id="reading-guide"></div>
-        <div id="radar"></div>
-        <div id="bars"></div>
-      </section>
-      <div id="texts" class="posts"></div>
     </section>
 
     <section id="similar-section" class="section" hidden>
-      <h2 data-i18n="profile.similar">Fish nearby</h2>
-      <div id="similar" class="feed"></div>
+      <div class="tabs" role="tablist" aria-label="Nearby and tribe">
+        <button type="button" id="tab-nearby" role="tab" aria-selected="true" aria-controls="pane-nearby" data-i18n="profile.similar">Fish nearby</button>
+        <button type="button" id="tab-tribe" role="tab" aria-selected="false" aria-controls="pane-tribe" data-i18n="profile.tribeTab">Tribe</button>
+      </div>
+      <div id="pane-nearby" role="tabpanel" aria-labelledby="tab-nearby">
+        <div id="similar" class="feed"></div>
+      </div>
+      <div id="pane-tribe" role="tabpanel" aria-labelledby="tab-tribe" hidden>
+        <div id="tribe-list" class="feed"></div>
+        <p id="tribe-empty" class="empty" hidden data-i18n="profile.tribeTabEmpty">Join their tribe to see this school.</p>
+      </div>
     </section>
   </main>
+
+  <dialog id="reading-sheet" class="modal modal-sheet" aria-labelledby="sheet-title">
+    <div class="head">
+      <h2 id="sheet-title" data-i18n="profile.details">Reading</h2>
+      <button type="button" id="sheet-close" class="btn btn-small" data-i18n="common.close">Close</button>
+    </div>
+    <div id="reading-guide"></div>
+    <div id="radar"></div>
+    <div id="bars"></div>
+    <div id="texts" class="posts"></div>
+    <section id="timeline" class="section" hidden>
+      <h3 data-i18n="history.timeline">Change over time</h3>
+      <div id="trend"></div>
+      <label class="field timeline-field" for="timeline-range">
+        <span class="timeline-when"><span id="timeline-when"></span><span id="timeline-count" class="hint"></span></span>
+        <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
+      </label>
+      <p id="timeline-note" class="hint"></p>
+    </section>
+  </dialog>
 
   <script src="/assets/config.js" defer></script>
   <script src="/assets/i18n.js" defer></script>

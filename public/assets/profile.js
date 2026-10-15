@@ -40,6 +40,7 @@
     var inviteForm = document.querySelector("#invite-form");
     var inviteInput = document.querySelector("#invite-alias");
     var range = document.querySelector("#timeline-range");
+    var sheet = document.querySelector("#reading-sheet");
     var route = parsePath();
     var doc = null;
     var alias = "";
@@ -49,16 +50,17 @@
     var versions = [];
     var shownScores = null;
 
+    ui.closeOnBackdrop(sheet);
+
     var warning = sessionStorage.getItem("mindset-warning");
     if (warning) {
       sessionStorage.removeItem("mindset-warning");
       ui.setStatus(status, t(warning), "error");
     }
 
-    // Only the number travels outside; aliases stay inside the tribe.
     shareButton.addEventListener("click", function () {
       var url = window.location.origin + "/i/" + doc.id;
-      var title = t("common.mindset", { n: doc.id });
+      var title = (doc.headline || t("common.mindset", { n: doc.id })) + ui.titleSuffix();
       if (navigator.share) {
         navigator.share({ title: title, text: title, url: url }).catch(function (error) {
           if (error && error.name === "AbortError") return;
@@ -76,13 +78,32 @@
       );
     });
 
+    document.querySelector("#open-sheet").addEventListener("click", function () {
+      sheet.showModal();
+    });
+    document.querySelector("#sheet-close").addEventListener("click", function () {
+      sheet.close();
+    });
+
     function renderAlias() {
       var node = document.querySelector("#alias");
       node.hidden = !alias;
       node.textContent = alias ? "@" + alias : "";
     }
 
+    function cardHeadline(source) {
+      return (
+        source.headline ||
+        math.deriveHeadline({
+          personalCode: source.personalCode,
+          currentPosition: source.currentPosition
+        }) ||
+        t("common.mindset", { n: source.id || source.number })
+      );
+    }
+
     function drawReading(scores, ghost) {
+      ui.renderRadar(document.querySelector("#radar-mini"), scores, ghost, { compact: true });
       ui.renderRadar(document.querySelector("#radar"), scores, ghost);
       ui.renderBars(document.querySelector("#bars"), scores, math.OPEN_KEYS);
     }
@@ -121,11 +142,7 @@
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);
       document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
-      var headlineNode = document.querySelector("#headline");
-      if (headlineNode) {
-        headlineNode.textContent = doc.headline || "";
-        headlineNode.hidden = !doc.headline;
-      }
+      document.querySelector("#headline").textContent = cardHeadline(doc);
       document.querySelector("#summary").textContent = ui.plainSummary(doc);
       var guide = document.querySelector("#reading-guide");
       if (guide && !guide.dataset.ready) {
@@ -150,6 +167,7 @@
       });
       range.setAttribute("aria-valuetext", document.querySelector("#timeline-when").textContent);
       document.querySelector("#summary").textContent = ui.plainSummary(Object.assign({ id: doc.id }, source));
+      document.querySelector("#headline").textContent = cardHeadline(Object.assign({ id: doc.id }, source));
       showReading(source, last ? null : math.scoresOf(doc));
       renderTexts(source, last ? null : doc);
       document.querySelector("#timeline-note").textContent = last ? "" : t("history.ghost");
@@ -221,6 +239,7 @@
       return action
         .then(function () {
           ui.setStatus(actionStatus, "");
+          return loadTribeTab();
         })
         .catch(function (error) {
           ui.setStatus(actionStatus, ui.errorText(error), "error");
@@ -270,6 +289,21 @@
       );
     });
 
+    function selectTab(name) {
+      var nearby = name === "nearby";
+      document.querySelector("#tab-nearby").setAttribute("aria-selected", String(nearby));
+      document.querySelector("#tab-tribe").setAttribute("aria-selected", String(!nearby));
+      document.querySelector("#pane-nearby").hidden = !nearby;
+      document.querySelector("#pane-tribe").hidden = nearby;
+    }
+
+    document.querySelector("#tab-nearby").addEventListener("click", function () {
+      selectTab("nearby");
+    });
+    document.querySelector("#tab-tribe").addEventListener("click", function () {
+      selectTab("tribe");
+    });
+
     async function loadSocial() {
       if (!session) {
         renderFollow();
@@ -279,6 +313,7 @@
       if (doc.ownerUid === session.uid) {
         document.querySelector("#edit").hidden = false;
         document.querySelector("#manage").hidden = false;
+        relation = "member";
       } else {
         following = await social.isFollowing(session, doc.id);
         renderFollow();
@@ -296,9 +331,53 @@
 
     async function loadSimilar() {
       var rows = await store.similar(doc, { limit: 6 });
-      if (!rows.length) return;
       document.querySelector("#similar-section").hidden = false;
-      ui.renderCards(document.querySelector("#similar"), rows);
+      if (rows.length) {
+        ui.renderCards(document.querySelector("#similar"), rows);
+      } else {
+        document.querySelector("#similar").innerHTML =
+          '<p class="empty">' + ui.escapeHtml(t("feed.empty")) + "</p>";
+      }
+    }
+
+    async function loadTribeTab() {
+      var list = document.querySelector("#tribe-list");
+      var empty = document.querySelector("#tribe-empty");
+      list.innerHTML = "";
+      empty.hidden = true;
+      if (!session || relation !== "member") {
+        empty.hidden = false;
+        return;
+      }
+      try {
+        var members = await social.members(session);
+        var others = members.filter(function (row) {
+          return Number(row.number) !== Number(doc.id);
+        });
+        if (!others.length) {
+          empty.hidden = false;
+          empty.textContent = t("profile.tribeTabSolo");
+          return;
+        }
+        empty.textContent = t("profile.tribeTabEmpty");
+        var numbers = others.map(function (row) {
+          return Number(row.number);
+        });
+        var docs = await store.byNumbers(numbers, session.idToken);
+        var aliases = {};
+        await Promise.all(
+          numbers.map(function (number) {
+            return social.aliasOf(number, session.idToken).then(function (entry) {
+              if (entry && entry.alias) aliases[number] = entry.alias;
+            });
+          })
+        );
+        ui.renderCards(list, docs, "feed.emptyTribe", function (row) {
+          return { alias: aliases[row.id] };
+        });
+      } catch (error) {
+        empty.hidden = false;
+      }
     }
 
     async function load() {
@@ -336,6 +415,7 @@
       showProfile();
       if (!session) session = await store.getOptionalSession();
       await Promise.all([loadSocial(), loadSimilar(), loadHistory()]);
+      await loadTribeTab();
     }
 
     load().catch(function (error) {

@@ -358,7 +358,9 @@
   }
 
   // Unknown scores are not drawn as zero; the radar only appears when all four are known.
-  function renderRadar(container, scores, ghost) {
+  function renderRadar(container, scores, ghost, options) {
+    options = options || {};
+    var compact = Boolean(options.compact);
     var keys = window.MindsetReading.OPEN_KEYS;
     var complete = keys.every(function (key) {
       return scores[key] >= 0;
@@ -369,10 +371,11 @@
       return;
     }
     container.hidden = false;
-    var cx = 160;
-    var cy = 150;
-    var radius = 86;
-    var rings = [0.25, 0.5, 0.75, 1]
+    var cx = compact ? 70 : 160;
+    var cy = compact ? 70 : 150;
+    var radius = compact ? 48 : 86;
+    var ringScales = compact ? [0.5, 1] : [0.25, 0.5, 0.75, 1];
+    var rings = ringScales
       .map(function (scale) {
         var points = keys
           .map(function (key, index) {
@@ -408,35 +411,42 @@
             .join(" ") +
           '"></polygon>'
         : "";
-    var labels = keys
-      .map(function (key, index) {
-        var spot = radarPoint(cx, cy, radius + 26, index, keys.length, 100);
-        var anchor = "middle";
-        if (spot[0] < cx - 20) {
-          spot = [cx - radius - 8, cy - 12];
-          anchor = "start";
-        } else if (spot[0] > cx + 20) {
-          spot = [cx + radius + 8, cy - 12];
-          anchor = "end";
-        }
-        var axis = axisByKey(key);
-        var tip = axisHint(axis);
-        return (
-          '<text class="radar-label" x="' +
-          spot[0] +
-          '" y="' +
-          spot[1] +
-          '" text-anchor="' +
-          anchor +
-          '">' +
-          (tip ? "<title>" + escapeHtml(tip) + "</title>" : "") +
-          escapeHtml(i18n.pick(axis.label)) +
-          "</text>"
-        );
-      })
-      .join("");
+    var labels = compact
+      ? ""
+      : keys
+          .map(function (key, index) {
+            var spot = radarPoint(cx, cy, radius + 26, index, keys.length, 100);
+            var anchor = "middle";
+            if (spot[0] < cx - 20) {
+              spot = [cx - radius - 8, cy - 12];
+              anchor = "start";
+            } else if (spot[0] > cx + 20) {
+              spot = [cx + radius + 8, cy - 12];
+              anchor = "end";
+            }
+            var axis = axisByKey(key);
+            var tip = axisHint(axis);
+            return (
+              '<text class="radar-label" x="' +
+              spot[0] +
+              '" y="' +
+              spot[1] +
+              '" text-anchor="' +
+              anchor +
+              '">' +
+              (tip ? "<title>" + escapeHtml(tip) + "</title>" : "") +
+              escapeHtml(i18n.pick(axis.label)) +
+              "</text>"
+            );
+          })
+          .join("");
+    var vb = compact ? "0 0 140 140" : "0 0 320 300";
     container.innerHTML =
-      '<svg class="radar" viewBox="0 0 320 300" role="img" aria-label="' +
+      '<svg class="radar' +
+      (compact ? " radar-compact" : "") +
+      '" viewBox="' +
+      vb +
+      '" role="img" aria-label="' +
       escapeHtml(t("common.approx")) +
       '">' +
       rings +
