@@ -263,7 +263,8 @@ async function getDoc(docPath, token) {
     });
     return decodeDocument(doc);
   } catch (error) {
-    if (error.status === 404) return null;
+    // Rules deny reads of missing or unpublished docs as 403, not 404.
+    if (error.status === 404 || error.status === 403) return null;
     throw error;
   }
 }
@@ -293,7 +294,8 @@ async function patchDoc(docPath, data, token) {
 }
 
 async function commit(writes, token) {
-  return http(withKey(DB.replace("/documents", "") + ":commit"), {
+  // Hosting client uses .../documents:commit (not .../databases/(default):commit).
+  return http(withKey(DB + ":commit"), {
     method: "POST",
     headers: { Authorization: "Bearer " + token },
     body: { writes: writes }
@@ -325,7 +327,8 @@ async function loadScorer() {
   var modulePath = require.resolve("@huggingface/transformers", {
     paths: [path.join("/tmp/mindset-seed"), process.cwd()]
   });
-  var transformers = await import(modulePath);
+  var imported = await import(modulePath);
+  var transformers = imported.default || imported;
   if (transformers.env) transformers.env.allowLocalModels = false;
   console.log("loading embedding model…");
   var extractor = await transformers.pipeline("feature-extraction", "Xenova/multilingual-e5-small", {
