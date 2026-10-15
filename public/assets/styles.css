@@ -7,7 +7,10 @@
   --hair: #dcdcd6;
   --accent: #2f9a7c;
   --accent-strong: #237e65;
+  --accent-deep: #1b6350;
   --accent-soft: #eafbf5;
+  --accent-mid: rgba(47, 154, 124, 0.35);
+  --accent-pastel: #8fe3cb;
   --warn: #8a5300;
   --danger: #b3261e;
   --stroke: 1.5px;
@@ -43,6 +46,11 @@ body.has-gamebar {
 
 a {
   color: inherit;
+  transition: color 0.12s ease;
+}
+
+a:hover {
+  color: var(--accent-strong);
 }
 
 :focus-visible {
@@ -240,13 +248,17 @@ a.head-side {
   font-weight: 600;
 }
 
+a.head-side:hover {
+  color: var(--accent-strong);
+}
+
 .section {
   border-top: 1px solid var(--hair);
   padding: 20px 0;
 }
 
 .section-private {
-  border: var(--stroke) dashed var(--ink);
+  border: var(--stroke) dashed var(--accent-mid);
   border-radius: 18px;
   padding: 16px;
   margin: 16px 0;
@@ -260,7 +272,7 @@ a.head-side {
 }
 
 .quote {
-  border-left: 2px solid var(--ink);
+  border-left: 2px solid var(--accent);
   padding-left: 12px;
   color: var(--ink);
 }
@@ -299,7 +311,9 @@ a.head-side {
   display: inline-block;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
   border-radius: 999px;
   padding: 0 8px;
   margin-left: 6px;
@@ -325,11 +339,20 @@ a.head-side {
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.12s ease;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .btn:active {
   transform: scale(0.97);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
 }
 
 .btn-primary {
@@ -344,6 +367,12 @@ a.head-side {
   color: #ffffff;
 }
 
+.btn-primary:active {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+  color: #ffffff;
+}
+
 .btn-small {
   font-size: 14px;
   padding: 0 14px;
@@ -353,23 +382,34 @@ a.head-side {
   width: 100%;
 }
 
-.btn-danger {
+.btn-danger,
+.btn-danger:hover,
+.btn-danger:active {
   background: var(--danger);
   border-color: var(--danger);
   color: var(--paper);
 }
 
-.btn-quiet-danger {
+.btn-quiet-danger,
+.btn-quiet-danger:hover,
+.btn-quiet-danger:active {
+  background: transparent;
   border-color: transparent;
   color: var(--danger);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn:disabled:hover {
   opacity: 0.45;
   cursor: default;
   transform: none;
+}
+.btn:disabled:not(.btn-primary):hover {
+  background: var(--paper);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 .actions {
@@ -433,6 +473,16 @@ input:disabled {
   opacity: 0.5;
 }
 
+input[type="text"]:focus-visible,
+input[type="email"]:focus-visible,
+input[type="password"]:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 textarea[aria-invalid="true"] {
   border-color: var(--danger);
 }
@@ -456,8 +506,9 @@ textarea[aria-invalid="true"] {
 }
 
 .prefix-input:focus-within {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .prefix-input input:focus-visible {
@@ -520,12 +571,12 @@ input[type="radio"],
 input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: var(--ink);
+  accent-color: var(--accent);
   margin: 0;
 }
 
 .invite {
-  border: var(--stroke) dashed var(--ink);
+  border: var(--stroke) dashed var(--accent-mid);
   border-radius: 16px;
   padding: 4px 14px;
   margin: 12px 0;
@@ -543,6 +594,12 @@ input[type="checkbox"] {
   padding: 14px 0;
   border-bottom: 1px solid var(--hair);
   text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.entry:hover {
+  background: var(--accent-soft);
+  box-shadow: -10px 0 0 var(--accent-soft), 10px 0 0 var(--accent-soft);
 }
 
 .entry:last-child {
@@ -618,6 +675,10 @@ input[type="checkbox"] {
   min-width: 0;
 }
 
+.person-link:hover strong {
+  color: var(--accent-strong);
+}
+
 .person-link strong,
 .person-link small {
   display: block;
@@ -647,6 +708,11 @@ input[type="checkbox"] {
   font-size: 17px;
   font-weight: 600;
   text-decoration: none;
+  transition: color 0.12s ease;
+}
+
+.link-row:hover {
+  color: var(--accent-strong);
 }
 
 .link-side {
@@ -657,7 +723,7 @@ input[type="checkbox"] {
 
 .link-side::after {
   content: "  →";
-  color: var(--ink);
+  color: var(--accent);
 }
 
 .posts .post {
@@ -838,7 +904,8 @@ input[type="checkbox"] {
 
 .bar-track {
   height: 8px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-soft);
   border-radius: 999px;
   overflow: hidden;
   margin: 6px 0 4px;
@@ -846,7 +913,7 @@ input[type="checkbox"] {
 
 .bar-fill {
   height: 100%;
-  background: var(--ink);
+  background: var(--accent);
 }
 
 .bar-poles {
@@ -869,8 +936,8 @@ input[type="checkbox"] {
 
 .trend-line {
   fill: none;
-  stroke: var(--ink);
-  stroke-width: 1.6;
+  stroke: var(--accent);
+  stroke-width: 1.8;
   stroke-linejoin: round;
 }
 
@@ -905,7 +972,7 @@ input[type="checkbox"] {
 }
 
 .trend-key line {
-  stroke: var(--ink);
+  stroke: var(--accent);
   stroke-width: 1.6;
 }
 
@@ -917,7 +984,7 @@ input[type="checkbox"] {
 .timeline-field input[type="range"] {
   width: 100%;
   min-height: 44px;
-  accent-color: var(--ink);
+  accent-color: var(--accent);
 }
 
 /* ---- Hunt ---- */
@@ -1023,7 +1090,7 @@ input[type="checkbox"] {
 }
 
 .fish.is-net .fish-ring {
-  stroke: var(--ink);
+  stroke: var(--accent-strong);
   stroke-width: 1;
   stroke-dasharray: 2 2;
 }
@@ -1055,6 +1122,12 @@ input[type="checkbox"] {
   stroke: var(--accent);
   stroke-width: 3;
   stroke-dasharray: none;
+}
+
+.fish:hover .fish-body,
+.fish:focus-visible .fish-body {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
 }
 
 .fish.is-faded {
@@ -1096,6 +1169,14 @@ input[type="checkbox"] {
   font: inherit;
   font-weight: 650;
   cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.panel-handle:hover,
+.panel-handle[aria-expanded="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .panel-handle::after {
@@ -1116,7 +1197,7 @@ input[type="checkbox"] {
 }
 
 #panel-body {
-  border: var(--stroke) solid var(--ink);
+  border: var(--stroke) solid var(--accent);
   border-top: 0;
   border-radius: 0 0 16px 16px;
   padding: 6px 16px 12px;
@@ -1138,11 +1219,16 @@ input[type="checkbox"] {
   font-weight: 650;
   padding: 0;
   cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.tabs button:hover {
+  color: var(--accent-strong);
 }
 
 .tabs button[aria-selected="true"] {
-  color: var(--ink);
-  box-shadow: inset 0 -2px 0 var(--ink);
+  color: var(--accent-strong);
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .range {
@@ -1176,7 +1262,7 @@ input[type="checkbox"] {
   right: 0;
   top: 50%;
   height: 2px;
-  background: var(--ink);
+  background: var(--accent-mid);
 }
 
 .range-pair input[type="range"] {
@@ -1203,7 +1289,7 @@ input[type="checkbox"] {
   height: 26px;
   margin-top: 9px;
   border-radius: 50%;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--accent);
   background: var(--paper);
   cursor: pointer;
 }
@@ -1217,7 +1303,7 @@ input[type="checkbox"] {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--accent);
   background: var(--paper);
   cursor: pointer;
 }
@@ -1227,7 +1313,11 @@ input[type="checkbox"] {
 }
 
 .range-pair input[type="range"]:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 3px var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.range-pair input[type="range"]::-webkit-slider-thumb:hover {
+  background: var(--accent-soft);
 }
 
 .range-poles {
@@ -1268,17 +1358,17 @@ input[type="checkbox"] {
   gap: 2px;
   width: 100%;
   height: 64px;
-  border-bottom: 1px solid var(--ink);
+  border-bottom: 1px solid var(--accent-mid);
 }
 
 .hist-bar {
   width: 42%;
   min-height: 1px;
-  background: var(--ink);
+  background: var(--accent-pastel);
 }
 
 .hist-bar.is-slice {
-  background: var(--accent);
+  background: var(--accent-strong);
 }
 
 .hist-col span {
@@ -1296,13 +1386,13 @@ input[type="checkbox"] {
   display: inline-block;
   width: 10px;
   height: 10px;
-  background: var(--ink);
+  background: var(--accent-pastel);
   margin: 0 4px 0 0;
   vertical-align: -1px;
 }
 
 .legend .key.is-slice {
-  background: var(--accent);
+  background: var(--accent-strong);
   margin-left: 8px;
 }
 
@@ -1323,14 +1413,15 @@ input[type="checkbox"] {
 
 .row-track {
   height: 8px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-soft);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .row-fill {
   height: 100%;
-  background: var(--ink);
+  background: var(--accent);
 }
 
 .row-value {
@@ -1386,7 +1477,7 @@ input[type="checkbox"] {
 .lang button {
   min-width: 40px;
   min-height: 36px;
-  border: 1px solid var(--ink);
+  border: 1px solid var(--accent-mid);
   border-radius: 999px;
   background: var(--paper);
   color: var(--ink);
@@ -1394,11 +1485,20 @@ input[type="checkbox"] {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
-.lang button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
+.lang button:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.lang button[aria-pressed="true"],
+.lang button[aria-pressed="true"]:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
 }
 
 .auth-wall {
@@ -1444,8 +1544,17 @@ input[type="checkbox"] {
   transition: transform 0.15s ease;
 }
 
+.gamebar-button:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
 .gamebar-button:active {
   transform: translateY(1px) scale(0.98);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
 }
 
 .gamebar-button span {
@@ -1454,8 +1563,9 @@ input[type="checkbox"] {
 }
 
 .gamebar-button[aria-current="page"] {
-  color: var(--accent);
+  color: var(--accent-strong);
   border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .gamebar-flow,
@@ -1511,7 +1621,7 @@ input[type="checkbox"] {
 
 .wizard-step {
   appearance: none;
-  border: var(--stroke) solid var(--hair);
+  border: var(--stroke) solid var(--accent-mid);
   background: var(--paper);
   color: var(--ink);
   border-radius: 999px;
@@ -1522,6 +1632,13 @@ input[type="checkbox"] {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.wizard-step:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .wizard-step span {
@@ -1535,15 +1652,16 @@ input[type="checkbox"] {
   font-weight: 700;
 }
 
-.wizard-step.is-active {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper);
+.wizard-step.is-active,
+.wizard-step.is-active:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
 }
 
 .wizard-step.is-active span {
-  background: var(--paper);
-  color: var(--ink);
+  background: #ffffff;
+  color: var(--accent-strong);
 }
 
 .wizard-step em {
@@ -1553,7 +1671,7 @@ input[type="checkbox"] {
 .how-to-read {
   margin: 0 0 16px;
   padding: 12px 14px;
-  border: var(--stroke) solid var(--hair);
+  border: var(--stroke) solid var(--accent-mid);
   border-radius: 12px;
   background: var(--accent-soft);
 }
@@ -1562,6 +1680,11 @@ input[type="checkbox"] {
   cursor: pointer;
   font-weight: 600;
   list-style: none;
+  color: var(--accent-strong);
+}
+
+.how-to-read summary:hover {
+  color: var(--accent-deep);
 }
 
 .how-to-read summary::-webkit-details-marker {
@@ -1591,7 +1714,7 @@ input[type="checkbox"] {
   gap: 10px;
   margin: 0 0 14px;
   padding: 10px 12px;
-  border: var(--stroke) dashed var(--hair);
+  border: var(--stroke) dashed var(--accent-mid);
   border-radius: 12px;
   background: var(--paper);
 }
@@ -1628,6 +1751,12 @@ input[type="checkbox"] {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  color: var(--accent-strong);
+  text-underline-offset: 3px;
+}
+
+.auth-links a:hover {
+  color: var(--accent-deep);
 }
 
 /* ---- Motion and small screens ---- */
