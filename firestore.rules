@@ -163,7 +163,7 @@ service cloud.firestore {
       return data.keys().hasOnly([
           'ownerUid', 'number', 'numberKey', 'published', 'createdAt', 'updatedAt',
           'lens', 'agency', 'communion', 'codeClarity', 'redemption', 'known', 'bucket',
-          'ageBand', 'gender', 'country', 'history',
+          'ageBand', 'gender', 'country', 'history', 'seed',
           'currentPosition', 'personalCode', 'selfNarrative'
         ])
         && data.ownerUid == request.auth.uid
@@ -180,6 +180,7 @@ service cloud.firestore {
         && data.bucket.matches('^[0-4u]{4}$')
         && validDemographics(data)
         && data.get('history', 'none') in ['none', 'tribe', 'public']
+        && (!('seed' in data) || data.seed == true)
         && openTexts(data);
     }
 

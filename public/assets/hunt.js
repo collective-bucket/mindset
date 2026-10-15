@@ -222,7 +222,7 @@
       math.OPEN_KEYS.forEach(function (key) {
         ranges[key] = [0, 100];
       });
-      return { ranges: ranges, ageBand: "", gender: "", country: "", uncaught: false };
+      return { ranges: ranges, ageBand: "", gender: "", country: "", uncaught: false, hideSeed: false };
     }
 
     // ---- SVG lake ----
@@ -315,6 +315,7 @@
         var group = document.createElementNS(SVG_NS, "g");
         var classes = ["fish"];
         if (ownDoc && doc.id === ownDoc.id) classes.push("is-mine");
+        if (doc.seed) classes.push("is-seed");
         if (tribe[doc.id]) classes.push("is-tribe");
         else if (net[doc.id]) classes.push("is-net");
         group.setAttribute("class", classes.join(" "));
@@ -360,6 +361,7 @@
       if (filters.gender && doc.gender !== filters.gender) return false;
       if (filters.country && doc.country !== filters.country) return false;
       if (filters.uncaught && (net[doc.id] || tribe[doc.id])) return false;
+      if (filters.hideSeed && doc.seed) return false;
       return true;
     }
 
@@ -368,7 +370,7 @@
         var range = filters.ranges[key];
         return range[0] > 0 || range[1] < 100;
       }).length;
-      ["ageBand", "gender", "country", "uncaught"].forEach(function (key) {
+      ["ageBand", "gender", "country", "uncaught", "hideSeed"].forEach(function (key) {
         if (filters[key]) countActive += 1;
       });
       return countActive;
@@ -538,6 +540,11 @@
       refresh(true);
     });
 
+    document.querySelector("#f-hide-seed").addEventListener("change", function (event) {
+      filters.hideSeed = event.target.checked;
+      refresh(true);
+    });
+
     document.querySelector("#f-clear").addEventListener("click", function () {
       filters = blankFilters();
       renderRanges();
@@ -545,6 +552,7 @@
         document.querySelector("#f-" + key).value = "";
       });
       document.querySelector("#f-uncaught").checked = false;
+      document.querySelector("#f-hide-seed").checked = false;
       refresh(true);
     });
 

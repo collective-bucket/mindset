@@ -42,6 +42,21 @@ reading.CLOSED_TEXT_KEYS.concat(reading.CLOSED_KEYS, ["city"]).forEach(function 
   assert.ok(publicAllowed.indexOf(key) < 0, "rules allow closed key on public doc: " + key);
 });
 assert.ok(publicAllowed.indexOf("alias") < 0, "aliases must never sit on the public doc");
+assert.ok(publicAllowed.indexOf("seed") >= 0, "seed flag must be allowed on public docs");
+var seeded = reading.buildDocuments(
+  "uid",
+  2,
+  { currentPosition: "", personalCode: "x", selfNarrative: "", unsayableAttitude: "", desireScript: "", disownedSelf: "" },
+  reading.blankScores(),
+  true,
+  "2026-10-14T12:00:00.000Z",
+  "2026-10-14T12:00:00.000Z",
+  {},
+  "none",
+  true
+);
+assert.strictEqual(seeded.publicDoc.seed, true);
+assert.ok(!("seed" in docs.publicDoc), "ordinary publishes omit seed");
 
 var versionAllowed = allowlist("validVersion");
 var version = reading.buildVersion(docs.publicDoc);

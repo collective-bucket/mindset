@@ -28,6 +28,7 @@
       "common.preview": "Preview",
       "common.approx": "Approximate reading",
       "common.needMindset": "Cast your line first.",
+      "common.seed": "Seed",
 
       "home.title": "Build a bucket of minds together.",
       "home.lead": "Write what you hold true and how you tell your story. You become a number, a fish in the lake. Hunt for minds like yours, or unlike.",
@@ -65,6 +66,7 @@
       "hunt.from": "{axis} from",
       "hunt.to": "{axis} to",
       "hunt.uncaught": "Only fish not in my net",
+      "hunt.hideSeed": "Hide seed fish",
       "hunt.clear": "Clear",
       "hunt.none": "No fish in this part of the lake.",
       "hunt.you": "you",
@@ -290,6 +292,7 @@
       "common.preview": "Önizleme",
       "common.approx": "Yaklaşık okuma",
       "common.needMindset": "Önce oltanı at.",
+      "common.seed": "Deneme",
 
       "home.title": "Birlikte bir zihin kovası kuralım.",
       "home.lead": "Doğru bildiğini ve kendini nasıl anlattığını yaz. Bir numara, gölde bir balık olursun. Sana benzeyen ya da benzemeyen zihinleri avla.",
@@ -327,6 +330,7 @@
       "hunt.from": "{axis} en az",
       "hunt.to": "{axis} en çok",
       "hunt.uncaught": "Yalnızca ağımda olmayanlar",
+      "hunt.hideSeed": "Deneme balıklarını gizle",
       "hunt.clear": "Temizle",
       "hunt.none": "Gölün bu kısmında balık yok.",
       "hunt.you": "sen",

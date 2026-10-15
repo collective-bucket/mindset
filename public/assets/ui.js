@@ -356,6 +356,7 @@
 
   function badgeText(doc) {
     var items = [];
+    if (doc.seed) items.push(t("common.seed"));
     if (doc.ageBand) items.push(doc.ageBand);
     if (doc.gender) items.push(t("gender." + doc.gender));
     if (doc.country) items.push(i18n.countryName(doc.country));
@@ -371,7 +372,9 @@
     if (quote.length > 140) quote = quote.slice(0, 137) + "…";
     var side = options.tag || relativeWhen(doc.updatedAt);
     return (
-      '<a class="entry" href="' +
+      '<a class="entry' +
+      (doc.seed ? " is-seed" : "") +
+      '" href="' +
       profileHref(doc) +
       '">' +
       '<span class="entry-head">' +

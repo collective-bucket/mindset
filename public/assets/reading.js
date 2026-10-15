@@ -248,12 +248,11 @@
     };
   }
 
-  function buildDocuments(uid, number, texts, scores, published, createdAt, now, demo, history) {
+  function buildDocuments(uid, number, texts, scores, published, createdAt, now, demo, history, seed) {
     var numberKey = String(number);
     var when = now || new Date().toISOString();
     var profile = demographics.normalize(demo);
-    return {
-      publicDoc: {
+    var publicDoc = {
         ownerUid: uid,
         number: number,
         numberKey: numberKey,
@@ -274,7 +273,10 @@
         currentPosition: texts.currentPosition,
         personalCode: texts.personalCode,
         selfNarrative: texts.selfNarrative
-      },
+      };
+    if (seed) publicDoc.seed = true;
+    return {
+      publicDoc: publicDoc,
       privateDoc: {
         ownerUid: uid,
         number: number,

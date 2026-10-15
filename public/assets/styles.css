@@ -920,6 +920,24 @@ input[type="checkbox"] {
   stroke-dasharray: 2 2;
 }
 
+.fish.is-seed .fish-body {
+  stroke-dasharray: 2 1.5;
+}
+
+.fish.is-seed .fish-ring {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 1 2;
+}
+
+.entry.is-seed {
+  opacity: 0.92;
+}
+
+.entry.is-seed .entry-meta {
+  color: var(--muted);
+}
+
 .fish.is-tribe .fish-ring {
   stroke: var(--accent);
   stroke-width: 1.6;
