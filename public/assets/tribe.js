@@ -121,13 +121,9 @@
         });
     });
 
-    store.getOptionalSession().then(function (next) {
+    ui.requireAuth().then(function (next) {
       session = next;
-      if (!session) {
-        document.querySelector("#login-link").href = ui.loginHref();
-        document.querySelector("#login-hint").hidden = false;
-        return;
-      }
+      if (!session) return;
       load().catch(function (error) {
         ui.setStatus(status, ui.errorText(error), "error");
       });

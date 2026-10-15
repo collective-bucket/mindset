@@ -32,6 +32,12 @@
     var step = 1;
     var pendingSuggest = null;
 
+    ui.requireAuth().then(function (session) {
+      if (!session) return;
+      boot(session);
+    });
+
+    function boot(session) {
     ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
     ui.renderDemoForm(document.querySelector("#demo-fields"));
     document.querySelector("#preview-guide").innerHTML = ui.howToReadHtml(true);
@@ -282,15 +288,14 @@
     }
 
     store
-      .getOptionalSession()
-      .then(async function (session) {
-        if (!session) return;
-        var own = await store.findOwn(session.uid, session.idToken);
+      .findOwn(session.uid, session.idToken)
+      .then(async function (own) {
         if (!own) return;
         existingNumber = own.publicDoc.id;
         var entry = await social.aliasOf(existingNumber, session.idToken);
         setNeedsAlias(!(entry && entry.alias));
         document.querySelector("#heading").textContent = t("create.edit", { n: existingNumber });
+        ui.setCrumb(t("create.edit", { n: existingNumber }));
         var privateDoc = own.privateDoc || {};
         ui.fillTexts(form, {
           currentPosition: own.publicDoc.currentPosition,
@@ -325,5 +330,6 @@
     window.MindsetLens.fields.forEach(function (field) {
       ui.updateCount(form, field.key);
     });
+    } // boot
   });
 })();

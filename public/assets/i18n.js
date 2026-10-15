@@ -6,13 +6,16 @@
 
   var dict = {
     en: {
+      "brand.name": "mindset bucket",
+      "nav.breadcrumb": "Breadcrumb",
       "bar.label": "Main",
-      "bar.flow": "Flow",
-      "bar.hunt": "Hunt",
-      "bar.me": "Me",
-      "footer.project": "A Collective Bucket project",
+      "bar.flow": "flow",
+      "bar.hunt": "hunt",
+      "bar.me": "me",
       "footer.language": "Language",
       "top.signIn": "Sign in",
+      "gate.title": "Sign in to enter the lake",
+      "gate.lead": "Flow, hunt and your net need an account. Shared fish pages stay open — anyone with a /i/ link can read them.",
 
       "common.loading": "Loading",
       "common.saving": "Saving",
@@ -24,7 +27,7 @@
       "common.permission": "This can't be read right now.",
       "common.notFound": "Not found.",
       "common.notFoundLead": "This fish swam away.",
-      "common.mindset": "{n}. mindset",
+      "common.mindset": "{n}",
       "common.preview": "Preview",
       "common.approx": "Approximate reading",
       "common.needMindset": "Cast your line first.",
@@ -240,7 +243,7 @@
       "me.deleteMindset": "Delete mindset",
       "me.deleteMindsetCopy": "Delete {n}? Open and closed texts, readings, versions, alias, tribe and net are deleted too.",
       "me.deleteAccount": "Delete account",
-      "me.deleteAccountCopy": "Delete your account? This also removes your sign-in for other Collective Bucket apps. Your mindset is deleted first.",
+      "me.deleteAccountCopy": "Delete your account? Your mindset is deleted first, then the sign-in.",
       "me.recentLogin": "For safety, sign in again and retry.",
       "me.delete": "Delete",
       "me.deleting": "Deleting",
@@ -271,7 +274,6 @@
       "auth.toLogin": "Have an account? Sign in",
       "auth.toForgot": "Forgot password?",
       "auth.resetSent": "If an account exists, a reset link is on its way.",
-      "auth.shared": "Accounts are shared with Collective Bucket apps.",
       "auth.err.invalid": "Email or password is wrong.",
       "auth.err.exists": "This email already has an account.",
       "auth.err.weak": "Password is too weak.",
@@ -282,13 +284,16 @@
       "auth.err.domain": "This domain isn't authorized for sign-in yet."
     },
     tr: {
+      "brand.name": "mindset bucket",
+      "nav.breadcrumb": "Konum",
       "bar.label": "Ana menü",
-      "bar.flow": "Akış",
-      "bar.hunt": "Av",
-      "bar.me": "Ben",
-      "footer.project": "Bir Collective Bucket projesi",
+      "bar.flow": "akış",
+      "bar.hunt": "av",
+      "bar.me": "ben",
       "footer.language": "Dil",
       "top.signIn": "Giriş yap",
+      "gate.title": "Göle girmek için giriş yap",
+      "gate.lead": "Akış, av ve ağın için hesap gerekir. Paylaşılan balık sayfaları açık kalır — /i/ linki olan herkes okuyabilir.",
 
       "common.loading": "Yükleniyor",
       "common.saving": "Kaydediliyor",
@@ -300,7 +305,7 @@
       "common.permission": "Bu şu an okunamıyor.",
       "common.notFound": "Bulunamadı.",
       "common.notFoundLead": "Bu balık kaçtı.",
-      "common.mindset": "{n}. mindset",
+      "common.mindset": "{n}",
       "common.preview": "Önizleme",
       "common.approx": "Yaklaşık okuma",
       "common.needMindset": "Önce oltanı at.",
@@ -516,7 +521,7 @@
       "me.deleteMindset": "Mindseti sil",
       "me.deleteMindsetCopy": "{n} silinsin mi? Açık ve kapalı metinler, okumalar, versiyonlar, mahlas, kabile ve ağ da silinir.",
       "me.deleteAccount": "Hesabı sil",
-      "me.deleteAccountCopy": "Hesabın silinsin mi? Diğer Collective Bucket uygulamalarındaki girişin de silinir. Önce mindsetin silinir.",
+      "me.deleteAccountCopy": "Hesabın silinsin mi? Önce mindsetin, sonra girişin silinir.",
       "me.recentLogin": "Güvenlik için yeniden giriş yap ve tekrar dene.",
       "me.delete": "Sil",
       "me.deleting": "Siliniyor",
@@ -547,7 +552,6 @@
       "auth.toLogin": "Hesabın var mı? Giriş yap",
       "auth.toForgot": "Şifremi unuttum",
       "auth.resetSent": "Hesap varsa sıfırlama linki yolda.",
-      "auth.shared": "Hesaplar Collective Bucket uygulamalarıyla ortaktır.",
       "auth.err.invalid": "E-posta ya da şifre yanlış.",
       "auth.err.exists": "Bu e-postanın zaten hesabı var.",
       "auth.err.weak": "Şifre çok zayıf.",
@@ -637,6 +641,6 @@
     document.documentElement.lang = lang;
     apply(document);
     var titleKey = document.body && document.body.getAttribute("data-title");
-    if (titleKey) document.title = t(titleKey) + " · mindset";
+    if (titleKey) document.title = t(titleKey) + " · " + t("brand.name");
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);

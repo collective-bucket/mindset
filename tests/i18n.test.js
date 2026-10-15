@@ -29,7 +29,7 @@ function scan(dir) {
       /data-title="([\w.]+)"/g,
       /\bt\("([\w.]+)"/g,
       /label: "([\w.]+)"/g,
-      /"((?:auth\.err|create|common|profile|me|feed|tribe|explore|error|hunt|flow|history|privacy|alias|invite|bar|about|home|following|guide)\.[\w]+(?:\.[\w]+)*)"/g
+      /"((?:auth\.err|create|common|profile|me|feed|tribe|explore|error|hunt|flow|history|privacy|alias|invite|bar|about|home|following|guide|gate|brand|nav)\.[\w]+(?:\.[\w]+)*)"/g
     ];
     patterns.forEach(function (pattern) {
       var match;
@@ -43,7 +43,8 @@ Object.keys(used).forEach(function (key) {
   assert.ok(key in i18n.dict.en, "missing i18n key " + key + " (" + path.relative(root, used[key]) + ")");
 });
 
-assert.strictEqual(i18n.t("common.mindset", { n: 212 }), "212. mindset");
+assert.strictEqual(i18n.t("common.mindset", { n: 212 }), "212");
+assert.strictEqual(i18n.t("brand.name"), "mindset bucket");
 assert.strictEqual(i18n.pick({ en: "A", tr: "B" }), "A");
 
 console.log("i18n.test.js passed");

@@ -841,32 +841,30 @@
     // ---- Load ----
 
     async function load() {
+      session = await ui.requireAuth();
+      if (!session) return;
       ui.setStatus(status, t("common.loading"));
       var loaded = await Promise.all([
-        store.recent(POOL_SIZE),
-        store.getOptionalSession(),
+        store.recent(POOL_SIZE, session.idToken),
         store.getStats().catch(function () {
           return null;
         })
       ]);
       pool = loaded[0];
-      session = loaded[1];
-      stats = loaded[2];
-      if (session) {
-        var social3 = await Promise.all([
-          store.findOwn(session.uid, session.idToken).catch(function () { return null; }),
-          social.followingNumbers(session).catch(function () { return []; }),
-          social.members(session).catch(function () { return []; })
-        ]);
-        ownDoc = social3[0] && social3[0].publicDoc;
-        social3[1].forEach(function (number) {
-          net[number] = true;
-        });
-        social3[2].forEach(function (row) {
-          if (row.number) tribe[row.number] = true;
-        });
-        if (ownDoc && !pool.some(function (doc) { return doc.id === ownDoc.id; })) pool.push(ownDoc);
-      }
+      stats = loaded[1];
+      var social3 = await Promise.all([
+        store.findOwn(session.uid, session.idToken).catch(function () { return null; }),
+        social.followingNumbers(session).catch(function () { return []; }),
+        social.members(session).catch(function () { return []; })
+      ]);
+      ownDoc = social3[0] && social3[0].publicDoc;
+      social3[1].forEach(function (number) {
+        net[number] = true;
+      });
+      social3[2].forEach(function (row) {
+        if (row.number) tribe[row.number] = true;
+      });
+      if (ownDoc && !pool.some(function (doc) { return doc.id === ownDoc.id; })) pool.push(ownDoc);
       fillAxisSelect(document.querySelector("#axis-x"), axes.x);
       fillAxisSelect(document.querySelector("#axis-y"), axes.y);
       axisLabels();
@@ -880,7 +878,6 @@
       ui.setStatus(status, hidden > 0 ? t("hunt.unplaced", { n: hidden }) : "");
     }
 
-    applyView();
     load().catch(function (error) {
       ui.setStatus(status, ui.errorText(error), "error");
     });

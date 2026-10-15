@@ -4,35 +4,35 @@
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
-  // Line drawings in the spirit of the fishing sketch: a bucket of fish,
-  // the angler on the shore, and a jumping fish.
+  // Line drawings: a bucket of three fish, a standing angler, and a jumping fish.
   var ICONS = {
     bucket: {
       box: "0 0 40 40",
       body:
-        '<path d="M15.5 21c-2.2-2.6-2.4-6-.4-8.6"/><path d="M15 12.4l-2.6-1.8M15 12.4l.4-3.1"/>' +
-        '<path d="M22.5 21c2.4-2.2 3.4-5.4 2.2-8.4"/><path d="M24.7 12.6l1-3M24.7 12.6l2.8-1.4"/>' +
-        '<circle cx="15.6" cy="16.6" r=".5"/><circle cx="23.6" cy="16.2" r=".5"/>' +
-        '<path d="M9 21h22l-2.6 12.6a1.6 1.6 0 0 1-1.6 1.3H13.2a1.6 1.6 0 0 1-1.6-1.3z"/>' +
-        '<path d="M9.6 24c3.4-1.6 17.4-1.6 20.8 0"/>'
+        '<path d="M14 13c0-5 3.6-8 6-8s6 3 6 8"/>' +
+        '<path d="M8 15h24"/>' +
+        '<path d="M10 15l2.8 18.2a2 2 0 0 0 2 1.7h10.4a2 2 0 0 0 2-1.7L30 15"/>' +
+        '<path d="M13 22c2.4-3 6.4-3.6 9.2-1.6-2 3.2-6.4 4-9.2 1.6z"/>' +
+        '<path d="M20 26c2-2.4 5.2-2.8 7.6-1.2-1.7 2.6-5.4 3.2-7.6 1.2z"/>' +
+        '<path d="M15 30c1.8-2.2 4.8-2.6 7-1.1-1.5 2.3-4.8 2.8-7 1.1z"/>' +
+        '<circle cx="15.2" cy="21.2" r=".55"/><circle cx="22" cy="25.2" r=".5"/><circle cx="17" cy="29.2" r=".45"/>'
     },
     scene: {
-      box: "0 0 64 48",
+      box: "0 0 40 40",
       body:
-        '<circle cx="15" cy="10" r="3.4"/><path d="M13 7.4c1.6-1.6 4.4-1.2 5.2.8"/>' +
-        '<path d="M15 13.6v10.4h7.6v9"/><path d="M15 17.6l6.4 3.4 2-1.6"/>' +
-        '<path d="M21.4 21L44 6"/><path d="M44 6c.8 8 1.6 16 4 25"/>' +
-        '<path d="M10.6 32.4l5.8-6.6M10.6 25.8l5.8 6.6M9.8 25.8h7.4"/>' +
-        '<path d="M3 34c6-3.4 14-3.6 21-.4 2.6 1.4 4.6 3.6 5.6 6.4"/>' +
-        '<path d="M32 33.4c2-1.4 4-1.4 6 0s4 1.4 6 0 4-1.4 6 0"/><path d="M38 39.4c2-1.4 4-1.4 6 0s4 1.4 6 0"/>'
+        '<circle cx="13" cy="8" r="3.2"/>' +
+        '<path d="M13 11.4v12.2"/>' +
+        '<path d="M13 23.6l-4.8 10.4M13 23.6l4.8 10.4"/>' +
+        '<path d="M13 15.2l6.2 3.4"/>' +
+        '<path d="M19.2 18.6L33 7.2"/>' +
+        '<path d="M33 7.2c.4 6.4.8 12.8 2.2 19.6"/>'
     },
     fish: {
       box: "0 0 40 40",
       body:
         '<path d="M8.4 22.6c3.6-7.4 11.6-10.4 18-6.8-3.4 6.8-11.6 9.6-18 6.8z"/>' +
         '<path d="M26.4 15.8l6.2-4.6-1.4 7.4"/><path d="M17 15.6l3-3.4 2.4 3"/>' +
-        '<circle cx="13.2" cy="20" r=".7"/><path d="M15.6 18.2c.8 1.4.8 3 .2 4.4"/>' +
-        '<path d="M6 31c2-1.4 4-1.4 6 0s4 1.4 6 0 4-1.4 6 0"/><path d="M22 34.6c2-1.4 4-1.4 6 0s4 1.4 6 0"/>'
+        '<circle cx="13.2" cy="20" r=".7"/><path d="M15.6 18.2c.8 1.4.8 3 .2 4.4"/>'
     }
   };
 
@@ -68,27 +68,59 @@
     );
   }
 
+  function brandLabel() {
+    return t("brand.name");
+  }
+
+  function titleSuffix() {
+    return " · " + brandLabel();
+  }
+
+  function crumbLabelFromBody() {
+    var body = document.body;
+    var text = body.getAttribute("data-crumb-text");
+    if (text) return text;
+    var key = body.getAttribute("data-crumb") || body.getAttribute("data-title");
+    return key ? t(key) : "";
+  }
+
+  function setCrumb(label) {
+    var current = document.querySelector("#crumb-current");
+    if (current) {
+      current.textContent = label || "";
+      current.hidden = !label;
+    }
+    var sep = document.querySelector("#crumb-sep");
+    if (sep) sep.hidden = !label;
+    if (label) document.title = label + titleSuffix();
+  }
+
   function mountShell() {
     var body = document.body;
     var active = body.getAttribute("data-tab") || "";
+    var crumb = crumbLabelFromBody();
 
     var top = document.createElement("header");
     top.className = "top";
     top.innerHTML =
-      '<a class="wordmark" href="/">mindset</a>' +
-      '<a class="top-action" id="top-action" href="/login">' +
-      escapeHtml(t("top.signIn")) +
-      "</a>";
-    body.insertBefore(top, body.firstChild);
-
-    var footer = document.createElement("footer");
-    footer.className = "footer";
-    footer.innerHTML =
-      '<a href="' +
-      escapeHtml(window.MindsetConfig.collectiveBucketUrl) +
-      '" rel="noopener">' +
-      escapeHtml(t("footer.project")) +
-      '</a><span class="lang" role="group" aria-label="' +
+      '<nav class="crumbs" aria-label="' +
+      escapeHtml(t("nav.breadcrumb")) +
+      '">' +
+      '<a class="wordmark" href="/">' +
+      '<img class="brand-mark" src="/assets/logo.svg" width="28" height="28" alt="" />' +
+      '<span>' +
+      escapeHtml(brandLabel()) +
+      "</span></a>" +
+      '<span class="crumb-sep" id="crumb-sep"' +
+      (crumb ? "" : " hidden") +
+      " aria-hidden=\"true\">›</span>" +
+      '<span class="crumb-current" id="crumb-current"' +
+      (crumb ? "" : " hidden") +
+      ">" +
+      escapeHtml(crumb) +
+      "</span></nav>" +
+      '<div class="top-actions">' +
+      '<span class="lang" role="group" aria-label="' +
       escapeHtml(t("footer.language")) +
       '">' +
       i18n.LANGS.map(function (code) {
@@ -102,17 +134,20 @@
           "</button>"
         );
       }).join("") +
-      "</span>";
-    var main = document.querySelector("main");
-    if (main) main.appendChild(footer);
-    else body.appendChild(footer);
-    footer.addEventListener("click", function (event) {
+      "</span>" +
+      '<a class="top-action" id="top-action" href="/login">' +
+      escapeHtml(t("top.signIn")) +
+      "</a></div>";
+    body.insertBefore(top, body.firstChild);
+    top.addEventListener("click", function (event) {
       var button = event.target.closest("[data-lang]");
       if (button) i18n.setLang(button.getAttribute("data-lang"));
     });
 
     var nav = document.createElement("nav");
     nav.className = "gamebar";
+    nav.id = "gamebar";
+    nav.hidden = true;
     nav.setAttribute("aria-label", t("bar.label"));
     nav.innerHTML = BAR.map(function (item) {
       return (
@@ -130,12 +165,33 @@
       );
     }).join("");
     body.appendChild(nav);
-    body.classList.add("has-gamebar");
 
     window.MindsetStore.getOptionalSession().then(function (session) {
       var action = document.querySelector("#top-action");
       if (action && session) action.hidden = true;
+      if (session) {
+        nav.hidden = false;
+        body.classList.add("has-gamebar");
+      }
     });
+  }
+
+  async function requireAuth() {
+    var session = await window.MindsetStore.getOptionalSession();
+    var wall = document.querySelector("#auth-wall");
+    var gated = document.querySelector("#gated");
+    if (session) {
+      if (wall) wall.hidden = true;
+      if (gated) gated.hidden = false;
+      return session;
+    }
+    if (gated) gated.hidden = true;
+    if (wall) {
+      wall.hidden = false;
+      var login = wall.querySelector("[data-auth-login]");
+      if (login) login.href = loginHref();
+    }
+    return null;
   }
 
   function formatWhen(iso) {
@@ -761,7 +817,11 @@
     fillTexts: fillTexts,
     updateCount: updateCount,
     loginHref: loginHref,
-    closeOnBackdrop: closeOnBackdrop
+    closeOnBackdrop: closeOnBackdrop,
+    setCrumb: setCrumb,
+    requireAuth: requireAuth,
+    titleSuffix: titleSuffix,
+    brandLabel: brandLabel
   };
 
   mountShell();

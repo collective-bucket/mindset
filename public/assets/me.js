@@ -50,6 +50,7 @@
       var doc = own.publicDoc;
       var number = doc.id;
       document.querySelector("#title").textContent = number;
+      ui.setCrumb(String(number));
       var when = ui.formatWhen(doc.updatedAt);
       document.querySelector("#meta").textContent =
         t(doc.published ? "me.published" : "me.unpublished") + (when ? " · " + when : "");
@@ -101,10 +102,8 @@
 
     async function load(notice) {
       ui.setStatus(status, t("common.loading"));
-      session = await store.getOptionalSession();
+      session = await ui.requireAuth();
       if (!session) {
-        document.querySelector("#signed-out").hidden = false;
-        document.querySelector("#account").hidden = true;
         ui.setStatus(status, "");
         return;
       }

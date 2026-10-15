@@ -3,17 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>Hunt · mindset</title>
+  <meta name="theme-color" content="#eafbf5" />
+  <title>hunt · mindset bucket</title>
   <meta name="description" content="Minds swim in a lake. Narrow the scale, find yours, hook them." />
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body data-tab="hunt" data-title="hunt.title">
   <main class="page page-hunt">
+    <section id="auth-wall" class="section auth-wall" hidden>
+      <h1 data-i18n="gate.title">Sign in to enter the lake</h1>
+      <p class="lead" data-i18n="gate.lead">Flow, hunt and your net need an account. Shared fish pages stay open — anyone with a /i/ link can read them.</p>
+      <div class="actions">
+        <a class="btn btn-primary" data-auth-login href="/login" data-i18n="auth.submitLogin">Sign in</a>
+        <a class="btn" href="/register" data-i18n="auth.submitRegister">Create account</a>
+      </div>
+    </section>
+
+    <div id="gated" hidden>
     <div class="head">
       <div>
-        <h1 data-i18n="hunt.title">Hunt</h1>
+        <h1 class="visually-hidden" data-i18n="hunt.title">Hunt</h1>
         <p class="hint" data-i18n="hunt.lead">Every fish is a mind. Narrow the scale and hook the ones you want to follow.</p>
       </div>
       <span id="hunt-count" class="head-side" aria-live="polite"></span>
@@ -75,6 +85,7 @@
         </div>
       </div>
     </section>
+    </div>
   </main>
 
   <dialog id="fish-card" class="modal modal-sheet" aria-labelledby="card-number">

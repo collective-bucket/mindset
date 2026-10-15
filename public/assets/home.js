@@ -18,7 +18,6 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var status = document.querySelector("#feed-status");
-    document.querySelector("#hero-art").innerHTML = ui.icon("scene");
 
     async function aliasMap(numbers, token) {
       var map = {};
@@ -33,9 +32,11 @@
     }
 
     async function load() {
+      var session = await ui.requireAuth();
+      if (!session) return;
+      document.querySelector("#hero-art").innerHTML = ui.icon("scene");
       ui.setStatus(status, t("common.loading"));
-      var session = await store.getOptionalSession();
-      var own = session ? await store.findOwn(session.uid, session.idToken).catch(function () { return null; }) : null;
+      var own = await store.findOwn(session.uid, session.idToken).catch(function () { return null; });
       document.querySelector("#hero").hidden = Boolean(own);
       if (own) {
         document.querySelector("#mine-head").hidden = false;
@@ -97,7 +98,8 @@
     }
 
     load().catch(function (error) {
-      document.querySelector("#hero").hidden = false;
+      var hero = document.querySelector("#hero");
+      if (hero && !document.querySelector("#gated").hidden) hero.hidden = false;
       ui.setStatus(status, ui.errorText(error), "error");
     });
   });

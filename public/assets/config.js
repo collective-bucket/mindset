@@ -4,6 +4,5 @@ window.MindsetConfig = {
   authDomain: "collective-bucket.firebaseapp.com",
   messagingSenderId: "239510573325",
   appId: "1:239510573325:web:64cea398023a9b3c226044",
-  siteOrigin: "https://mindsetbucket.com",
-  collectiveBucketUrl: "https://collectivebucket.com"
+  siteOrigin: "https://mindsetbucket.com"
 };

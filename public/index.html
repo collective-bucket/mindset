@@ -3,46 +3,57 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>mindset</title>
+  <meta name="theme-color" content="#eafbf5" />
+  <title>flow · mindset bucket</title>
   <meta name="description" content="Build a bucket of minds together, for fun or for research. Outside, everyone is only a number." />
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="flow">
+<body data-tab="flow" data-title="flow.title">
   <main class="page">
-    <section id="hero" class="hero" hidden>
-      <div class="hero-art" aria-hidden="true" id="hero-art"></div>
-      <h1 data-i18n="home.title">Build a bucket of minds together.</h1>
-      <p class="lead" data-i18n="home.lead">Write what you hold true and how you tell your story. You become a number, a fish in the lake. Hunt for minds like yours, or unlike.</p>
-      <p class="hint" data-i18n="home.private">What you don't say out loud, your desire and your shadow stay with you.</p>
+    <section id="auth-wall" class="section auth-wall" hidden>
+      <h1 data-i18n="gate.title">Sign in to enter the lake</h1>
+      <p class="lead" data-i18n="gate.lead">Flow, hunt and your net need an account. Shared fish pages stay open — anyone with a /i/ link can read them.</p>
       <div class="actions">
-        <a class="btn btn-primary" href="/new" data-i18n="home.write">Cast your line</a>
-        <a class="btn" href="/hunt" data-i18n="home.hunt">Go hunting</a>
+        <a class="btn btn-primary" data-auth-login href="/login" data-i18n="auth.submitLogin">Sign in</a>
+        <a class="btn" href="/register" data-i18n="auth.submitRegister">Create account</a>
       </div>
-      <p class="fineprint"><span data-i18n="home.purpose">For fun or for research.</span> <span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span></p>
     </section>
 
-    <div class="head" id="mine-head" hidden>
-      <h1 data-i18n="flow.title">Flow</h1>
-      <a class="head-side" id="mine" href="/me"></a>
+    <div id="gated" hidden>
+      <section id="hero" class="hero" hidden>
+        <div class="hero-art" aria-hidden="true" id="hero-art"></div>
+        <h1 data-i18n="home.title">Build a bucket of minds together.</h1>
+        <p class="lead" data-i18n="home.lead">Write what you hold true and how you tell your story. You become a number, a fish in the lake. Hunt for minds like yours, or unlike.</p>
+        <p class="hint" data-i18n="home.private">What you don't say out loud, your desire and your shadow stay with you.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/new" data-i18n="home.write">Cast your line</a>
+          <a class="btn" href="/hunt" data-i18n="home.hunt">Go hunting</a>
+        </div>
+        <p class="fineprint"><span data-i18n="home.purpose">For fun or for research.</span> <span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span></p>
+      </section>
+
+      <div class="head" id="mine-head" hidden>
+        <h1 class="visually-hidden" data-i18n="flow.title">Flow</h1>
+        <a class="head-side" id="mine" href="/me"></a>
+      </div>
+      <p id="feed-status" class="status" role="status" hidden></p>
+
+      <section class="section" id="tribe-section" hidden>
+        <h2 data-i18n="flow.tribe">Your tribe</h2>
+        <div id="tribe-feed" class="feed"></div>
+      </section>
+
+      <section class="section" id="net-section" hidden>
+        <h2 data-i18n="flow.net">Your net</h2>
+        <div id="net-feed" class="feed"></div>
+      </section>
+
+      <section class="section">
+        <h2 data-i18n="flow.everyone">Across the lake</h2>
+        <div id="everyone-feed" class="feed"></div>
+      </section>
     </div>
-    <p id="feed-status" class="status" role="status" hidden></p>
-
-    <section class="section" id="tribe-section" hidden>
-      <h2 data-i18n="flow.tribe">Your tribe</h2>
-      <div id="tribe-feed" class="feed"></div>
-    </section>
-
-    <section class="section" id="net-section" hidden>
-      <h2 data-i18n="flow.net">Your net</h2>
-      <div id="net-feed" class="feed"></div>
-    </section>
-
-    <section class="section">
-      <h2 data-i18n="flow.everyone">Across the lake</h2>
-      <div id="everyone-feed" class="feed"></div>
-    </section>
   </main>
 
   <script src="/assets/config.js" defer></script>

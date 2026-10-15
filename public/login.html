@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>Sign in · mindset</title>
+  <meta name="theme-color" content="#eafbf5" />
+  <title>sign in · mindset bucket</title>
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="me" data-page="login" data-title="auth.loginTitle">
+<body data-tab="" data-page="login" data-title="auth.loginTitle">
   <main class="page page-narrow">
-    <h1 data-i18n="auth.loginTitle">Sign in</h1>
+    <h1 class="visually-hidden" data-i18n="auth.loginTitle">Sign in</h1>
     <button type="button" id="google" class="btn btn-ghost btn-block btn-google"><span class="g" aria-hidden="true">G</span><span data-i18n="auth.google">Continue with Google</span></button>
     <p class="divider"><span data-i18n="auth.or">or</span></p>
     <form id="auth-form" class="auth-form" novalidate>
@@ -23,7 +23,6 @@
       <a href="/forgot" data-keep-next data-i18n="auth.toForgot">Forgot password?</a>
       <a href="/register" data-keep-next data-i18n="auth.toRegister">New here? Create an account</a>
     </p>
-    <p class="fineprint" data-i18n="auth.shared">Accounts are shared with Collective Bucket apps.</p>
   </main>
 
   <script src="/assets/config.js" defer></script>

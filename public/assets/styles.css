@@ -1,12 +1,12 @@
-/* mindset: line drawings on white paper, one accent for water. */
+/* mindset bucket: line drawings on white paper, mint accent. */
 
 :root {
   --ink: #141414;
   --paper: #ffffff;
   --muted: #5c5c5c;
   --hair: #dcdcd6;
-  --accent: #1f5fbf;
-  --accent-soft: rgba(31, 95, 191, 0.12);
+  --accent: #2f9a7c;
+  --accent-soft: #eafbf5;
   --warn: #8a5300;
   --danger: #b3261e;
   --stroke: 1.5px;
@@ -73,18 +73,57 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   min-height: 56px;
   padding-top: env(safe-area-inset-top);
 }
 
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .wordmark {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
   letter-spacing: -0.02em;
   text-decoration: none;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.crumb-sep {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.crumb-current {
+  font-weight: 650;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .top-action {
@@ -93,6 +132,7 @@ a {
   align-items: center;
   font-weight: 600;
   text-underline-offset: 4px;
+  white-space: nowrap;
 }
 
 .page-narrow {
@@ -1275,40 +1315,22 @@ input[type="checkbox"] {
   margin-top: 16px;
 }
 
-/* ---- Footer and game bar ---- */
-
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-top: 1px solid var(--hair);
-  margin-top: 28px;
-  padding: 14px 0;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.footer a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-}
+/* ---- Language and game bar ---- */
 
 .lang {
   display: inline-flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .lang button {
-  min-width: 44px;
+  min-width: 40px;
   min-height: 36px;
   border: 1px solid var(--ink);
   border-radius: 999px;
   background: var(--paper);
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -1316,6 +1338,10 @@ input[type="checkbox"] {
 .lang button[aria-pressed="true"] {
   background: var(--ink);
   color: var(--paper);
+}
+
+.auth-wall {
+  margin-top: 24px;
 }
 
 .gamebar {
@@ -1360,10 +1386,7 @@ input[type="checkbox"] {
 
 .gamebar-button[aria-current="page"] {
   color: var(--accent);
-}
-
-.gamebar-button[aria-current="page"] span {
-  box-shadow: inset 0 -2px 0 currentColor;
+  border-color: var(--accent);
 }
 
 .gamebar-flow,

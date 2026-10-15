@@ -117,7 +117,7 @@
     function showProfile() {
       document.querySelector("#profile").hidden = false;
       document.querySelector("#title").textContent = doc.id;
-      document.title = t("common.mindset", { n: doc.id }) + " · mindset";
+      ui.setCrumb(String(doc.id));
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);
       document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
@@ -306,8 +306,9 @@
       if (route.kind === "i" && /^\d+$/.test(route.key)) {
         number = route.key;
       } else if (route.kind === "a" && social.ALIAS_PATTERN.test(route.key)) {
-        session = await store.getOptionalSession();
-        var entry = await social.resolveAlias(route.key, session && session.idToken);
+        session = await ui.requireAuth();
+        if (!session) return;
+        var entry = await social.resolveAlias(route.key, session.idToken);
         if (entry) {
           number = String(entry.number);
           alias = route.key;

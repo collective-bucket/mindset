@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>Create account · mindset</title>
+  <meta name="theme-color" content="#eafbf5" />
+  <title>create account · mindset bucket</title>
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="me" data-page="register" data-title="auth.registerTitle">
+<body data-tab="" data-page="register" data-title="auth.registerTitle">
   <main class="page page-narrow">
-    <h1 data-i18n="auth.registerTitle">Create account</h1>
+    <h1 class="visually-hidden" data-i18n="auth.registerTitle">Create account</h1>
     <form id="auth-form" class="auth-form" novalidate>
       <label class="check"><input id="adult" type="checkbox" required /> <span data-i18n="auth.adult">I am 18 or older.</span></label>
       <button type="button" id="google" class="btn btn-ghost btn-block btn-google"><span class="g" aria-hidden="true">G</span><span data-i18n="auth.google">Continue with Google</span></button>
@@ -23,7 +23,6 @@
     <p class="auth-links">
       <a href="/login" data-keep-next data-i18n="auth.toLogin">Have an account? Sign in</a>
     </p>
-    <p class="fineprint" data-i18n="auth.shared">Accounts are shared with Collective Bucket apps.</p>
   </main>
 
   <script src="/assets/config.js" defer></script>
