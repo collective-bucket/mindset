@@ -97,4 +97,5 @@ Pushing to `main` deploys hosting, rules and indexes through GitHub Actions
 (Workload Identity, service account `github-actions-deployer`). Firebase project
 `collective-bucket`, hosting site `cbucket-mindset`, target `mindset`.
 
-Live: https://mindset.collectivebucket.com
+Live: https://mindsetbucket.com (https://mindset.collectivebucket.com and
+https://www.mindsetbucket.com redirect here)
