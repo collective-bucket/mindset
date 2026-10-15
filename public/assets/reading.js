@@ -217,7 +217,38 @@
       .trim();
   }
 
-  function buildDocuments(uid, number, texts, scores, published, createdAt, now, demo) {
+  var HISTORY_LEVELS = ["none", "tribe", "public"];
+
+  function historyLevel(value) {
+    return HISTORY_LEVELS.indexOf(value) >= 0 ? value : "none";
+  }
+
+  function versionId(when) {
+    return String(when).replace(/\D/g, "").slice(0, 17);
+  }
+
+  // Only the open side is ever copied into history.
+  function buildVersion(publicDoc) {
+    return {
+      ownerUid: publicDoc.ownerUid,
+      number: publicDoc.number,
+      createdAt: publicDoc.updatedAt,
+      lens: publicDoc.lens,
+      agency: publicDoc.agency,
+      communion: publicDoc.communion,
+      codeClarity: publicDoc.codeClarity,
+      redemption: publicDoc.redemption,
+      known: publicDoc.known,
+      ageBand: publicDoc.ageBand || "",
+      gender: publicDoc.gender || "",
+      country: publicDoc.country || "",
+      currentPosition: publicDoc.currentPosition,
+      personalCode: publicDoc.personalCode,
+      selfNarrative: publicDoc.selfNarrative
+    };
+  }
+
+  function buildDocuments(uid, number, texts, scores, published, createdAt, now, demo, history) {
     var numberKey = String(number);
     var when = now || new Date().toISOString();
     var profile = demographics.normalize(demo);
@@ -229,6 +260,7 @@
         published: published,
         createdAt: createdAt || when,
         updatedAt: when,
+        history: historyLevel(history),
         lens: lens.version,
         agency: scores.agency,
         communion: scores.communion,
@@ -298,6 +330,10 @@
     normalizeTexts: normalizeTexts,
     joinFields: joinFields,
     buildDocuments: buildDocuments,
+    buildVersion: buildVersion,
+    versionId: versionId,
+    historyLevel: historyLevel,
+    HISTORY_LEVELS: HISTORY_LEVELS,
     scoresOf: scoresOf,
     demoOf: demoOf
   };

@@ -4,49 +4,62 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
-  <title>Write · mindset</title>
+  <title>Cast your line · mindset</title>
   <meta name="description" content="Write your mindset. The reading stays in your browser." />
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="create" data-title="create.title">
+<body data-tab="me" data-title="create.title">
   <main class="page">
-    <h1 id="heading" data-i18n="create.title">Write</h1>
+    <h1 id="heading" data-i18n="create.title">Cast your line</h1>
     <p class="lead"><span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span> <span data-i18n="create.lead">The model downloads to your browser on first read. Your text isn't sent anywhere.</span></p>
 
     <form id="mindset-form" novalidate>
-      <section class="panel">
+      <section class="section">
+        <h2 data-i18n="create.openTitle">On your profile</h2>
         <p class="hint" data-i18n="create.openHint">These three show on your profile. One line you hold true is enough to publish.</p>
+        <p class="hint" data-i18n="privacy.hint">Leave out names, places and contact details. Anything that points to a person is flagged.</p>
         <div id="open-fields"></div>
       </section>
 
-      <section class="panel panel-private">
+      <section class="section section-private">
         <h2 data-i18n="create.closedTitle">Stays with you</h2>
         <p class="hint" data-i18n="create.closedHint">What you don't say out loud, your desire and the side you're ashamed of go to no one. Their readings stay with you too.</p>
         <div id="closed-fields"></div>
       </section>
 
-      <section class="panel">
+      <section class="section">
         <h2 data-i18n="create.aboutTitle">About you (optional)</h2>
         <p class="hint" data-i18n="create.aboutHint">Age range, gender and country show on your profile and shape lists and suggestions. City is never shown individually; it is only counted.</p>
         <div id="demo-fields"></div>
       </section>
 
+      <section class="section" id="alias-section">
+        <h2 data-i18n="alias.title">Your alias</h2>
+        <p class="hint" data-i18n="alias.hint">Only your tribe sees it. To invite you, someone has to know it.</p>
+        <label class="field" for="alias"><span data-i18n="alias.label">Alias</span>
+          <span class="prefix-input"><span aria-hidden="true">@</span><input id="alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" pattern="[a-z0-9_]{3,20}" aria-describedby="alias-rule" /></span>
+          <small id="alias-rule" data-i18n="alias.rule">3-20 lowercase letters, digits or _.</small>
+        </label>
+      </section>
+
       <div class="actions sticky-actions">
-        <button type="button" id="read" class="btn btn-ghost" data-i18n="create.read">Read</button>
+        <button type="button" id="read" class="btn" data-i18n="create.read">Read</button>
         <button type="button" id="publish" class="btn btn-primary" data-i18n="create.publish">Publish</button>
       </div>
-      <p id="form-status" class="status" hidden></p>
-      <p id="login-hint" hidden><a id="login-link" class="btn btn-ghost" href="/login" data-i18n="create.signInToPublish">Sign in to publish</a></p>
+      <p id="form-status" class="status" role="status" hidden></p>
+      <p id="login-hint" hidden><a id="login-link" class="btn" href="/login" data-i18n="create.signInToPublish">Sign in to publish</a></p>
     </form>
 
-    <section id="preview" class="panel" hidden>
+    <section id="preview" class="section" hidden>
       <h2 data-i18n="common.approx">Approximate reading</h2>
       <p id="preview-summary" class="summary"></p>
       <div id="preview-radar"></div>
       <div id="preview-open"></div>
-      <h2 data-i18n="create.privateTitle">Only for you</h2>
-      <div id="preview-closed"></div>
+      <div class="section-private">
+        <h3 data-i18n="create.privateTitle">Only for you</h3>
+        <div id="preview-closed"></div>
+      </div>
     </section>
   </main>
 
@@ -55,9 +68,10 @@
       <h2 data-i18n="create.publish">Publish</h2>
       <p data-i18n="create.dialogOpen">Right now, what you hold true and how you tell your story show on your profile. Your story may reveal you or someone else.</p>
       <p data-i18n="create.closedHint">What you don't say out loud, your desire and the side you're ashamed of go to no one. Their readings stay with you too.</p>
+      <p data-i18n="create.dialogHistory">Each publish is kept as a version. Only you see them unless you open your history.</p>
       <p data-i18n="create.dialogScale">This is not a validated scale.</p>
       <div class="dialog-actions">
-        <button class="btn btn-ghost" value="cancel" data-i18n="common.cancel">Cancel</button>
+        <button class="btn" value="cancel" data-i18n="common.cancel">Cancel</button>
         <button class="btn btn-primary" value="confirm" data-i18n="create.publish">Publish</button>
       </div>
     </form>
@@ -68,6 +82,7 @@
   <script src="/assets/demographics.js" defer></script>
   <script src="/assets/lens-v2.js" defer></script>
   <script src="/assets/reading.js" defer></script>
+  <script src="/assets/privacy.js" defer></script>
   <script src="/assets/firestore.js" defer></script>
   <script type="module" src="/assets/auth.js"></script>
   <script src="/assets/store.js" defer></script>

@@ -65,19 +65,29 @@
     return "none";
   }
 
-  function invite(session, myNumber, otherUid, otherNumber) {
-    return db().create(
-      "tribeRequests",
-      requestId(session.uid, otherUid),
-      {
-        from: session.uid,
-        to: otherUid,
-        fromNumber: Number(myNumber),
-        toNumber: Number(otherNumber),
-        createdAt: now()
-      },
-      session.idToken
-    );
+  // The rules check the alias against the invitee, so a wrong alias fails the
+  // same way as a missing one and reveals nothing.
+  async function invite(session, myNumber, otherUid, otherNumber, alias) {
+    alias = String(alias || "").trim().replace(/^@/, "").toLowerCase();
+    if (!ALIAS_PATTERN.test(alias)) throw aliasError("tribe.aliasWrong");
+    try {
+      await db().create(
+        "tribeRequests",
+        requestId(session.uid, otherUid),
+        {
+          from: session.uid,
+          to: otherUid,
+          fromNumber: Number(myNumber),
+          toNumber: Number(otherNumber),
+          alias: alias,
+          createdAt: now()
+        },
+        session.idToken
+      );
+    } catch (error) {
+      if (db().isPermission(error)) throw aliasError("tribe.aliasWrong");
+      throw error;
+    }
   }
 
   async function accept(session, fromUid) {
@@ -162,27 +172,37 @@
     return error;
   }
 
-  async function setAlias(session, number, alias, visibility, current) {
-    alias = String(alias || "").trim().toLowerCase();
+  function cleanAlias(alias) {
+    return String(alias || "").trim().replace(/^@/, "").toLowerCase();
+  }
+
+  // Another person's alias is unreadable, so "permission denied" means taken.
+  async function aliasFree(alias, session) {
+    alias = cleanAlias(alias);
     if (!ALIAS_PATTERN.test(alias)) throw aliasError("me.aliasInvalid");
-    if (visibility !== "public") visibility = "tribe";
-    var token = session.idToken;
-    if (alias !== current) {
-      try {
-        var taken = await db().get("aliases/" + alias, token);
-        if (taken && taken.ownerUid !== session.uid) throw aliasError("me.aliasTaken");
-      } catch (error) {
-        if (db().isPermission(error)) throw aliasError("me.aliasTaken");
-        throw error;
-      }
+    if (alias === "mindhunter") return false;
+    try {
+      var found = await db().get("aliases/" + alias, session && session.idToken);
+      return !found || (session && found.ownerUid === session.uid);
+    } catch (error) {
+      if (db().isPermission(error)) return false;
+      throw error;
     }
+  }
+
+  async function setAlias(session, number, alias, current) {
+    alias = cleanAlias(alias);
+    if (!ALIAS_PATTERN.test(alias)) throw aliasError("me.aliasInvalid");
+    if (alias === current) return alias;
+    var token = session.idToken;
+    var reserved = alias === "mindhunter" && Number(number) === 1;
+    if (!reserved && !(await aliasFree(alias, session))) throw aliasError("me.aliasTaken");
     var writes = db().writes;
     var list = [];
-    if (current && current !== alias) list.push(writes.remove("aliases/" + current));
+    if (current) list.push(writes.remove("aliases/" + current));
     list.push(
-      writes.set("aliases/" + alias, { ownerUid: session.uid, number: Number(number), visibility: visibility }),
-      writes.set("aliasOf/" + number, { ownerUid: session.uid, alias: alias, visibility: visibility }),
-      writes.patch("mindsets/" + number, { alias: visibility === "public" ? alias : "" })
+      writes.set("aliases/" + alias, { ownerUid: session.uid, number: Number(number) }),
+      writes.set("aliasOf/" + number, { ownerUid: session.uid, alias: alias })
     );
     try {
       await db().commit(list, token);
@@ -191,17 +211,6 @@
       throw error;
     }
     return alias;
-  }
-
-  async function removeAlias(session, number, current) {
-    var writes = db().writes;
-    var list = [];
-    if (current) list.push(writes.remove("aliases/" + current));
-    list.push(
-      writes.remove("aliasOf/" + number),
-      writes.patch("mindsets/" + number, { alias: "" })
-    );
-    await db().commit(list, session.idToken);
   }
 
   async function inChunks(list, token) {
@@ -253,8 +262,9 @@
     members: members,
     aliasOf: aliasOf,
     resolveAlias: resolveAlias,
+    cleanAlias: cleanAlias,
+    aliasFree: aliasFree,
     setAlias: setAlias,
-    removeAlias: removeAlias,
     cleanup: cleanup
   };
 })();

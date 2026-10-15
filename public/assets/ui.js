@@ -4,20 +4,45 @@
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
+  // Line drawings in the spirit of the fishing sketch: a bucket of fish,
+  // the angler on the shore, and a jumping fish.
   var ICONS = {
-    home: '<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
-    explore: '<circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
-    create: '<path d="M12 5v14M5 12h14"/>',
-    tribe: '<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9.5" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 20c0-2 .8-3.7 2-4.6 2.3.3 4 2.2 4 4.6"/>',
-    me: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>'
+    bucket: {
+      box: "0 0 40 40",
+      body:
+        '<path d="M15.5 21c-2.2-2.6-2.4-6-.4-8.6"/><path d="M15 12.4l-2.6-1.8M15 12.4l.4-3.1"/>' +
+        '<path d="M22.5 21c2.4-2.2 3.4-5.4 2.2-8.4"/><path d="M24.7 12.6l1-3M24.7 12.6l2.8-1.4"/>' +
+        '<circle cx="15.6" cy="16.6" r=".5"/><circle cx="23.6" cy="16.2" r=".5"/>' +
+        '<path d="M9 21h22l-2.6 12.6a1.6 1.6 0 0 1-1.6 1.3H13.2a1.6 1.6 0 0 1-1.6-1.3z"/>' +
+        '<path d="M9.6 24c3.4-1.6 17.4-1.6 20.8 0"/>'
+    },
+    scene: {
+      box: "0 0 64 48",
+      body:
+        '<circle cx="15" cy="10" r="3.4"/><path d="M13 7.4c1.6-1.6 4.4-1.2 5.2.8"/>' +
+        '<path d="M15 13.6v10.4h7.6v9"/><path d="M15 17.6l6.4 3.4 2-1.6"/>' +
+        '<path d="M21.4 21L44 6"/><path d="M44 6c.8 8 1.6 16 4 25"/>' +
+        '<path d="M10.6 32.4l5.8-6.6M10.6 25.8l5.8 6.6M9.8 25.8h7.4"/>' +
+        '<path d="M3 34c6-3.4 14-3.6 21-.4 2.6 1.4 4.6 3.6 5.6 6.4"/>' +
+        '<path d="M32 33.4c2-1.4 4-1.4 6 0s4 1.4 6 0 4-1.4 6 0"/><path d="M38 39.4c2-1.4 4-1.4 6 0s4 1.4 6 0"/>'
+    },
+    fish: {
+      box: "0 0 40 40",
+      body:
+        '<path d="M8.4 22.6c3.6-7.4 11.6-10.4 18-6.8-3.4 6.8-11.6 9.6-18 6.8z"/>' +
+        '<path d="M26.4 15.8l6.2-4.6-1.4 7.4"/><path d="M17 15.6l3-3.4 2.4 3"/>' +
+        '<circle cx="13.2" cy="20" r=".7"/><path d="M15.6 18.2c.8 1.4.8 3 .2 4.4"/>' +
+        '<path d="M6 31c2-1.4 4-1.4 6 0s4 1.4 6 0 4-1.4 6 0"/><path d="M22 34.6c2-1.4 4-1.4 6 0s4 1.4 6 0"/>'
+    }
   };
 
-  var TABS = [
-    { id: "home", href: "/" },
-    { id: "explore", href: "/explore" },
-    { id: "create", href: "/new" },
-    { id: "tribe", href: "/tribe" },
-    { id: "me", href: "/me" }
+  // A single fish for lists and the lake, drawn around (0,0) facing right.
+  var FISH_PATH = "M-5 0c2.6-3.4 6.6-4 10-1.2C1.6 2.6-2.4 3.4-5 0zM5-1.2l3-2.2-.8 3.6.8 3-3-2";
+
+  var BAR = [
+    { id: "flow", href: "/", icon: "bucket" },
+    { id: "hunt", href: "/hunt", icon: "scene" },
+    { id: "me", href: "/me", icon: "fish" }
   ];
 
   function escapeHtml(value) {
@@ -29,8 +54,17 @@
   }
 
   function icon(name) {
+    var item = ICONS[name];
     return (
-      '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + "</svg>"
+      '<svg class="icon icon-' + name + '" viewBox="' + item.box + '" aria-hidden="true">' + item.body + "</svg>"
+    );
+  }
+
+  function fishGlyph(className) {
+    return (
+      '<svg class="glyph ' + (className || "") + '" viewBox="-7 -5 16 10" aria-hidden="true"><path d="' +
+      FISH_PATH +
+      '"/><circle cx="-2.6" cy="-.6" r=".5"/></svg>'
     );
   }
 
@@ -39,9 +73,9 @@
     var active = body.getAttribute("data-tab") || "";
 
     var top = document.createElement("header");
-    top.className = "topbar";
+    top.className = "top";
     top.innerHTML =
-      '<a class="brand" href="/"><img src="/assets/logo.svg" alt="" width="26" height="26" /><span>mindset</span></a>' +
+      '<a class="wordmark" href="/">mindset</a>' +
       '<a class="top-action" id="top-action" href="/login">' +
       escapeHtml(t("top.signIn")) +
       "</a>";
@@ -78,33 +112,29 @@
     });
 
     var nav = document.createElement("nav");
-    nav.className = "tabbar";
-    nav.setAttribute("aria-label", "mindset");
-    nav.innerHTML = TABS.map(function (tab) {
+    nav.className = "gamebar";
+    nav.setAttribute("aria-label", t("bar.label"));
+    nav.innerHTML = BAR.map(function (item) {
       return (
         '<a href="' +
-        tab.href +
-        '" class="tab tab-' +
-        tab.id +
+        item.href +
+        '" class="gamebar-button gamebar-' +
+        item.id +
         '"' +
-        (tab.id === active ? ' aria-current="page"' : "") +
+        (item.id === active ? ' aria-current="page"' : "") +
         ">" +
-        icon(tab.id) +
+        icon(item.icon) +
         "<span>" +
-        escapeHtml(t("tab." + tab.id)) +
+        escapeHtml(t("bar." + item.id)) +
         "</span></a>"
       );
     }).join("");
     body.appendChild(nav);
+    body.classList.add("has-gamebar");
 
     window.MindsetStore.getOptionalSession().then(function (session) {
       var action = document.querySelector("#top-action");
-      if (!action || !session) return;
-      action.textContent = "";
-      action.href = "/me";
-      action.classList.add("is-icon");
-      action.setAttribute("aria-label", t("tab.me"));
-      action.innerHTML = icon("me");
+      if (action && session) action.hidden = true;
     });
   }
 
@@ -129,6 +159,7 @@
     if (error.code && i18n.dict.en["error." + error.code]) return t("error." + error.code);
     if (error.i18n) return t(error.i18n);
     if (window.MindsetFirestore.isPermission(error)) return t("common.permission");
+    if (error.status) return t(fallbackKey || "common.error");
     return error.message || t(fallbackKey || "common.error");
   }
 
@@ -186,7 +217,7 @@
   }
 
   // Unknown scores are not drawn as zero; the radar only appears when all four are known.
-  function renderRadar(container, scores) {
+  function renderRadar(container, scores, ghost) {
     var keys = window.MindsetReading.OPEN_KEYS;
     var complete = keys.every(function (key) {
       return scores[key] >= 0;
@@ -223,6 +254,19 @@
         return radarPoint(cx, cy, radius, index, keys.length, scores[key]).join(",");
       })
       .join(" ");
+    var ghostShape =
+      ghost &&
+      keys.every(function (key) {
+        return ghost[key] >= 0;
+      })
+        ? '<polygon class="radar-ghost" points="' +
+          keys
+            .map(function (key, index) {
+              return radarPoint(cx, cy, radius, index, keys.length, ghost[key]).join(",");
+            })
+            .join(" ") +
+          '"></polygon>'
+        : "";
     var labels = keys
       .map(function (key, index) {
         var spot = radarPoint(cx, cy, radius + 26, index, keys.length, 100);
@@ -247,6 +291,7 @@
       '">' +
       rings +
       spokes +
+      ghostShape +
       '<polygon class="radar-shape" points="' +
       shape +
       '"></polygon>' +
@@ -271,21 +316,21 @@
       .join("");
   }
 
-  function hue(number) {
-    return (Number(number) * 137) % 360;
+  function avatar(number, size) {
+    return (
+      '<span class="avatar' + (size ? " avatar-" + size : "") + '" aria-hidden="true">' + fishGlyph() + "</span>"
+    );
   }
 
-  function avatar(number, size) {
-    var label = String(number);
-    return (
-      '<span class="avatar' +
-      (size ? " avatar-" + size : "") +
-      '" style="--hue:' +
-      hue(number) +
-      '" aria-hidden="true">' +
-      escapeHtml(label.length > 4 ? label.slice(-4) : label) +
-      "</span>"
-    );
+  function relativeWhen(iso) {
+    var date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    var minutes = Math.round((Date.now() - date.getTime()) / 60000);
+    var format = new Intl.RelativeTimeFormat(i18n.lang, { numeric: "auto" });
+    if (minutes < 60) return format.format(-Math.max(0, minutes), "minute");
+    if (minutes < 60 * 24) return format.format(-Math.round(minutes / 60), "hour");
+    if (minutes < 60 * 24 * 30) return format.format(-Math.round(minutes / 1440), "day");
+    return formatWhen(iso);
   }
 
   function badges(doc) {
@@ -304,52 +349,45 @@
     return "/i/" + doc.id;
   }
 
-  function miniMeters(scores) {
-    return (
-      '<div class="meters">' +
-      window.MindsetReading.OPEN_KEYS.map(function (key) {
-        var value = scores[key];
-        var known = value >= 0;
-        return (
-          '<div class="meter' +
-          (known ? "" : " is-unknown") +
-          '"><span>' +
-          escapeHtml(i18n.pick(axisByKey(key).label)) +
-          '</span><div class="meter-track"><div class="meter-fill" style="width:' +
-          (known ? value : 0) +
-          '%"></div></div></div>'
-        );
-      }).join("") +
-      "</div>"
-    );
+  function plainSummary(doc) {
+    var scores = window.MindsetReading.scoresOf(doc);
+    return window.MindsetReading.summary(doc.id || doc.number, scores, i18n.lang).replace(/^\d+\.\s*/, "");
   }
 
+  function badgeText(doc) {
+    var items = [];
+    if (doc.ageBand) items.push(doc.ageBand);
+    if (doc.gender) items.push(t("gender." + doc.gender));
+    if (doc.country) items.push(i18n.countryName(doc.country));
+    return items.join(" · ");
+  }
+
+  // One fish per line: number on the left, when and badges on the right.
   function card(doc, options) {
     options = options || {};
     if (!/^\d+$/.test(String(doc.id || ""))) return "";
-    var scores = window.MindsetReading.scoresOf(doc);
-    var alias = options.alias || doc.alias || "";
+    var alias = options.alias || "";
     var quote = String(doc.personalCode || "");
-    if (quote.length > 160) quote = quote.slice(0, 157) + "…";
+    if (quote.length > 140) quote = quote.slice(0, 137) + "…";
+    var side = options.tag || relativeWhen(doc.updatedAt);
     return (
-      '<a class="card" href="' +
+      '<a class="entry" href="' +
       profileHref(doc) +
       '">' +
-      '<div class="card-head">' +
-      avatar(doc.id) +
-      '<div class="card-id"><strong>' +
-      escapeHtml(t("common.mindset", { n: doc.id })) +
+      '<span class="entry-head">' +
+      fishGlyph("entry-fish") +
+      '<strong class="entry-number">' +
+      escapeHtml(doc.id) +
       "</strong>" +
       (alias ? '<span class="alias">@' + escapeHtml(alias) + "</span>" : "") +
-      "</div>" +
-      (options.tag ? '<span class="tag">' + escapeHtml(options.tag) + "</span>" : "") +
-      "</div>" +
-      (doc.ageBand || doc.gender || doc.country ? '<div class="badges">' + badges(doc) + "</div>" : "") +
-      '<p class="card-summary">' +
-      escapeHtml(window.MindsetReading.summary(doc.id, scores, i18n.lang).replace(/^\d+\.\s*/, "")) +
-      "</p>" +
-      (quote ? '<p class="card-quote">' + escapeHtml(quote) + "</p>" : "") +
-      miniMeters(scores) +
+      '<span class="entry-side">' +
+      escapeHtml(side) +
+      "</span></span>" +
+      '<span class="entry-summary">' +
+      escapeHtml(plainSummary(doc)) +
+      "</span>" +
+      (quote ? '<span class="entry-quote">' + escapeHtml(quote) + "</span>" : "") +
+      (badgeText(doc) ? '<span class="entry-meta">' + escapeHtml(badgeText(doc)) + "</span>" : "") +
       "</a>"
     );
   }
@@ -366,6 +404,91 @@
       .join("");
   }
 
+  var DASHES = ["", "5 3", "1.5 2.5", "7 2 1.5 2"];
+
+  // How the four open readings moved across versions; one line style per reading.
+  function renderTrend(container, versions, activeIndex) {
+    var keys = window.MindsetReading.OPEN_KEYS;
+    var width = 320;
+    var height = 150;
+    var pad = { left: 8, right: 8, top: 10, bottom: 18 };
+    var count = versions.length;
+    function x(index) {
+      return count < 2 ? width / 2 : pad.left + ((width - pad.left - pad.right) * index) / (count - 1);
+    }
+    function y(value) {
+      return pad.top + (height - pad.top - pad.bottom) * (1 - value / 100);
+    }
+    var lines = keys
+      .map(function (key, keyIndex) {
+        var points = versions
+          .map(function (version, index) {
+            var value = version[key];
+            return typeof value === "number" && value >= 0 ? x(index).toFixed(1) + "," + y(value).toFixed(1) : null;
+          })
+          .filter(Boolean);
+        if (!points.length) return "";
+        return (
+          '<polyline class="trend-line" points="' +
+          points.join(" ") +
+          '"' +
+          (DASHES[keyIndex] ? ' stroke-dasharray="' + DASHES[keyIndex] + '"' : "") +
+          "></polyline>"
+        );
+      })
+      .join("");
+    var marker =
+      activeIndex >= 0
+        ? '<line class="trend-now" x1="' + x(activeIndex) + '" x2="' + x(activeIndex) + '" y1="' + pad.top + '" y2="' + (height - pad.bottom) + '"></line>'
+        : "";
+    var legend = keys
+      .map(function (key, keyIndex) {
+        return (
+          '<span class="trend-key"><svg viewBox="0 0 24 6" aria-hidden="true"><line x1="0" y1="3" x2="24" y2="3"' +
+          (DASHES[keyIndex] ? ' stroke-dasharray="' + DASHES[keyIndex] + '"' : "") +
+          "></line></svg>" +
+          escapeHtml(i18n.pick(axisByKey(key).label)) +
+          "</span>"
+        );
+      })
+      .join("");
+    container.innerHTML =
+      '<svg class="trend" viewBox="0 0 ' + width + " " + height + '" role="img" aria-label="' +
+      escapeHtml(t("history.trend")) +
+      '"><line class="trend-axis" x1="' + pad.left + '" x2="' + (width - pad.right) + '" y1="' + y(50) + '" y2="' + y(50) + '"></line>' +
+      lines +
+      marker +
+      "</svg>" +
+      '<div class="trend-legend">' + legend + "</div>";
+  }
+
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  // Eases between two score sets and calls draw on every frame.
+  function tweenScores(from, to, draw) {
+    if (!from || prefersReducedMotion()) {
+      draw(to);
+      return;
+    }
+    var start = performance.now();
+    var duration = 420;
+    function frame(now) {
+      var progress = Math.min(1, (now - start) / duration);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      var current = {};
+      Object.keys(to).forEach(function (key) {
+        var a = typeof from[key] === "number" && from[key] >= 0 ? from[key] : to[key];
+        var b = to[key];
+        current[key] = typeof b === "number" && b >= 0 ? Math.round(a + (b - a) * eased) : b;
+      });
+      draw(current);
+      if (progress < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
   function textareaControl(field) {
     return (
       '<label class="field" for="' +
@@ -380,10 +503,42 @@
       field.rows +
       '" maxlength="1200" placeholder="' +
       escapeHtml(i18n.pick(field.placeholder)) +
+      '" aria-describedby="leak-' +
+      field.key +
       '"></textarea><small data-count-for="' +
       field.key +
-      '">0 / 1200</small></label>'
+      '">0 / 1200</small><span class="leak" id="leak-' +
+      field.key +
+      '" role="status" hidden></span></label>'
     );
+  }
+
+  // Shows what in a text could identify someone; definite matches block publishing.
+  function renderLeaks(form, findingsByField) {
+    window.MindsetLens.fields.forEach(function (field) {
+      var node = form.querySelector("#leak-" + field.key);
+      var input = form.querySelector("#" + field.key);
+      if (!node) return;
+      var findings = findingsByField[field.key] || [];
+      var blocking = findings.some(function (item) {
+        return item.severity === "block";
+      });
+      node.hidden = !findings.length;
+      node.className = "leak" + (blocking ? " is-block" : "");
+      if (input) input.setAttribute("aria-invalid", String(blocking));
+      if (!findings.length) {
+        node.textContent = "";
+        return;
+      }
+      var kinds = findings
+        .map(function (item) {
+          return t("privacy." + item.kind);
+        })
+        .filter(function (label, index, list) {
+          return list.indexOf(label) === index;
+        });
+      node.textContent = t(blocking ? "privacy.block" : "privacy.warn", { what: kinds.join(", ") });
+    });
   }
 
   function renderForm(openHost, closedHost) {
@@ -519,7 +674,15 @@
   window.MindsetUi = {
     escapeHtml: escapeHtml,
     icon: icon,
+    fishGlyph: fishGlyph,
+    FISH_PATH: FISH_PATH,
     formatWhen: formatWhen,
+    relativeWhen: relativeWhen,
+    plainSummary: plainSummary,
+    badgeText: badgeText,
+    renderTrend: renderTrend,
+    tweenScores: tweenScores,
+    prefersReducedMotion: prefersReducedMotion,
     errorText: errorText,
     setStatus: setStatus,
     axisByKey: axisByKey,
@@ -531,6 +694,7 @@
     card: card,
     renderCards: renderCards,
     renderForm: renderForm,
+    renderLeaks: renderLeaks,
     renderDemoForm: renderDemoForm,
     demoOptions: demoOptions,
     collectDemo: collectDemo,

@@ -142,7 +142,7 @@
     for (var attempt = 0; attempt < 8; attempt += 1) {
       var counter = await db().get("counters/mindset", token);
       var number = counter ? counter.next : 1;
-      var docs = reading().buildDocuments(uid, number, texts, scores, true, now, now, demo);
+      var docs = reading().buildDocuments(uid, number, texts, scores, true, now, now, demo, "none");
       try {
         await db().create("mindsets", String(number), docs.publicDoc, token);
       } catch (error) {
@@ -158,12 +158,21 @@
       } catch (error) {
         // The number is already on the document; the next writer advances the counter.
       }
-      return { number: number, previous: null };
+      return { number: number, previous: null, publicDoc: docs.publicDoc };
     }
     throw lastError || new Error("Couldn't allocate a number.");
   }
 
-  async function publish(session, texts, scores, demo) {
+  function writeVersion(publicDoc, token) {
+    return db().create(
+      "mindsets/" + publicDoc.number + "/versions",
+      reading().versionId(publicDoc.updatedAt),
+      reading().buildVersion(publicDoc),
+      token
+    );
+  }
+
+  async function publish(session, texts, scores, demo, alias) {
     var token = session.idToken;
     var now = new Date().toISOString();
     var existing = await findOwn(session.uid, token);
@@ -180,18 +189,34 @@
         true,
         existing.publicDoc.createdAt,
         now,
-        demo
+        demo,
+        existing.publicDoc.history
       );
       await db().update("mindsets/" + number, docs.publicDoc, token);
       await writePrivate(number, docs.privateDoc, token, Boolean(existing.privateDoc));
       await ensureOwner(session.uid, number, token);
       saved = {
         number: number,
-        previous: placementOf(existing.publicDoc, existing.privateDoc)
+        previous: placementOf(existing.publicDoc, existing.privateDoc),
+        publicDoc: docs.publicDoc
       };
     }
 
     var warning = false;
+    try {
+      await writeVersion(saved.publicDoc, token);
+    } catch (error) {
+      warning = true;
+    }
+    var aliasFailed = null;
+    if (alias) {
+      try {
+        var current = await window.MindsetSocial.aliasOf(saved.number, token);
+        await window.MindsetSocial.setAlias(session, saved.number, alias, current && current.alias);
+      } catch (error) {
+        aliasFailed = error;
+      }
+    }
     try {
       await adjustStats(token, saved.previous, {
         published: true,
@@ -201,7 +226,52 @@
     } catch (error) {
       warning = true;
     }
-    return { number: saved.number, warning: warning };
+    return { number: saved.number, warning: warning, aliasError: aliasFailed };
+  }
+
+  async function setHistory(session, level) {
+    var existing = await findOwn(session.uid, session.idToken);
+    if (!existing) {
+      var error = new Error("No mindset.");
+      error.i18n = "common.needMindset";
+      throw error;
+    }
+    level = reading().historyLevel(level);
+    await db().update("mindsets/" + existing.publicDoc.id, { history: level }, session.idToken);
+    return level;
+  }
+
+  function versions(number, token) {
+    return db().runQuery(
+      {
+        from: [{ collectionId: "versions" }],
+        orderBy: [{ field: { fieldPath: "createdAt" }, direction: "ASCENDING" }],
+        limit: 120
+      },
+      token,
+      "mindsets/" + number
+    );
+  }
+
+  async function ensureFirstVersion(publicDoc, token) {
+    if (!publicDoc || !publicDoc.updatedAt) return false;
+    var rows = await versions(publicDoc.id, token);
+    if (rows.length) return false;
+    await writeVersion(publicDoc, token);
+    return true;
+  }
+
+  async function removeVersions(number, token) {
+    var rows = await versions(number, token);
+    var writes = db().writes;
+    for (var index = 0; index < rows.length; index += 400) {
+      await db().commit(
+        rows.slice(index, index + 400).map(function (row) {
+          return writes.remove("mindsets/" + number + "/versions/" + row.id);
+        }),
+        token
+      );
+    }
   }
 
   async function setPublished(session, published) {
@@ -243,6 +313,7 @@
       // Deleting continues even if the distribution can't be updated.
     }
     await window.MindsetSocial.cleanup(session, number);
+    await removeVersions(number, token);
     if (existing.privateDoc) await db().remove("privateMindsets/" + number, token);
     await db().remove("mindsets/" + number, token);
     await db().remove("owners/" + session.uid, token);
@@ -269,6 +340,18 @@
       orderBy: [{ field: { fieldPath: orderField }, direction: "DESCENDING" }],
       limit: options.limit || PAGE
     });
+  }
+
+  function recent(limit, token) {
+    return db().runQuery(
+      {
+        from: [{ collectionId: "mindsets" }],
+        where: publishedFilter(),
+        orderBy: [{ field: { fieldPath: "updatedAt" }, direction: "DESCENDING" }],
+        limit: limit || PAGE
+      },
+      token
+    );
   }
 
   async function byNumbers(numbers, token) {
@@ -337,7 +420,11 @@
     findOwn: findOwn,
     publish: publish,
     setPublished: setPublished,
+    setHistory: setHistory,
+    versions: versions,
+    ensureFirstVersion: ensureFirstVersion,
     remove: remove,
+    recent: recent,
     listPublic: listPublic,
     byNumbers: byNumbers,
     similar: similar,

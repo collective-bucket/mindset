@@ -8,14 +8,14 @@
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="tribe" data-title="tribe.title">
+<body data-tab="me" data-title="tribe.title">
   <main class="page">
-    <div class="page-head">
+    <div class="head">
       <h1 data-i18n="tribe.title">Tribe</h1>
-      <a class="btn btn-ghost btn-small" href="/following" data-i18n="tribe.followingLink">Following</a>
+      <a class="head-side" href="/following" data-i18n="following.title">Net</a>
     </div>
-    <p class="lead" data-i18n="tribe.lead">A tribe is mutual: you invite, they accept. Following needs no approval.</p>
-    <p id="page-status" class="status" hidden></p>
+    <p class="lead" data-i18n="tribe.lead">Your school of fish. It is mutual: you invite with their alias, they accept. Members see each other's aliases.</p>
+    <p id="page-status" class="status" role="status" hidden></p>
     <p id="login-hint" hidden><a id="login-link" class="btn btn-primary" href="/login" data-i18n="top.signIn">Sign in</a></p>
 
     <div id="tribe-body" hidden>

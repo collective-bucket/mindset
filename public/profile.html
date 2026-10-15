@@ -5,43 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
   <title>mindset</title>
-  <meta name="description" content="A public mindset profile." />
+  <meta name="description" content="A mind in the bucket. Only its number is public." />
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body data-tab="">
   <main class="page">
-    <p id="page-status" class="status" hidden></p>
+    <p id="page-status" class="status" role="status" hidden></p>
 
-    <section id="profile" class="profile" hidden>
-      <div class="profile-head">
-        <div id="avatar"></div>
-        <div class="profile-id">
-          <h1 id="title">mindset</h1>
+    <section id="profile" hidden>
+      <div class="head">
+        <div>
+          <p class="eyebrow" data-i18n="profile.fish">Fish</p>
+          <h1 id="title" class="number">mindset</h1>
           <p id="alias" class="alias" hidden></p>
         </div>
+        <span class="head-side" id="meta"></span>
       </div>
-      <div id="badges" class="badges"></div>
+      <p id="badges" class="meta"></p>
       <p id="summary" class="summary"></p>
-      <p id="meta" class="meta"></p>
 
-      <div class="profile-actions">
-        <button type="button" id="follow" class="btn btn-primary" hidden data-i18n="profile.follow">Follow</button>
-        <button type="button" id="tribe" class="btn btn-ghost" hidden data-i18n="profile.addTribe">Add to tribe</button>
-        <button type="button" id="share" class="btn btn-ghost" data-i18n="profile.share">Share</button>
-        <a id="edit" class="btn btn-ghost" href="/new" hidden data-i18n="profile.edit">Edit</a>
-        <a id="manage" class="btn btn-ghost" href="/me" hidden data-i18n="profile.manage">Manage</a>
+      <div class="actions">
+        <button type="button" id="follow" class="btn btn-primary" hidden aria-pressed="false" data-i18n="profile.follow">Hook</button>
+        <button type="button" id="tribe" class="btn" hidden data-i18n="profile.addTribe">Invite to tribe</button>
+        <button type="button" id="share" class="btn" data-i18n="profile.share">Share</button>
+        <a id="edit" class="btn" href="/new" hidden data-i18n="profile.edit">Edit</a>
+        <a id="manage" class="btn" href="/me" hidden data-i18n="profile.manage">Manage</a>
       </div>
-      <p id="action-status" class="status" hidden></p>
 
-      <div id="radar"></div>
-      <div id="bars" class="panel"></div>
+      <form id="invite-form" class="invite" hidden novalidate>
+        <label class="field" for="invite-alias"><span data-i18n="invite.label">Their alias</span>
+          <span class="prefix-input"><span aria-hidden="true">@</span><input id="invite-alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" aria-describedby="invite-hint" /></span>
+        </label>
+        <small id="invite-hint" class="hint" data-i18n="invite.hint">You can only invite someone whose alias you know.</small>
+        <div class="actions">
+          <button type="submit" class="btn btn-primary" data-i18n="invite.send">Send invite</button>
+          <button type="button" id="invite-cancel" class="btn" data-i18n="common.cancel">Cancel</button>
+        </div>
+      </form>
+      <p id="action-status" class="status" role="status" hidden></p>
+
+      <section id="timeline" class="section" hidden>
+        <h2 data-i18n="history.timeline">Change over time</h2>
+        <div id="trend"></div>
+        <label class="field timeline-field" for="timeline-range">
+          <span class="timeline-when"><span id="timeline-when"></span><span id="timeline-count" class="hint"></span></span>
+          <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
+        </label>
+        <p id="timeline-note" class="hint"></p>
+      </section>
+
+      <section class="section">
+        <div id="radar"></div>
+        <div id="bars"></div>
+      </section>
       <div id="texts" class="posts"></div>
-      <p class="fineprint" data-i18n="common.notTest">This is not a test result. It's an approximate reading.</p>
     </section>
 
     <section id="similar-section" class="section" hidden>
-      <h2 data-i18n="profile.similar">Similar mindsets</h2>
+      <h2 data-i18n="profile.similar">Fish nearby</h2>
       <div id="similar" class="feed"></div>
     </section>
   </main>

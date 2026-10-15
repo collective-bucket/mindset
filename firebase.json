@@ -16,7 +16,8 @@
     "redirects": [
       { "source": "/m/:number", "destination": "/i/:number", "type": 301 },
       { "source": "/yeni", "destination": "/new", "type": 301 },
-      { "source": "/liste", "destination": "/explore", "type": 301 },
+      { "source": "/liste", "destination": "/hunt", "type": 301 },
+      { "source": "/explore", "destination": "/hunt", "type": 301 },
       { "source": "/ben", "destination": "/me", "type": 301 }
     ],
     "rewrites": [

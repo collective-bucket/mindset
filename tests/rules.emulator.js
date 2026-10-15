@@ -165,47 +165,45 @@ async function expect(label, status, wanted) {
   await expect("alice cannot read bob's follows", await get("follows/bob/items/1", "alice"), 403);
   await expect("follow id must match number", await commit("bob", [w.set("follows/bob/items/3", { number: 1, createdAt: NOW })]), 403);
 
-  await expect(
-    "alice sets tribe-only alias",
-    await commit("alice", [
-      w.set("aliases/alice", { ownerUid: "alice", number: 1, visibility: "tribe" }),
-      w.set("aliasOf/1", { ownerUid: "alice", alias: "alice", visibility: "tribe" }),
-      w.patch("mindsets/1", { alias: "" })
-    ]),
-    "ok"
-  );
-  await expect("tribe-only alias hidden from bob", await get("aliases/alice", "bob"), 403);
-  await expect("tribe-only aliasOf hidden from anonymous", await get("aliasOf/1"), 403);
+  function setAlias(uid, number, alias) {
+    return commit(uid, [
+      w.set("aliases/" + alias, { ownerUid: uid, number: number }),
+      w.set("aliasOf/" + number, { ownerUid: uid, alias: alias })
+    ]);
+  }
+
+  await expect("alice sets alias", await setAlias("alice", 1, "alicefish"), "ok");
+  await expect("bob sets alias", await setAlias("bob", 2, "bobfish"), "ok");
+  await expect("carol sets alias", await setAlias("carol", 3, "carolfish"), "ok");
+  await expect("alias hidden from outsiders", await get("aliases/alicefish", "bob"), 403);
+  await expect("aliasOf hidden from anonymous", await get("aliasOf/1"), 403);
+  await expect("owner reads own alias", await get("aliases/alicefish", "alice"), "ok");
   await expect("missing alias reads as 404", await get("aliases/nobody"), 404);
-  await expect("tribe-only alias cannot go on public doc", await commit("alice", [w.patch("mindsets/1", { alias: "alice" })]), 403);
-  await expect(
-    "bob cannot take alice's alias",
-    await commit("bob", [
-      w.set("aliases/alice", { ownerUid: "bob", number: 2, visibility: "public" }),
-      w.set("aliasOf/2", { ownerUid: "bob", alias: "alice", visibility: "public" })
-    ]),
-    403
-  );
+  await expect("alias never on the public doc", await commit("alice", [w.patch("mindsets/1", { alias: "alicefish" })]), 403);
+  await expect("public visibility field rejected", await commit("carol", [
+    w.set("aliases/carolfish", { ownerUid: "carol", number: 3, visibility: "public" }),
+    w.set("aliasOf/3", { ownerUid: "carol", alias: "carolfish" })
+  ]), 403);
+  await expect("bob cannot take alice's alias", await setAlias("bob", 2, "alicefish"), 403);
   await expect(
     "alias needs matching aliasOf in the same batch",
-    await commit("bob", [w.set("aliases/bobby", { ownerUid: "bob", number: 2, visibility: "public" })]),
+    await commit("bob", [w.set("aliases/bobby", { ownerUid: "bob", number: 2 })]),
     403
   );
-  await expect(
-    "carol sets public alias",
-    await commit("carol", [
-      w.set("aliases/carol", { ownerUid: "carol", number: 3, visibility: "public" }),
-      w.set("aliasOf/3", { ownerUid: "carol", alias: "carol", visibility: "public" }),
-      w.patch("mindsets/3", { alias: "carol" })
-    ]),
-    "ok"
-  );
-  await expect("public alias readable by anyone", await get("aliases/carol"), "ok");
+  await expect("mindhunter reserved for mindset 1", await setAlias("bob", 2, "mindhunter"), 403);
+  await expect("bob back to his alias", await setAlias("bob", 2, "bobfish"), "ok");
 
-  var request = { from: "bob", to: "alice", fromNumber: 2, toNumber: 1, createdAt: NOW };
-  await expect("bob invites alice", await commit("bob", [w.create("tribeRequests/bob_alice", request)]), "ok");
-  await expect("forged request denied", await commit("carol", [w.create("tribeRequests/bob_carol", Object.assign({}, request, { to: "carol", toNumber: 3 }))]), 403);
-  await expect("request with someone else's number denied", await commit("bob", [w.create("tribeRequests/bob_carol", { from: "bob", to: "carol", fromNumber: 1, toNumber: 3, createdAt: NOW })]), 403);
+  var request = { from: "bob", to: "alice", fromNumber: 2, toNumber: 1, alias: "alicefish", createdAt: NOW };
+  await expect("invite without alias denied", await commit("bob", [w.create("tribeRequests/bob_alice", (function () {
+    var copy = Object.assign({}, request);
+    delete copy.alias;
+    return copy;
+  })())]), 403);
+  await expect("invite with wrong alias denied", await commit("bob", [w.create("tribeRequests/bob_alice", Object.assign({}, request, { alias: "carolfish" }))]), 403);
+  await expect("invite with unknown alias denied", await commit("bob", [w.create("tribeRequests/bob_alice", Object.assign({}, request, { alias: "ghostfish" }))]), 403);
+  await expect("bob invites alice with her alias", await commit("bob", [w.create("tribeRequests/bob_alice", request)]), "ok");
+  await expect("forged request denied", await commit("carol", [w.create("tribeRequests/bob_carol", Object.assign({}, request, { to: "carol", toNumber: 3, alias: "carolfish" }))]), 403);
+  await expect("request with someone else's number denied", await commit("bob", [w.create("tribeRequests/bob_carol", { from: "bob", to: "carol", fromNumber: 1, toNumber: 3, alias: "carolfish", createdAt: NOW })]), 403);
   await expect("carol cannot read bob->alice request", await get("tribeRequests/bob_alice", "carol"), 403);
   await expect("alice reads incoming request", await get("tribeRequests/bob_alice", "alice"), "ok");
   await expect("bob cannot self-join alice's tribe", await commit("bob", [w.create("tribes/alice/members/bob", { uid: "bob", number: 2, since: NOW })]), 403);
@@ -220,9 +218,35 @@ async function expect(label, status, wanted) {
     "ok"
   );
   await expect("request gone after accept", await get("tribeRequests/bob_alice", "alice"), 404);
-  await expect("tribe member sees tribe-only alias", await get("aliases/alice", "bob"), "ok");
+  await expect("tribe member sees alias", await get("aliases/alicefish", "bob"), "ok");
   await expect("tribe member sees aliasOf", await get("aliasOf/1", "bob"), "ok");
-  await expect("outsider still blocked", await get("aliases/alice", "carol"), 403);
+  await expect("outsider still blocked", await get("aliases/alicefish", "carol"), 403);
+
+  function version(uid, number, extra) {
+    var doc = mindset(uid, number, extra);
+    ["numberKey", "published", "updatedAt", "bucket"].forEach(function (key) {
+      delete doc[key];
+    });
+    return doc;
+  }
+  var versionPath = "mindsets/1/versions/20261015000000000";
+  await expect("alice writes a version", await commit("alice", [w.create(versionPath, version("alice", 1))]), "ok");
+  await expect("bob cannot write alice's version", await commit("bob", [w.create("mindsets/1/versions/20261015000000001", version("bob", 1))]), 403);
+  await expect("version with closed text denied", await commit("alice", [w.create("mindsets/1/versions/20261015000000002", version("alice", 1, { desireScript: "x" }))]), 403);
+  await expect("versions are immutable", await commit("alice", [w.set(versionPath, version("alice", 1, { personalCode: "Changed." }))]), 403);
+  await expect("history none: tribe member blocked", await get(versionPath, "bob"), 403);
+  await expect("history none: owner reads", await get(versionPath, "alice"), "ok");
+  await expect("bad history level denied", await commit("alice", [w.patch("mindsets/1", { history: "friends" })]), 403);
+  await expect("alice opens history to tribe", await commit("alice", [w.patch("mindsets/1", { history: "tribe" })]), "ok");
+  await expect("history tribe: member reads", await get(versionPath, "bob"), "ok");
+  await expect("history tribe: outsider blocked", await get(versionPath, "carol"), 403);
+  await expect("history tribe: anonymous blocked", await get(versionPath), 403);
+  await expect("alice opens history to everyone", await commit("alice", [w.patch("mindsets/1", { history: "public" })]), "ok");
+  await expect("history public: anonymous reads", await get(versionPath), "ok");
+  await expect("history public: list versions", await call("POST", ROOT + "/mindsets/1:runQuery", null, { structuredQuery: { from: [{ collectionId: "versions" }] } }), "ok");
+  await expect("unpublished hides history", await commit("alice", [w.patch("mindsets/1", { published: false })]), "ok");
+  await expect("history public but unpublished: blocked", await get(versionPath, "carol"), 403);
+  await expect("alice republishes", await commit("alice", [w.patch("mindsets/1", { published: true, history: "none" })]), "ok");
   await expect("member reads tribe list", await call("POST", ROOT + "/tribes/alice:runQuery", "bob", { structuredQuery: { from: [{ collectionId: "members" }] } }), "ok");
   await expect("outsider cannot read tribe list", await call("POST", ROOT + "/tribes/alice:runQuery", "carol", { structuredQuery: { from: [{ collectionId: "members" }] } }), 403);
   await expect("no duplicate request once in tribe", await commit("bob", [w.create("tribeRequests/bob_alice", request)]), 403);
@@ -238,7 +262,16 @@ async function expect(label, status, wanted) {
     await commit("bob", [w.remove("tribes/bob/members/alice"), w.remove("tribes/alice/members/bob")]),
     "ok"
   );
-  await expect("alias hidden again after leaving", await get("aliases/alice", "bob"), 403);
+  await expect("alias hidden again after leaving", await get("aliases/alicefish", "bob"), 403);
+  await expect(
+    "owner of mindset 1 can take mindhunter",
+    await commit("alice", [
+      w.remove("aliases/alicefish"),
+      w.set("aliases/mindhunter", { ownerUid: "alice", number: 1 }),
+      w.set("aliasOf/1", { ownerUid: "alice", alias: "mindhunter" })
+    ]),
+    "ok"
+  );
 
   console.log(results.join("\n"));
   console.log("rules.emulator.js passed (" + results.length + " checks)");

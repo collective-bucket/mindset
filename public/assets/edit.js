@@ -3,6 +3,8 @@
 
   var ui = window.MindsetUi;
   var store = window.MindsetStore;
+  var social = window.MindsetSocial;
+  var privacy = window.MindsetPrivacy;
   var math = window.MindsetReading;
   var i18n = window.MindsetI18n;
   var t = i18n.t;
@@ -15,24 +17,75 @@
     var dialog = document.querySelector("#publish-dialog");
     var readButton = document.querySelector("#read");
     var publishButton = document.querySelector("#publish");
+    var aliasSection = document.querySelector("#alias-section");
+    var aliasInput = document.querySelector("#alias");
     var reading = null;
     var dirty = true;
     var existingNumber = null;
+    var needsAlias = true;
+    var findings = {};
 
     ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
     ui.renderDemoForm(document.querySelector("#demo-fields"));
     ui.closeOnBackdrop(dialog);
     document.querySelector("#login-link").href = ui.loginHref();
 
+    function isTextField(id) {
+      return window.MindsetLens.fields.some(function (field) {
+        return field.key === id;
+      });
+    }
+
+    function scanField(id) {
+      var input = form.querySelector("#" + id);
+      var found = privacy.scan(input ? input.value : "");
+      if (found.length) findings[id] = found;
+      else delete findings[id];
+      ui.renderLeaks(form, findings);
+    }
+
     form.addEventListener("input", function (event) {
       var id = event.target && event.target.id;
-      if (window.MindsetLens.fields.some(function (field) { return field.key === id; })) {
-        dirty = true;
-        reading = null;
-        preview.hidden = true;
-        ui.updateCount(form, id);
-      }
+      if (!isTextField(id)) return;
+      dirty = true;
+      reading = null;
+      preview.hidden = true;
+      ui.updateCount(form, id);
+      scanField(id);
     });
+
+    function firstBlockingField() {
+      return window.MindsetLens.fields.find(function (field) {
+        return privacy.blocks(findings[field.key] || []);
+      });
+    }
+
+    function guardPrivacy() {
+      window.MindsetLens.fields.forEach(function (field) {
+        scanField(field.key);
+      });
+      var blocking = firstBlockingField();
+      if (!blocking) return true;
+      ui.setStatus(status, t("privacy.blocked"), "error");
+      var input = form.querySelector("#" + blocking.key);
+      if (input) input.focus();
+      return false;
+    }
+
+    async function checkAlias() {
+      if (!needsAlias) return "";
+      var value = social.cleanAlias(aliasInput.value);
+      if (!social.ALIAS_PATTERN.test(value)) {
+        aliasInput.focus();
+        throw Object.assign(new Error("alias"), { i18n: "me.aliasInvalid" });
+      }
+      var session = await store.getOptionalSession();
+      if (session && !(await social.aliasFree(value, session))) {
+        aliasInput.focus();
+        throw Object.assign(new Error("alias"), { i18n: "me.aliasTaken" });
+      }
+      return value;
+    }
 
     function showPreview(scores) {
       var label = existingNumber || t("common.preview");
@@ -59,6 +112,7 @@
 
     readButton.addEventListener("click", function () {
       loginHint.hidden = true;
+      if (!guardPrivacy()) return;
       runRead()
         .catch(function (error) {
           ui.setStatus(status, ui.errorText(error, "error.read_failed"), "error");
@@ -71,9 +125,12 @@
 
     publishButton.addEventListener("click", function () {
       loginHint.hidden = true;
+      if (!guardPrivacy()) return;
       publishButton.disabled = true;
-      var prepare = !reading || dirty ? runRead() : Promise.resolve(ui.collectTexts(form));
-      prepare
+      checkAlias()
+        .then(function () {
+          return !reading || dirty ? runRead() : ui.collectTexts(form);
+        })
         .then(function () {
           dialog.showModal();
         })
@@ -95,16 +152,19 @@
         ui.setStatus(status, ui.errorText(error), "error");
         return;
       }
+      if (!guardPrivacy()) return;
       var demo = ui.collectDemo(form);
+      var alias = needsAlias ? social.cleanAlias(aliasInput.value) : "";
       publishButton.disabled = true;
       ui.setStatus(status, t("common.saving"));
       store
         .requireSession()
         .then(function (session) {
-          return store.publish(session, texts, reading, demo);
+          return store.publish(session, texts, reading, demo, alias);
         })
         .then(function (result) {
-          if (result.warning) sessionStorage.setItem("mindset-warning", "create.publishWarning");
+          if (result.aliasError) sessionStorage.setItem("mindset-warning", "create.aliasWarning");
+          else if (result.warning) sessionStorage.setItem("mindset-warning", "create.publishWarning");
           window.location.assign("/i/" + result.number);
         })
         .catch(function (error) {
@@ -114,14 +174,21 @@
         });
     });
 
+    function setNeedsAlias(value) {
+      needsAlias = value;
+      aliasSection.hidden = !value;
+      aliasInput.required = value;
+    }
+
     store
       .getOptionalSession()
-      .then(function (session) {
-        return session ? store.findOwn(session.uid, session.idToken) : null;
-      })
-      .then(function (own) {
+      .then(async function (session) {
+        if (!session) return;
+        var own = await store.findOwn(session.uid, session.idToken);
         if (!own) return;
         existingNumber = own.publicDoc.id;
+        var entry = await social.aliasOf(existingNumber, session.idToken);
+        setNeedsAlias(!(entry && entry.alias));
         document.querySelector("#heading").textContent = t("create.edit", { n: existingNumber });
         var privateDoc = own.privateDoc || {};
         ui.fillTexts(form, {
@@ -133,6 +200,9 @@
           disownedSelf: privateDoc.disownedSelf
         });
         ui.fillDemo(form, math.demoOf(own.publicDoc, own.privateDoc));
+        window.MindsetLens.fields.forEach(function (field) {
+          scanField(field.key);
+        });
         var scores = math.scoresOf(own.publicDoc);
         var closed = math.scoresOf(own.privateDoc);
         math.CLOSED_KEYS.forEach(function (key) {
@@ -150,6 +220,7 @@
         ui.setStatus(status, ui.errorText(error), "error");
       });
 
+    setNeedsAlias(true);
     window.MindsetLens.fields.forEach(function (field) {
       ui.updateCount(form, field.key);
     });

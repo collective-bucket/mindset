@@ -1,6 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="mindset">
-  <rect width="64" height="64" rx="16" fill="#5b4bdb"/>
-  <polygon points="32,12 52,32 32,52 12,32" fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
-  <polygon points="32,18 45,32 32,40 21,32" fill="#ffffff"/>
-  <circle cx="32" cy="32" r="3" fill="#5b4bdb"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="16" fill="#ffffff"/>
+  <g fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 34c6-10 18-13 28-6-5 9-18 12-28 6z"/>
+    <path d="M38 28l10-7-2 11 2 11-10-8"/>
+    <path d="M10 48c4-3 8-3 12 0s8 3 12 0 8-3 12 0"/>
+  </g>
+  <circle cx="18" cy="31" r="2" fill="#141414"/>
 </svg>

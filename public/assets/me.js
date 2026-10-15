@@ -11,9 +11,10 @@
   document.addEventListener("DOMContentLoaded", function () {
     var status = document.querySelector("#page-status");
     var aliasStatus = document.querySelector("#alias-status");
+    var historyStatus = document.querySelector("#history-status");
     var aliasForm = document.querySelector("#alias-form");
     var aliasInput = document.querySelector("#alias");
-    var aliasRemove = document.querySelector("#alias-remove");
+    var aliasLine = document.querySelector("#alias-line");
     var dialog = document.querySelector("#delete-dialog");
     var session = null;
     var current = null;
@@ -48,12 +49,10 @@
       if (!own) return;
       var doc = own.publicDoc;
       var number = doc.id;
-      document.querySelector("#avatar").innerHTML = ui.avatar(number, "lg");
-      document.querySelector("#title").textContent = t("common.mindset", { n: number });
+      document.querySelector("#title").textContent = number;
       var when = ui.formatWhen(doc.updatedAt);
       document.querySelector("#meta").textContent =
-        t(doc.published ? "me.published" : "me.unpublished") +
-        (when ? " · " + t("common.lastRead", { date: when }) : "");
+        t(doc.published ? "me.published" : "me.unpublished") + (when ? " · " + when : "");
       var scores = math.scoresOf(doc);
       var closed = math.scoresOf(own.privateDoc);
       math.CLOSED_KEYS.forEach(function (key) {
@@ -66,14 +65,28 @@
       renderClosedTexts(own.privateDoc);
       document.querySelector("#toggle-publish").textContent = t(doc.published ? "me.unpublish" : "me.publish");
       document.querySelector("#profile-link").href = "/i/" + number;
+      var level = math.historyLevel(doc.history);
+      document.querySelector('input[name="history"][value="' + level + '"]').checked = true;
     }
 
-    function renderAlias(entry) {
-      currentAlias = (entry && entry.alias) || "";
+    function renderAlias(alias) {
+      currentAlias = alias || "";
       aliasInput.value = currentAlias;
-      var visibility = (entry && entry.visibility) || "tribe";
-      aliasForm.querySelector('input[value="' + visibility + '"]').checked = true;
-      aliasRemove.hidden = !currentAlias;
+      aliasLine.textContent = currentAlias ? "@" + currentAlias : t("alias.missing");
+      aliasLine.classList.toggle("is-missing", !currentAlias);
+      if (!currentAlias) ui.setStatus(aliasStatus, t("alias.required"), "error");
+    }
+
+    async function renderCounts() {
+      var results = await Promise.all([
+        social.incoming(session).catch(function () { return []; }),
+        social.members(session).catch(function () { return []; }),
+        social.followingNumbers(session).catch(function () { return []; })
+      ]);
+      var incoming = results[0].length;
+      document.querySelector("#tribe-count").textContent =
+        String(results[1].length) + (incoming ? " · " + t("me.requests", { n: incoming }) : "");
+      document.querySelector("#net-count").textContent = String(results[2].length);
     }
 
     async function load(notice) {
@@ -89,8 +102,14 @@
       document.querySelector("#email").textContent = t("me.signedInAs", { email: session.email });
       var own = await store.findOwn(session.uid, session.idToken);
       render(own);
-      if (own) renderAlias(await social.aliasOf(own.publicDoc.id, session.idToken));
+      if (own) {
+        var entry = await social.aliasOf(own.publicDoc.id, session.idToken);
+        renderAlias(entry && entry.alias);
+        renderCounts();
+        store.ensureFirstVersion(own.publicDoc, session.idToken).catch(function () {});
+      }
       ui.setStatus(status, notice ? t(notice) : "", notice ? "error" : "");
+      if (window.location.hash === "#about") document.querySelector("#about").scrollIntoView();
     }
 
     function fail(error) {
@@ -110,16 +129,12 @@
 
     aliasForm.addEventListener("submit", function (event) {
       event.preventDefault();
-      if (!current) {
-        ui.setStatus(aliasStatus, t("me.aliasNeedsMindset"), "error");
-        return;
-      }
-      var visibility = aliasForm.querySelector('input[name="visibility"]:checked').value;
+      if (!current) return;
       ui.setStatus(aliasStatus, t("common.saving"));
       social
-        .setAlias(session, current.publicDoc.id, aliasInput.value, visibility, currentAlias)
+        .setAlias(session, current.publicDoc.id, aliasInput.value, currentAlias)
         .then(function (saved) {
-          renderAlias({ alias: saved, visibility: visibility });
+          renderAlias(saved);
           ui.setStatus(aliasStatus, t("me.aliasSaved"));
         })
         .catch(function (error) {
@@ -127,16 +142,17 @@
         });
     });
 
-    aliasRemove.addEventListener("click", function () {
-      if (!current || !currentAlias) return;
-      social
-        .removeAlias(session, current.publicDoc.id, currentAlias)
-        .then(function () {
-          renderAlias(null);
-          ui.setStatus(aliasStatus, t("me.aliasRemoved"));
+    document.querySelector("#history-choices").addEventListener("change", function (event) {
+      if (!current || event.target.name !== "history") return;
+      ui.setStatus(historyStatus, t("common.saving"));
+      store
+        .setHistory(session, event.target.value)
+        .then(function (level) {
+          current.publicDoc.history = level;
+          ui.setStatus(historyStatus, t("history.saved." + level));
         })
         .catch(function (error) {
-          ui.setStatus(aliasStatus, ui.errorText(error), "error");
+          ui.setStatus(historyStatus, ui.errorText(error), "error");
         });
     });
 

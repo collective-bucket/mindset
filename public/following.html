@@ -8,11 +8,14 @@
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="tribe" data-title="following.title">
+<body data-tab="me" data-title="following.title">
   <main class="page">
-    <h1 data-i18n="following.title">Following</h1>
-    <p class="lead" data-i18n="following.lead">Like bookmarks. Nobody is notified.</p>
-    <p id="page-status" class="status" hidden></p>
+    <div class="head">
+      <h1 data-i18n="following.title">Net</h1>
+      <a class="head-side" href="/tribe" data-i18n="tribe.title">Tribe</a>
+    </div>
+    <p class="lead" data-i18n="following.lead">Fish you hooked. Like bookmarks: nobody is notified.</p>
+    <p id="page-status" class="status" role="status" hidden></p>
     <p id="login-hint" hidden><a id="login-link" class="btn btn-primary" href="/login" data-i18n="top.signIn">Sign in</a></p>
     <div id="following" class="list"></div>
   </main>

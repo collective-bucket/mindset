@@ -15,7 +15,7 @@
       '">' +
       ui.avatar(number, "sm") +
       "<span><strong>" +
-      ui.escapeHtml(t("common.mindset", { n: number })) +
+      ui.escapeHtml(number) +
       "</strong>" +
       (alias ? '<small class="alias">@' + ui.escapeHtml(alias) + "</small>" : "") +
       '</span></a><span class="person-actions">' +
@@ -23,7 +23,7 @@
         .map(function (action) {
           return (
             '<button type="button" class="btn btn-small ' +
-            (action.primary ? "btn-primary" : "btn-ghost") +
+            (action.primary ? "btn-primary" : "") +
             '" data-action="' +
             action.id +
             '">' +

@@ -136,23 +136,34 @@ service cloud.firestore {
         && data.get('country', '').matches('^([A-Z]{2})?$');
     }
 
-    // A public alias on the mindset must be backed by an alias document the
-    // writer owns and has marked public, evaluated after the whole batch.
-    function validPublicAlias(data) {
-      return data.get('alias', '') == ''
-        || (
-          aliasName(data.alias)
-          && getAfter(docPath('aliases', data.alias)).data.ownerUid == request.auth.uid
-          && getAfter(docPath('aliases', data.alias)).data.visibility == 'public'
-        );
+    function ownsMindsetAfter(number) {
+      return getAfter(docPath('mindsets', string(number))).data.ownerUid == request.auth.uid;
     }
 
+    function openScores(data) {
+      return score(data.agency)
+        && score(data.communion)
+        && score(data.codeClarity)
+        && score(data.redemption)
+        && data.known is list
+        && data.known.size() <= 4
+        && data.known.hasOnly(['agency', 'communion', 'codeClarity', 'redemption']);
+    }
+
+    function openTexts(data) {
+      return shortText(data.currentPosition)
+        && shortText(data.personalCode)
+        && data.personalCode.size() > 0
+        && shortText(data.selfNarrative);
+    }
+
+    // Aliases never sit on the public document; outsiders only ever see numbers.
     function validPublic(mindsetId) {
       let data = request.resource.data;
       return data.keys().hasOnly([
           'ownerUid', 'number', 'numberKey', 'published', 'createdAt', 'updatedAt',
           'lens', 'agency', 'communion', 'codeClarity', 'redemption', 'known', 'bucket',
-          'ageBand', 'gender', 'country', 'alias',
+          'ageBand', 'gender', 'country', 'history',
           'currentPosition', 'personalCode', 'selfNarrative'
         ])
         && data.ownerUid == request.auth.uid
@@ -164,21 +175,39 @@ service cloud.firestore {
         && data.lens in ['v1', 'v2']
         && isoTime(data.createdAt)
         && isoTime(data.updatedAt)
-        && score(data.agency)
-        && score(data.communion)
-        && score(data.codeClarity)
-        && score(data.redemption)
-        && data.known is list
-        && data.known.size() <= 4
-        && data.known.hasOnly(['agency', 'communion', 'codeClarity', 'redemption'])
+        && openScores(data)
         && data.bucket is string
         && data.bucket.matches('^[0-4u]{4}$')
         && validDemographics(data)
-        && validPublicAlias(data)
-        && shortText(data.currentPosition)
-        && shortText(data.personalCode)
-        && data.personalCode.size() > 0
-        && shortText(data.selfNarrative);
+        && data.get('history', 'none') in ['none', 'tribe', 'public']
+        && openTexts(data);
+    }
+
+    // A version is a frozen copy of the open side of one reading.
+    function validVersion(mindsetId, versionId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'ownerUid', 'number', 'createdAt', 'lens',
+          'agency', 'communion', 'codeClarity', 'redemption', 'known',
+          'ageBand', 'gender', 'country',
+          'currentPosition', 'personalCode', 'selfNarrative'
+        ])
+        && versionId.matches('^\\d{14,20}$')
+        && data.ownerUid == request.auth.uid
+        && data.number is int
+        && string(data.number) == mindsetId
+        && data.lens in ['v1', 'v2']
+        && isoTime(data.createdAt)
+        && openScores(data)
+        && validDemographics(data)
+        && openTexts(data);
+    }
+
+    function canSeeHistory(mindsetId) {
+      let parent = get(docPath('mindsets', mindsetId)).data;
+      return (signedIn() && parent.ownerUid == request.auth.uid)
+        || (parent.published == true && parent.get('history', 'none') == 'public')
+        || (parent.published == true && parent.get('history', 'none') == 'tribe' && inTribeOf(parent.ownerUid));
     }
 
     function validPrivate(privateId) {
@@ -221,6 +250,18 @@ service cloud.firestore {
         && validPublic(mindsetId);
 
       allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+
+      match /versions/{versionId} {
+        allow read: if canSeeHistory(mindsetId);
+
+        allow create: if signedIn()
+          && ownsMindsetAfter(mindsetId)
+          && validVersion(mindsetId, versionId);
+
+        allow update: if false;
+
+        allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      }
     }
 
     match /privateMindsets/{privateId} {
@@ -301,21 +342,21 @@ service cloud.firestore {
     }
 
     // Alias ids are the alias itself, so uniqueness comes from the document id.
+    // Only the owner and their tribe can read one; "mindhunter" belongs to mindset 1.
     match /aliases/{aliasId} {
       allow get: if resource == null
-        || resource.data.visibility == 'public'
         || (signedIn() && resource.data.ownerUid == request.auth.uid)
         || inTribeOf(resource.data.ownerUid);
       allow list: if false;
 
       allow create, update: if signedIn()
         && aliasName(aliasId)
+        && (aliasId != 'mindhunter' || request.resource.data.number == 1)
         && (resource == null || resource.data.ownerUid == request.auth.uid)
-        && request.resource.data.keys().hasOnly(['ownerUid', 'number', 'visibility'])
+        && request.resource.data.keys().hasOnly(['ownerUid', 'number'])
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.number is int
-        && request.resource.data.visibility in ['public', 'tribe']
-        && ownsMindset(request.resource.data.number)
+        && ownsMindsetAfter(request.resource.data.number)
         && getAfter(docPath('aliasOf', string(request.resource.data.number))).data.alias == aliasId;
 
       allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
@@ -323,7 +364,6 @@ service cloud.firestore {
 
     match /aliasOf/{numberId} {
       allow get: if resource == null
-        || resource.data.visibility == 'public'
         || (signedIn() && resource.data.ownerUid == request.auth.uid)
         || inTribeOf(resource.data.ownerUid);
       allow list: if false;
@@ -331,11 +371,10 @@ service cloud.firestore {
       allow create, update: if signedIn()
         && numberId.matches('^\\d+$')
         && (resource == null || resource.data.ownerUid == request.auth.uid)
-        && request.resource.data.keys().hasOnly(['ownerUid', 'alias', 'visibility'])
+        && request.resource.data.keys().hasOnly(['ownerUid', 'alias'])
         && request.resource.data.ownerUid == request.auth.uid
         && aliasName(request.resource.data.alias)
-        && request.resource.data.visibility in ['public', 'tribe']
-        && ownsMindset(numberId)
+        && ownsMindsetAfter(numberId)
         && getAfter(docPath('aliases', request.resource.data.alias)).data.ownerUid == request.auth.uid;
 
       allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
@@ -355,6 +394,7 @@ service cloud.firestore {
     }
 
     // Request ids are "{fromUid}_{toUid}". Uids are alphanumeric.
+    // An invite carries the invitee's alias: you can only invite someone whose alias you know.
     match /tribeRequests/{requestId} {
       allow get: if signedIn()
         && (
@@ -365,15 +405,18 @@ service cloud.firestore {
         && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
 
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'alias', 'createdAt'])
         && request.resource.data.from == request.auth.uid
         && request.resource.data.to is string
         && request.resource.data.to != request.auth.uid
         && requestId == request.resource.data.from + '_' + request.resource.data.to
         && request.resource.data.fromNumber is int
         && request.resource.data.toNumber is int
+        && aliasName(request.resource.data.alias)
         && ownsMindset(request.resource.data.fromNumber)
         && get(docPath('mindsets', string(request.resource.data.toNumber))).data.ownerUid == request.resource.data.to
+        && get(docPath('aliases', request.resource.data.alias)).data.ownerUid == request.resource.data.to
+        && get(docPath('aliases', request.resource.data.alias)).data.number == request.resource.data.toNumber
         && !exists(/databases/$(database)/documents/tribes/$(request.auth.uid)/members/$(request.resource.data.to))
         && isoTime(request.resource.data.createdAt);
 

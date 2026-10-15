@@ -12,7 +12,6 @@
     var session = null;
 
     function row(number, doc) {
-      var alias = doc && doc.alias;
       return (
         '<div class="person" data-number="' +
         number +
@@ -21,10 +20,10 @@
         '">' +
         ui.avatar(number, "sm") +
         "<span><strong>" +
-        ui.escapeHtml(t("common.mindset", { n: number })) +
+        ui.escapeHtml(number) +
         "</strong>" +
-        (alias ? '<small class="alias">@' + ui.escapeHtml(alias) + "</small>" : "") +
-        '</span></a><span class="person-actions"><button type="button" class="btn btn-small btn-ghost" data-unfollow>' +
+        (doc ? '<small class="hint">' + ui.escapeHtml(ui.plainSummary(doc)) + "</small>" : "") +
+        '</span></a><span class="person-actions"><button type="button" class="btn btn-small" data-unfollow>' +
         ui.escapeHtml(t("following.unfollow")) +
         "</button></span></div>"
       );

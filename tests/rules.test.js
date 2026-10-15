@@ -41,6 +41,17 @@ Object.keys(docs.privateDoc).forEach(function (key) {
 reading.CLOSED_TEXT_KEYS.concat(reading.CLOSED_KEYS, ["city"]).forEach(function (key) {
   assert.ok(publicAllowed.indexOf(key) < 0, "rules allow closed key on public doc: " + key);
 });
+assert.ok(publicAllowed.indexOf("alias") < 0, "aliases must never sit on the public doc");
+
+var versionAllowed = allowlist("validVersion");
+var version = reading.buildVersion(docs.publicDoc);
+Object.keys(version).forEach(function (key) {
+  assert.ok(versionAllowed.indexOf(key) >= 0, "version key not allowed by rules: " + key);
+});
+reading.CLOSED_TEXT_KEYS.concat(reading.CLOSED_KEYS, ["city", "alias"]).forEach(function (key) {
+  assert.ok(versionAllowed.indexOf(key) < 0, "rules allow closed key on a version: " + key);
+  assert.ok(!(key in version), "version carries closed key: " + key);
+});
 
 // The shared ads and trips rules stay first and untouched.
 assert.ok(rules.indexOf("match /ads/{adId}") > 0, "ads rules missing");

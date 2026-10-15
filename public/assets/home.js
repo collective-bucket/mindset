@@ -6,109 +6,99 @@
   var social = window.MindsetSocial;
   var t = window.MindsetI18n.t;
 
+  var LIMIT = 12;
+
+  function byUpdated(left, right) {
+    return String(right.updatedAt || "").localeCompare(String(left.updatedAt || ""));
+  }
+
+  function changeTag(doc) {
+    return t(doc.createdAt === doc.updatedAt ? "flow.new" : "flow.changed") + " · " + ui.relativeWhen(doc.updatedAt);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
-    var feed = document.querySelector("#feed");
     var status = document.querySelector("#feed-status");
-    var tabs = document.querySelectorAll("[data-feed]");
-    var session = null;
-    var own = null;
-    var cache = {};
-    var current = "latest";
+    document.querySelector("#hero-art").innerHTML = ui.icon("scene");
 
-    async function numbersFor(kind) {
-      if (kind === "following") return social.followingNumbers(session);
-      var rows = await social.members(session);
-      return rows.map(function (row) {
-        return row.number;
-      });
-    }
-
-    async function rowsFor(kind) {
-      if (kind === "latest") return store.listPublic({});
-      if (!session) return null;
-      var numbers = await numbersFor(kind);
-      return numbers.length ? store.byNumbers(numbers, session.idToken) : [];
-    }
-
-    function show(kind) {
-      current = kind;
-      tabs.forEach(function (tab) {
-        tab.setAttribute("aria-selected", String(tab.getAttribute("data-feed") === kind));
-      });
-      if (kind !== "latest" && !session) {
-        feed.innerHTML =
-          '<p class="empty"><a href="' + ui.loginHref() + '">' + ui.escapeHtml(t("feed.signInFor")) + "</a></p>";
-        ui.setStatus(status, "");
-        return;
-      }
-      if (cache[kind]) {
-        render(kind, cache[kind]);
-        return;
-      }
-      feed.innerHTML = "";
-      ui.setStatus(status, t("common.loading"));
-      rowsFor(kind)
-        .then(function (rows) {
-          cache[kind] = rows || [];
-          if (current === kind) render(kind, cache[kind]);
-          ui.setStatus(status, "");
+    async function aliasMap(numbers, token) {
+      var map = {};
+      await Promise.all(
+        numbers.map(function (number) {
+          return social.aliasOf(number, token).then(function (entry) {
+            if (entry && entry.alias) map[number] = entry.alias;
+          });
         })
-        .catch(function (error) {
-          ui.setStatus(status, ui.errorText(error), "error");
+      );
+      return map;
+    }
+
+    async function load() {
+      ui.setStatus(status, t("common.loading"));
+      var session = await store.getOptionalSession();
+      var own = session ? await store.findOwn(session.uid, session.idToken).catch(function () { return null; }) : null;
+      document.querySelector("#hero").hidden = Boolean(own);
+      if (own) {
+        document.querySelector("#mine-head").hidden = false;
+        document.querySelector("#mine").textContent = t("flow.youAre", { n: own.publicDoc.id });
+      }
+
+      var seen = {};
+      if (own) seen[own.publicDoc.id] = true;
+
+      if (session) {
+        var lists = await Promise.all([
+          social.members(session).catch(function () { return []; }),
+          social.followingNumbers(session).catch(function () { return []; })
+        ]);
+        var members = lists[0];
+        var tribeNumbers = members.map(function (row) { return Number(row.number); });
+        var sinceByNumber = {};
+        members.forEach(function (row) {
+          sinceByNumber[row.number] = row.since;
         });
-    }
+        var netNumbers = lists[1].filter(function (number) {
+          return tribeNumbers.indexOf(Number(number)) < 0;
+        });
+        var docs = await store.byNumbers(tribeNumbers.concat(netNumbers), session.idToken).catch(function () { return []; });
+        var aliases = tribeNumbers.length ? await aliasMap(tribeNumbers, session.idToken) : {};
+        var tribeDocs = docs.filter(function (doc) { return tribeNumbers.indexOf(Number(doc.id)) >= 0; }).sort(byUpdated);
+        var netDocs = docs.filter(function (doc) { return netNumbers.indexOf(Number(doc.id)) >= 0; }).sort(byUpdated);
 
-    function render(kind, rows) {
-      var empty = { latest: "feed.empty", following: "feed.emptyFollowing", tribe: "feed.emptyTribe" }[kind];
-      ui.renderCards(feed, rows, empty);
-    }
-
-    tabs.forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        show(tab.getAttribute("data-feed"));
-      });
-    });
-
-    async function loadSimilar() {
-      var exclude = {};
-      var follows = await social.followingNumbers(session);
-      var tribe = await social.members(session);
-      follows.forEach(function (number) {
-        exclude[number] = true;
-      });
-      tribe.forEach(function (row) {
-        exclude[row.number] = true;
-      });
-      var rows = await store.similar(own.publicDoc, { exclude: exclude, limit: 6 });
-      if (!rows.length) return;
-      document.querySelector("#similar-section").hidden = false;
-      ui.renderCards(document.querySelector("#similar"), rows);
-    }
-
-    store
-      .getOptionalSession()
-      .then(function (next) {
-        session = next;
-        return session ? store.findOwn(session.uid, session.idToken) : null;
-      })
-      .then(function (found) {
-        own = found;
-        document.querySelector("#hero").hidden = Boolean(own);
-        if (own) {
-          var number = own.publicDoc.id;
-          var mine = document.querySelector("#mine");
-          var link =
-            '<a href="/i/' + number + '">' + ui.escapeHtml(t("common.mindset", { n: number })) + "</a>";
-          mine.innerHTML = ui.escapeHtml(t("home.yours", { link: "\u0000" })).replace("\u0000", link);
-          mine.hidden = false;
-          return loadSimilar();
+        if (tribeNumbers.length) {
+          document.querySelector("#tribe-section").hidden = false;
+          ui.renderCards(document.querySelector("#tribe-feed"), tribeDocs.slice(0, LIMIT), "feed.emptyTribe", function (doc) {
+            var since = sinceByNumber[doc.id];
+            var joinedLater = since && since > doc.updatedAt;
+            return {
+              alias: aliases[doc.id],
+              tag: joinedLater ? t("flow.joined") + " · " + ui.relativeWhen(since) : changeTag(doc)
+            };
+          });
         }
-        return null;
-      })
-      .catch(function () {
-        document.querySelector("#hero").hidden = false;
-      });
+        if (netNumbers.length) {
+          document.querySelector("#net-section").hidden = false;
+          ui.renderCards(document.querySelector("#net-feed"), netDocs.slice(0, LIMIT), "feed.emptyFollowing", function (doc) {
+            return { tag: changeTag(doc) };
+          });
+        }
+        tribeNumbers.concat(netNumbers).forEach(function (number) {
+          seen[number] = true;
+        });
+      }
 
-    show("latest");
+      var recent = await store.recent(40, session && session.idToken);
+      var everyone = recent.filter(function (doc) {
+        return !seen[doc.id];
+      });
+      ui.renderCards(document.querySelector("#everyone-feed"), everyone.slice(0, 20), "feed.empty", function (doc) {
+        return { tag: changeTag(doc) };
+      });
+      ui.setStatus(status, "");
+    }
+
+    load().catch(function (error) {
+      document.querySelector("#hero").hidden = false;
+      ui.setStatus(status, ui.errorText(error), "error");
+    });
   });
 })();

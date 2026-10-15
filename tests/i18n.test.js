@@ -29,7 +29,7 @@ function scan(dir) {
       /data-title="([\w.]+)"/g,
       /\bt\("([\w.]+)"/g,
       /label: "([\w.]+)"/g,
-      /"((?:auth\.err|create|common|profile|me|feed|tribe|explore|error)\.[\w.]+)"/g
+      /"((?:auth\.err|create|common|profile|me|feed|tribe|explore|error|hunt|flow|history|privacy|alias|invite|bar|about|home|following)\.[\w]+(?:\.[\w]+)*)"/g
     ];
     patterns.forEach(function (pattern) {
       var match;
@@ -39,7 +39,7 @@ function scan(dir) {
 }
 scan(root);
 Object.keys(used).forEach(function (key) {
-  if (!/^[a-z]+\.[\w.]+$/.test(key)) return;
+  if (!/^[a-z]+\.[\w.]*\w$/.test(key)) return;
   assert.ok(key in i18n.dict.en, "missing i18n key " + key + " (" + path.relative(root, used[key]) + ")");
 });
 

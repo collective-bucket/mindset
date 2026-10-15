@@ -23,7 +23,7 @@ fs.readdirSync(assets)
     childProcess.execFileSync(process.execPath, ["--check", target], { stdio: "inherit" });
   });
 
-["reading.test.js", "i18n.test.js", "rules.test.js"].forEach(function (file) {
+["reading.test.js", "privacy.test.js", "i18n.test.js", "rules.test.js"].forEach(function (file) {
   childProcess.execFileSync(process.execPath, [path.join(__dirname, "..", "tests", file)], {
     stdio: "inherit"
   });

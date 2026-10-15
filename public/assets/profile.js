@@ -37,12 +37,17 @@
     var followButton = document.querySelector("#follow");
     var tribeButton = document.querySelector("#tribe");
     var shareButton = document.querySelector("#share");
+    var inviteForm = document.querySelector("#invite-form");
+    var inviteInput = document.querySelector("#invite-alias");
+    var range = document.querySelector("#timeline-range");
     var route = parsePath();
     var doc = null;
     var alias = "";
     var session = null;
     var following = false;
     var relation = "none";
+    var versions = [];
+    var shownScores = null;
 
     var warning = sessionStorage.getItem("mindset-warning");
     if (warning) {
@@ -50,14 +55,9 @@
       ui.setStatus(status, t(warning), "error");
     }
 
-    function shareUrl() {
-      var base = window.location.origin;
-      if (doc && doc.alias) return base + "/a/" + doc.alias;
-      return base + "/i/" + doc.id;
-    }
-
+    // Only the number travels outside; aliases stay inside the tribe.
     shareButton.addEventListener("click", function () {
-      var url = shareUrl();
+      var url = window.location.origin + "/i/" + doc.id;
       var title = t("common.mindset", { n: doc.id });
       if (navigator.share) {
         navigator.share({ title: title, text: title, url: url }).catch(function (error) {
@@ -80,32 +80,100 @@
       var node = document.querySelector("#alias");
       node.hidden = !alias;
       node.textContent = alias ? "@" + alias : "";
-      if (alias) document.title = "@" + alias + " · mindset";
+    }
+
+    function drawReading(scores, ghost) {
+      ui.renderRadar(document.querySelector("#radar"), scores, ghost);
+      ui.renderBars(document.querySelector("#bars"), scores, math.OPEN_KEYS);
+    }
+
+    function showReading(source, ghost) {
+      var next = math.scoresOf(source);
+      ui.tweenScores(shownScores, next, function (scores) {
+        drawReading(scores, ghost);
+      });
+      shownScores = next;
+    }
+
+    function renderTexts(source, compareTo) {
+      document.querySelector("#texts").innerHTML = window.MindsetLens.fields
+        .filter(function (field) {
+          return field.open && source[field.key];
+        })
+        .map(function (field) {
+          var changed = compareTo && compareTo[field.key] !== source[field.key];
+          return (
+            '<article class="post"><h3>' +
+            ui.escapeHtml(i18n.pick(field.label)) +
+            (changed ? ' <span class="tag">' + ui.escapeHtml(t("history.changedSince")) + "</span>" : "") +
+            "</h3><p>" +
+            ui.escapeHtml(source[field.key]) +
+            "</p></article>"
+          );
+        })
+        .join("");
     }
 
     function showProfile() {
-      var scores = math.scoresOf(doc);
       document.querySelector("#profile").hidden = false;
-      document.querySelector("#avatar").innerHTML = ui.avatar(doc.id, "lg");
-      document.querySelector("#title").textContent = t("common.mindset", { n: doc.id });
+      document.querySelector("#title").textContent = doc.id;
       document.title = t("common.mindset", { n: doc.id }) + " · mindset";
-      if (!alias && doc.alias) alias = doc.alias;
       renderAlias();
-      document.querySelector("#badges").innerHTML = ui.badges(doc);
-      var when = ui.formatWhen(doc.updatedAt);
-      document.querySelector("#meta").textContent =
-        t("common.approx") + (when ? " · " + t("common.lastRead", { date: when }) : "");
-      document.querySelector("#summary").textContent = math.summary(doc.id, scores, i18n.lang);
-      ui.renderRadar(document.querySelector("#radar"), scores);
-      ui.renderBars(document.querySelector("#bars"), scores, math.OPEN_KEYS);
-      ui.renderOpenTexts(document.querySelector("#texts"), doc);
+      document.querySelector("#badges").textContent = ui.badgeText(doc);
+      document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
+      document.querySelector("#summary").textContent = ui.plainSummary(doc);
+      showReading(doc);
+      renderTexts(doc);
       if (doc.published === false) ui.setStatus(status, t("profile.onlyYou"));
     }
+
+    function showVersion(index) {
+      var version = versions[index];
+      var last = index === versions.length - 1;
+      var source = last ? doc : version;
+      document.querySelector("#timeline-when").textContent = last
+        ? t("history.now")
+        : ui.formatWhen(version.createdAt);
+      document.querySelector("#timeline-count").textContent = t("history.position", {
+        i: index + 1,
+        n: versions.length
+      });
+      range.setAttribute("aria-valuetext", document.querySelector("#timeline-when").textContent);
+      document.querySelector("#summary").textContent = ui.plainSummary(Object.assign({ id: doc.id }, source));
+      showReading(source, last ? null : math.scoresOf(doc));
+      renderTexts(source, last ? null : doc);
+      document.querySelector("#timeline-note").textContent = last ? "" : t("history.ghost");
+      ui.renderTrend(document.querySelector("#trend"), versions, index);
+    }
+
+    async function loadHistory() {
+      try {
+        versions = await store.versions(doc.id, session && session.idToken);
+      } catch (error) {
+        versions = [];
+      }
+      if (!versions.length) return;
+      document.querySelector("#timeline").hidden = false;
+      range.max = String(versions.length - 1);
+      range.value = range.max;
+      range.disabled = versions.length < 2;
+      if (versions.length < 2) {
+        ui.renderTrend(document.querySelector("#trend"), versions, 0);
+        document.querySelector("#timeline-when").textContent = t("history.now");
+        document.querySelector("#timeline-note").textContent = t("history.single");
+        return;
+      }
+      showVersion(versions.length - 1);
+    }
+
+    range.addEventListener("input", function () {
+      showVersion(Number(range.value));
+    });
 
     function renderFollow() {
       followButton.hidden = false;
       followButton.textContent = t(following ? "profile.following" : "profile.follow");
-      followButton.className = "btn " + (following ? "btn-ghost" : "btn-primary");
+      followButton.className = "btn " + (following ? "" : "btn-primary");
       followButton.setAttribute("aria-pressed", String(following));
     }
 
@@ -119,7 +187,7 @@
       }[relation];
       tribeButton.textContent = t(key);
       tribeButton.disabled = relation === "member";
-      tribeButton.className = "btn " + (relation === "incoming" ? "btn-primary" : "btn-ghost");
+      tribeButton.className = "btn " + (relation === "incoming" ? "btn-primary" : "");
     }
 
     function needLogin() {
@@ -128,54 +196,68 @@
 
     followButton.addEventListener("click", function () {
       if (!session) return needLogin();
-      followButton.disabled = true;
-      var action = following ? social.unfollow(session, doc.id) : social.follow(session, doc.id);
-      action
+      following = !following;
+      renderFollow();
+      var action = following ? social.follow(session, doc.id) : social.unfollow(session, doc.id);
+      action.catch(function (error) {
+        following = !following;
+        renderFollow();
+        ui.setStatus(actionStatus, ui.errorText(error), "error");
+      });
+    });
+
+    function settle(action) {
+      tribeButton.disabled = true;
+      return action
         .then(function () {
-          following = !following;
-          renderFollow();
+          ui.setStatus(actionStatus, "");
         })
         .catch(function (error) {
           ui.setStatus(actionStatus, ui.errorText(error), "error");
         })
-        .finally(function () {
-          followButton.disabled = false;
-        });
-    });
+        .finally(renderTribe);
+    }
 
     tribeButton.addEventListener("click", function () {
       if (!session) return needLogin();
-      tribeButton.disabled = true;
-      var action;
       if (relation === "incoming") {
-        action = social.accept(session, doc.ownerUid).then(function () {
-          relation = "member";
-        });
+        settle(
+          social.accept(session, doc.ownerUid).then(function () {
+            relation = "member";
+          })
+        );
       } else if (relation === "outgoing") {
-        action = social.cancel(session, doc.ownerUid).then(function () {
-          relation = "none";
-        });
-      } else {
-        action = store.findOwn(session.uid, session.idToken).then(function (own) {
-          if (!own) {
-            var error = new Error("needs mindset");
-            error.i18n = "profile.tribeNeedsMindset";
-            throw error;
-          }
-          return social.invite(session, own.publicDoc.id, doc.ownerUid, doc.id).then(function () {
-            relation = "outgoing";
-          });
-        });
+        settle(
+          social.cancel(session, doc.ownerUid).then(function () {
+            relation = "none";
+          })
+        );
+      } else if (relation === "none") {
+        inviteForm.hidden = false;
+        inviteInput.focus();
       }
-      action
-        .then(function () {
-          ui.setStatus(actionStatus, "");
-          renderTribe();
+    });
+
+    document.querySelector("#invite-cancel").addEventListener("click", function () {
+      inviteForm.hidden = true;
+      tribeButton.focus();
+    });
+
+    inviteForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var typed = inviteInput.value;
+      settle(
+        store.findOwn(session.uid, session.idToken).then(function (own) {
+          if (!own) {
+            throw Object.assign(new Error("needs mindset"), { i18n: "profile.tribeNeedsMindset" });
+          }
+          return social.invite(session, own.publicDoc.id, doc.ownerUid, doc.id, typed).then(function () {
+            relation = "outgoing";
+            inviteForm.hidden = true;
+            inviteInput.value = "";
+          });
         })
-        .catch(function (error) {
-          ui.setStatus(actionStatus, ui.errorText(error), "error");
-          renderTribe();
-        });
+      );
     });
 
     async function loadSocial() {
@@ -242,7 +324,7 @@
       doc = found;
       showProfile();
       if (!session) session = await store.getOptionalSession();
-      await Promise.all([loadSocial(), loadSimilar()]);
+      await Promise.all([loadSocial(), loadSimilar(), loadHistory()]);
     }
 
     load().catch(function (error) {
