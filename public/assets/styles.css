@@ -501,6 +501,13 @@ input[type="checkbox"] {
   border-bottom: 0;
 }
 
+.entry .entry-headline {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
 .entry-head {
   display: flex;
   align-items: center;
@@ -1399,6 +1406,107 @@ input[type="checkbox"] {
   width: 64px;
   height: 48px;
   stroke-width: 1.4;
+}
+
+/* ---- Wizard / guide ---- */
+
+.wizard-steps {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 8px;
+  flex-wrap: wrap;
+}
+
+.wizard-step {
+  appearance: none;
+  border: var(--stroke) solid var(--hair);
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.wizard-step span {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wizard-step.is-active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.wizard-step.is-active span {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.wizard-step em {
+  font-style: normal;
+}
+
+.how-to-read {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: var(--stroke) solid var(--hair);
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.how-to-read summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+
+.how-to-read summary::-webkit-details-marker {
+  display: none;
+}
+
+.how-to-read[open] summary {
+  margin-bottom: 8px;
+}
+
+.how-to-read .plain-list {
+  margin: 8px 0;
+}
+
+.entry-headline {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: var(--stroke) dashed var(--hair);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+.suggest .hint {
+  margin: 0;
+  flex: 1 1 180px;
 }
 
 /* ---- Auth ---- */

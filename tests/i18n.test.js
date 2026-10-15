@@ -29,7 +29,7 @@ function scan(dir) {
       /data-title="([\w.]+)"/g,
       /\bt\("([\w.]+)"/g,
       /label: "([\w.]+)"/g,
-      /"((?:auth\.err|create|common|profile|me|feed|tribe|explore|error|hunt|flow|history|privacy|alias|invite|bar|about|home|following)\.[\w]+(?:\.[\w]+)*)"/g
+      /"((?:auth\.err|create|common|profile|me|feed|tribe|explore|error|hunt|flow|history|privacy|alias|invite|bar|about|home|following|guide)\.[\w]+(?:\.[\w]+)*)"/g
     ];
     patterns.forEach(function (pattern) {
       var match;

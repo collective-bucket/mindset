@@ -6,6 +6,7 @@
   var social = window.MindsetSocial;
   var privacy = window.MindsetPrivacy;
   var math = window.MindsetReading;
+  var demo = window.MindsetDemographics;
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
@@ -13,20 +14,27 @@
     var form = document.querySelector("#mindset-form");
     var status = document.querySelector("#form-status");
     var loginHint = document.querySelector("#login-hint");
-    var preview = document.querySelector("#preview");
     var dialog = document.querySelector("#publish-dialog");
     var readButton = document.querySelector("#read");
     var publishButton = document.querySelector("#publish");
+    var nextButton = document.querySelector("#next");
+    var backButton = document.querySelector("#back");
     var aliasSection = document.querySelector("#alias-section");
     var aliasInput = document.querySelector("#alias");
+    var suggestBox = document.querySelector("#demo-suggest");
+    var suggestText = document.querySelector("#demo-suggest-text");
+    var suggestApply = document.querySelector("#demo-suggest-apply");
     var reading = null;
     var dirty = true;
     var existingNumber = null;
     var needsAlias = true;
     var findings = {};
+    var step = 1;
+    var pendingSuggest = null;
 
     ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
     ui.renderDemoForm(document.querySelector("#demo-fields"));
+    document.querySelector("#preview-guide").innerHTML = ui.howToReadHtml(true);
     ui.closeOnBackdrop(dialog);
     document.querySelector("#login-link").href = ui.loginHref();
 
@@ -49,7 +57,6 @@
       if (!isTextField(id)) return;
       dirty = true;
       reading = null;
-      preview.hidden = true;
       ui.updateCount(form, id);
       scanField(id);
     });
@@ -88,12 +95,17 @@
     }
 
     function showPreview(scores) {
+      var texts = ui.collectTexts(form);
       var label = existingNumber || t("common.preview");
-      document.querySelector("#preview-summary").textContent = math.summary(label, scores, i18n.lang);
+      var headline = math.deriveHeadline(texts);
+      var blurb = math.deriveBlurb(label, texts, scores, i18n.lang);
+      var headlineNode = document.querySelector("#preview-headline");
+      headlineNode.textContent = headline;
+      headlineNode.hidden = !headline;
+      document.querySelector("#preview-summary").textContent = blurb;
       ui.renderRadar(document.querySelector("#preview-radar"), scores);
       ui.renderBars(document.querySelector("#preview-open"), scores, math.OPEN_KEYS);
       ui.renderBars(document.querySelector("#preview-closed"), scores, math.CLOSED_KEYS);
-      preview.hidden = false;
     }
 
     async function runRead() {
@@ -109,6 +121,95 @@
       ui.setStatus(status, t("create.ready"));
       return texts;
     }
+
+    function refreshSuggest() {
+      var texts = {};
+      try {
+        texts = ui.collectTexts(form);
+      } catch (error) {
+        texts = {};
+      }
+      var joined = [texts.currentPosition, texts.personalCode, texts.selfNarrative].join("\n");
+      var suggested = demo.suggestFromText(joined);
+      var current = ui.collectDemo(form);
+      var parts = [];
+      pendingSuggest = {};
+      ["ageBand", "gender", "country", "city"].forEach(function (key) {
+        if (suggested[key] && !current[key]) {
+          pendingSuggest[key] = suggested[key];
+          if (key === "gender") parts.push(t("gender." + suggested[key]));
+          else if (key === "country") parts.push(i18n.countryName(suggested[key]));
+          else parts.push(suggested[key]);
+        }
+      });
+      if (!parts.length) {
+        suggestBox.hidden = true;
+        pendingSuggest = null;
+        return;
+      }
+      suggestText.textContent = t("create.suggest", { what: parts.join(" · ") });
+      suggestBox.hidden = false;
+    }
+
+    suggestApply.addEventListener("click", function () {
+      if (!pendingSuggest) return;
+      var current = ui.collectDemo(form);
+      ui.fillDemo(form, Object.assign({}, current, pendingSuggest));
+      suggestBox.hidden = true;
+      pendingSuggest = null;
+    });
+
+    function go(next) {
+      step = next;
+      form.querySelectorAll(".wizard-pane").forEach(function (pane) {
+        pane.hidden = Number(pane.getAttribute("data-step")) !== step;
+      });
+      document.querySelectorAll(".wizard-step").forEach(function (button) {
+        var n = Number(button.getAttribute("data-go"));
+        button.classList.toggle("is-active", n === step);
+        if (n === step) button.setAttribute("aria-current", "step");
+        else button.removeAttribute("aria-current");
+      });
+      backButton.hidden = step === 1;
+      nextButton.hidden = step === 3;
+      readButton.hidden = step !== 3;
+      publishButton.hidden = step !== 3;
+      if (step === 2) refreshSuggest();
+      if (step === 3 && reading && !dirty) showPreview(reading);
+      window.scrollTo(0, 0);
+    }
+
+    document.querySelectorAll("[data-go]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        go(Number(button.getAttribute("data-go")));
+      });
+    });
+
+    backButton.addEventListener("click", function () {
+      go(Math.max(1, step - 1));
+    });
+
+    nextButton.addEventListener("click", function () {
+      if (step === 1) {
+        if (!guardPrivacy()) return;
+        try {
+          ui.collectTexts(form);
+        } catch (error) {
+          ui.setStatus(status, ui.errorText(error), "error");
+          return;
+        }
+        checkAlias()
+          .then(function () {
+            ui.setStatus(status, "");
+            go(2);
+          })
+          .catch(function (error) {
+            ui.setStatus(status, ui.errorText(error), "error");
+          });
+        return;
+      }
+      go(Math.min(3, step + 1));
+    });
 
     readButton.addEventListener("click", function () {
       loginHint.hidden = true;
@@ -153,14 +254,14 @@
         return;
       }
       if (!guardPrivacy()) return;
-      var demo = ui.collectDemo(form);
+      var demoValues = ui.collectDemo(form);
       var alias = needsAlias ? social.cleanAlias(aliasInput.value) : "";
       publishButton.disabled = true;
       ui.setStatus(status, t("common.saving"));
       store
         .requireSession()
         .then(function (session) {
-          return store.publish(session, texts, reading, demo, alias);
+          return store.publish(session, texts, reading, demoValues, alias);
         })
         .then(function (result) {
           if (result.aliasError) sessionStorage.setItem("mindset-warning", "create.aliasWarning");
@@ -208,7 +309,6 @@
         math.CLOSED_KEYS.forEach(function (key) {
           scores[key] = closed[key];
         });
-        // v1 readings used different poles; force a fresh read before republishing.
         if (own.publicDoc.lens === window.MindsetLens.version) {
           reading = scores;
           dirty = false;
@@ -221,6 +321,7 @@
       });
 
     setNeedsAlias(true);
+    go(1);
     window.MindsetLens.fields.forEach(function (field) {
       ui.updateCount(form, field.key);
     });

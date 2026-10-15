@@ -441,10 +441,20 @@
     function axisLabels() {
       var x = ui.axisByKey(axes.x);
       var y = ui.axisByKey(axes.y);
-      document.querySelector("#x-low").textContent = "← " + i18n.pick(x.lowLabel);
-      document.querySelector("#x-high").textContent = i18n.pick(x.highLabel) + " →";
-      document.querySelector("#y-high").textContent = "↑ " + i18n.pick(y.highLabel);
-      document.querySelector("#y-low").textContent = "↓ " + i18n.pick(y.lowLabel);
+      var xLow = document.querySelector("#x-low");
+      var xHigh = document.querySelector("#x-high");
+      var yHigh = document.querySelector("#y-high");
+      var yLow = document.querySelector("#y-low");
+      xLow.textContent = "← " + i18n.pick(x.lowLabel);
+      xHigh.textContent = i18n.pick(x.highLabel) + " →";
+      yHigh.textContent = "↑ " + i18n.pick(y.highLabel);
+      yLow.textContent = "↓ " + i18n.pick(y.lowLabel);
+      var xHint = ui.axisHint(x);
+      var yHint = ui.axisHint(y);
+      xLow.title = xHint;
+      xHigh.title = xHint;
+      yHigh.title = yHint;
+      yLow.title = yHint;
     }
 
     function fillAxisSelect(select, value) {
@@ -723,6 +733,11 @@
       cardDoc = doc;
       var mine = ownDoc && doc.id === ownDoc.id;
       document.querySelector("#card-number").textContent = doc.id;
+      var cardHeadline = document.querySelector("#card-headline");
+      if (cardHeadline) {
+        cardHeadline.textContent = doc.headline || "";
+        cardHeadline.hidden = !doc.headline;
+      }
       document.querySelector("#card-badges").textContent = ui.badgeText(doc);
       document.querySelector("#card-summary").textContent = ui.plainSummary(doc);
       document.querySelector("#card-quote").textContent = doc.personalCode || "";

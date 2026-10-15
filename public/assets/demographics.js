@@ -58,6 +58,68 @@
     return { ageBand: ageBand, gender: gender, country: country, city: city };
   }
 
+  // Soft hints from open text for the form only — never auto-written without Apply.
+  // Avoid \\b with Turkish letters — JS word boundaries are ASCII-only.
+  var CITY_HINTS = [
+    { city: "İstanbul", country: "TR", re: /(?:^|[^A-Za-z])(istanbul|İstanbul)(?![A-Za-z])/i },
+    { city: "Ankara", country: "TR", re: /(?:^|[^A-Za-z])ankara(?![A-Za-z])/i },
+    { city: "İzmir", country: "TR", re: /(?:^|[^A-Za-z])(izmir|İzmir)(?![A-Za-z])/i },
+    { city: "Bursa", country: "TR", re: /(?:^|[^A-Za-z])bursa(?![A-Za-z])/i },
+    { city: "Antalya", country: "TR", re: /(?:^|[^A-Za-z])antalya(?![A-Za-z])/i },
+    { city: "Berlin", country: "DE", re: /(?:^|[^A-Za-z])berlin(?![A-Za-z])/i },
+    { city: "München", country: "DE", re: /(?:^|[^A-Za-z])(munich|münih|muenchen|münchen)(?![A-Za-z])/i },
+    { city: "London", country: "GB", re: /(?:^|[^A-Za-z])(london|londra)(?![A-Za-z])/i },
+    { city: "Paris", country: "FR", re: /(?:^|[^A-Za-z])paris(?![A-Za-z])/i },
+    { city: "Amsterdam", country: "NL", re: /(?:^|[^A-Za-z])amsterdam(?![A-Za-z])/i },
+    { city: "New York", country: "US", re: /(?:^|[^A-Za-z])new\s*york(?![A-Za-z])/i },
+    { city: "Tokyo", country: "JP", re: /(?:^|[^A-Za-z])tokyo(?![A-Za-z])/i }
+  ];
+
+  var AGE_HINTS = [
+    { ageBand: "18-24", re: /\b(18|19|20|21|22|23|24)\s*(yaşında|yasinda|yaş|yas|y\.?o\.?|years?\s*old)\b/i },
+    { ageBand: "25-34", re: /\b(25|26|27|28|29|30|31|32|33|34)\s*(yaşında|yasinda|yaş|yas|y\.?o\.?|years?\s*old)\b/i },
+    { ageBand: "35-44", re: /\b(35|36|37|38|39|40|41|42|43|44)\s*(yaşında|yasinda|yaş|yas|y\.?o\.?|years?\s*old)\b/i },
+    { ageBand: "45-54", re: /\b(45|46|47|48|49|50|51|52|53|54)\s*(yaşında|yasinda|yaş|yas|y\.?o\.?|years?\s*old)\b/i },
+    { ageBand: "55-64", re: /\b(55|56|57|58|59|60|61|62|63|64)\s*(yaşında|yasinda|yaş|yas|y\.?o\.?|years?\s*old)\b/i },
+    { ageBand: "65+", re: /\b(6[5-9]|[7-9]\d)\s*(yaşında|yasinda|yaş|yas|y\.?o\.?|years?\s*old)\b/i },
+    { ageBand: "18-24", re: /(?:^|[^A-Za-z])(üniversite|university|öğrenci|student)(?![A-Za-z])/i },
+    { ageBand: "65+", re: /(?:^|[^A-Za-z])(emekli|retired)(?![A-Za-z])/i }
+  ];
+
+  function suggestFromText(text) {
+    var source = String(text || "");
+    var out = {};
+    var i;
+    for (i = 0; i < AGE_HINTS.length; i += 1) {
+      if (AGE_HINTS[i].re.test(source)) {
+        out.ageBand = AGE_HINTS[i].ageBand;
+        break;
+      }
+    }
+    if (/(?:^|[^A-Za-z])(kadın|woman|female|kız)(?![A-Za-z])/i.test(source)) out.gender = "woman";
+    else if (/(?:^|[^A-Za-z])(erkek|man|male|adam)(?![A-Za-z])/i.test(source) && !/\b(human|mankind)\b/i.test(source)) {
+      out.gender = "man";
+    } else if (/(?:^|[^A-Za-z])(non[- ]?binary|ikili olmayan)(?![A-Za-z])/i.test(source)) {
+      out.gender = "nonbinary";
+    }
+
+    if (/(?:^|[^A-Za-z])(türkiye|turkey|türkçe|turkish)(?![A-Za-z])/i.test(source)) out.country = "TR";
+    else if (/(?:^|[^A-Za-z])(germany|almanya|deutsch)(?![A-Za-z])/i.test(source)) out.country = "DE";
+    else if (/(?:^|[^A-Za-z])(united states|amerika|usa|american)(?![A-Za-z])/i.test(source)) out.country = "US";
+    else if (/(?:^|[^A-Za-z])(britain|england|ingiltere|uk)(?![A-Za-z])/i.test(source)) out.country = "GB";
+    else if (/(?:^|[^A-Za-z])(france|fransa|français|francais)(?![A-Za-z])/i.test(source)) out.country = "FR";
+    else if (/(?:^|[^A-Za-z])(netherlands|hollanda|dutch)(?![A-Za-z])/i.test(source)) out.country = "NL";
+
+    for (i = 0; i < CITY_HINTS.length; i += 1) {
+      if (CITY_HINTS[i].re.test(source)) {
+        out.city = CITY_HINTS[i].city;
+        if (!out.country) out.country = CITY_HINTS[i].country;
+        break;
+      }
+    }
+    return normalize(out);
+  }
+
   var api = {
     AGE_BANDS: AGE_BANDS,
     GENDERS: GENDERS,
@@ -65,7 +127,8 @@
     CITY_MAX: CITY_MAX,
     ageKey: ageKey,
     cityKey: cityKey,
-    normalize: normalize
+    normalize: normalize,
+    suggestFromText: suggestFromText
   };
 
   root.MindsetDemographics = api;

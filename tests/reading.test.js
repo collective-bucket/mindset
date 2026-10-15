@@ -216,6 +216,8 @@ reading.CLOSED_TEXT_KEYS.concat(reading.CLOSED_KEYS, ["city"]).forEach(function 
 });
 assert.strictEqual(docs.publicDoc.lens, "v2");
 assert.strictEqual(docs.publicDoc.personalCode, "Keep your word.");
+assert.strictEqual(docs.publicDoc.headline, "Keep your word.");
+assert.ok(docs.publicDoc.blurb.indexOf("Keep your word.") >= 0);
 assert.strictEqual(docs.publicDoc.bucket, "3u4u");
 assert.strictEqual(docs.publicDoc.country, "TR");
 assert.strictEqual(docs.publicDoc.ageBand, "35-44");
@@ -223,6 +225,22 @@ assert.deepStrictEqual(docs.publicDoc.known, ["agency", "codeClarity"]);
 assert.strictEqual(docs.privateDoc.unsayableAttitude, "secret");
 assert.strictEqual(docs.privateDoc.city, "Izmir");
 assert.strictEqual(docs.privateDoc.codeGap, 40);
+
+assert.strictEqual(
+  reading.deriveHeadline({ personalCode: "Hold the line. More later.", currentPosition: "" }),
+  "Hold the line."
+);
+assert.ok(
+  reading.deriveBlurb(1, { personalCode: "Hold the line." }, { agency: 70, communion: 50, codeClarity: 80, redemption: 50 }, "en")
+    .indexOf("Hold the line.") >= 0
+);
+assert.deepStrictEqual(
+  demographics.suggestFromText("Ben 30 yaşında bir kadın, İstanbul'da yaşıyorum."),
+  { ageBand: "25-34", gender: "woman", country: "TR", city: "İstanbul" }
+);
+lens.axes.forEach(function (axis) {
+  assert.ok(axis.hint && axis.hint.en && axis.hint.tr, axis.key + " needs EN/TR hint");
+});
 
 // History defaults to private and versions copy only the open side.
 assert.strictEqual(docs.publicDoc.history, "none");
@@ -232,6 +250,8 @@ assert.strictEqual(reading.versionId("2026-10-14T12:00:00.123Z"), "2026101412000
 var version = reading.buildVersion(docs.publicDoc);
 assert.strictEqual(version.createdAt, docs.publicDoc.updatedAt);
 assert.strictEqual(version.personalCode, "Keep your word.");
+assert.strictEqual(version.headline, docs.publicDoc.headline);
+assert.strictEqual(version.blurb, docs.publicDoc.blurb);
 assert.strictEqual(version.agency, 70);
 reading.CLOSED_TEXT_KEYS.concat(reading.CLOSED_KEYS, ["city", "alias", "history", "published"]).forEach(function (key) {
   assert.ok(!(key in version), key + " must not be in a version");

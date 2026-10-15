@@ -142,7 +142,8 @@
     for (var attempt = 0; attempt < 8; attempt += 1) {
       var counter = await db().get("counters/mindset", token);
       var number = counter ? counter.next : 1;
-      var docs = reading().buildDocuments(uid, number, texts, scores, true, now, now, demo, "none");
+      var lang = (window.MindsetI18n && window.MindsetI18n.lang) || "en";
+      var docs = reading().buildDocuments(uid, number, texts, scores, true, now, now, demo, "none", false, lang);
       try {
         await db().create("mindsets", String(number), docs.publicDoc, token);
       } catch (error) {
@@ -181,6 +182,7 @@
       saved = await allocate(session.uid, token, texts, scores, demo, now);
     } else {
       var number = Number(existing.publicDoc.id);
+      var lang = (window.MindsetI18n && window.MindsetI18n.lang) || "en";
       var docs = reading().buildDocuments(
         session.uid,
         number,
@@ -190,7 +192,9 @@
         existing.publicDoc.createdAt,
         now,
         demo,
-        existing.publicDoc.history
+        existing.publicDoc.history,
+        existing.publicDoc.seed === true,
+        lang
       );
       await db().update("mindsets/" + number, docs.publicDoc, token);
       await writePrivate(number, docs.privateDoc, token, Boolean(existing.privateDoc));

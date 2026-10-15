@@ -14,53 +14,73 @@
     <h1 id="heading" data-i18n="create.title">Cast your line</h1>
     <p class="lead"><span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span> <span data-i18n="create.lead">The model downloads to your browser on first read. Your text isn't sent anywhere.</span></p>
 
+    <nav class="wizard-steps" aria-label="Steps">
+      <button type="button" class="wizard-step is-active" data-go="1" aria-current="step"><span>1</span> <em data-i18n="create.stepTexts">Texts</em></button>
+      <button type="button" class="wizard-step" data-go="2"><span>2</span> <em data-i18n="create.stepDemo">About you</em></button>
+      <button type="button" class="wizard-step" data-go="3"><span>3</span> <em data-i18n="create.stepPreview">Preview</em></button>
+    </nav>
+
     <form id="mindset-form" novalidate>
-      <section class="section">
-        <h2 data-i18n="create.openTitle">On your profile</h2>
-        <p class="hint" data-i18n="create.openHint">These three show on your profile. One line you hold true is enough to publish.</p>
-        <p class="hint" data-i18n="privacy.hint">Leave out names, places and contact details. Anything that points to a person is flagged.</p>
-        <div id="open-fields"></div>
+      <section class="wizard-pane" data-step="1">
+        <section class="section">
+          <h2 data-i18n="create.openTitle">On your profile</h2>
+          <p class="hint" data-i18n="create.openHint">These three show on your profile. One line you hold true is enough to publish.</p>
+          <p class="hint" data-i18n="privacy.hint">Leave out names, places and contact details. Anything that points to a person is flagged.</p>
+          <div id="open-fields"></div>
+        </section>
+
+        <section class="section section-private">
+          <h2 data-i18n="create.closedTitle">Stays with you</h2>
+          <p class="hint" data-i18n="create.closedHint">What you don't say out loud, your desire and the side you're ashamed of go to no one. Their readings stay with you too.</p>
+          <div id="closed-fields"></div>
+        </section>
+
+        <section class="section" id="alias-section">
+          <h2 data-i18n="alias.title">Your alias</h2>
+          <p class="hint" data-i18n="alias.hint">Only your tribe sees it. To invite you, someone has to know it.</p>
+          <label class="field" for="alias"><span data-i18n="alias.label">Alias</span>
+            <span class="prefix-input"><span aria-hidden="true">@</span><input id="alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" pattern="[a-z0-9_]{3,20}" aria-describedby="alias-rule" /></span>
+            <small id="alias-rule" data-i18n="alias.rule">3-20 lowercase letters, digits or _.</small>
+          </label>
+        </section>
       </section>
 
-      <section class="section section-private">
-        <h2 data-i18n="create.closedTitle">Stays with you</h2>
-        <p class="hint" data-i18n="create.closedHint">What you don't say out loud, your desire and the side you're ashamed of go to no one. Their readings stay with you too.</p>
-        <div id="closed-fields"></div>
+      <section class="wizard-pane" data-step="2" hidden>
+        <section class="section">
+          <h2 data-i18n="create.aboutTitle">About you (optional)</h2>
+          <p class="hint" data-i18n="create.aboutHint">Age range, gender and country show on your profile and shape lists and suggestions. City is never shown individually; it is only counted.</p>
+          <div id="demo-suggest" class="suggest" hidden>
+            <p id="demo-suggest-text" class="hint"></p>
+            <button type="button" id="demo-suggest-apply" class="btn btn-small" data-i18n="create.applySuggest">Apply</button>
+          </div>
+          <div id="demo-fields"></div>
+        </section>
       </section>
 
-      <section class="section">
-        <h2 data-i18n="create.aboutTitle">About you (optional)</h2>
-        <p class="hint" data-i18n="create.aboutHint">Age range, gender and country show on your profile and shape lists and suggestions. City is never shown individually; it is only counted.</p>
-        <div id="demo-fields"></div>
-      </section>
-
-      <section class="section" id="alias-section">
-        <h2 data-i18n="alias.title">Your alias</h2>
-        <p class="hint" data-i18n="alias.hint">Only your tribe sees it. To invite you, someone has to know it.</p>
-        <label class="field" for="alias"><span data-i18n="alias.label">Alias</span>
-          <span class="prefix-input"><span aria-hidden="true">@</span><input id="alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" pattern="[a-z0-9_]{3,20}" aria-describedby="alias-rule" /></span>
-          <small id="alias-rule" data-i18n="alias.rule">3-20 lowercase letters, digits or _.</small>
-        </label>
+      <section class="wizard-pane" data-step="3" hidden>
+        <section class="section">
+          <h2 data-i18n="common.approx">Approximate reading</h2>
+          <div id="preview-guide"></div>
+          <p id="preview-headline" class="entry-headline" hidden></p>
+          <p id="preview-summary" class="summary"></p>
+          <div id="preview-radar"></div>
+          <div id="preview-open"></div>
+          <div class="section-private">
+            <h3 data-i18n="create.privateTitle">Only for you</h3>
+            <div id="preview-closed"></div>
+          </div>
+        </section>
       </section>
 
       <div class="actions sticky-actions">
-        <button type="button" id="read" class="btn" data-i18n="create.read">Read</button>
-        <button type="button" id="publish" class="btn btn-primary" data-i18n="create.publish">Publish</button>
+        <button type="button" id="back" class="btn" hidden data-i18n="create.back">Back</button>
+        <button type="button" id="next" class="btn btn-primary" data-i18n="create.next">Next</button>
+        <button type="button" id="read" class="btn" hidden data-i18n="create.read">Read</button>
+        <button type="button" id="publish" class="btn btn-primary" hidden data-i18n="create.publish">Publish</button>
       </div>
       <p id="form-status" class="status" role="status" hidden></p>
       <p id="login-hint" hidden><a id="login-link" class="btn" href="/login" data-i18n="create.signInToPublish">Sign in to publish</a></p>
     </form>
-
-    <section id="preview" class="section" hidden>
-      <h2 data-i18n="common.approx">Approximate reading</h2>
-      <p id="preview-summary" class="summary"></p>
-      <div id="preview-radar"></div>
-      <div id="preview-open"></div>
-      <div class="section-private">
-        <h3 data-i18n="create.privateTitle">Only for you</h3>
-        <div id="preview-closed"></div>
-      </div>
-    </section>
   </main>
 
   <dialog id="publish-dialog" class="modal">

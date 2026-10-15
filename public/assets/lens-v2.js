@@ -83,6 +83,10 @@
         label: { en: "In charge", tr: "İş bende" },
         lowLabel: { en: "Drifting", tr: "Sürükleniyorum" },
         highLabel: { en: "I have the last word", tr: "Son söz bende" },
+        hint: {
+          en: "Do you steer your life, or do events and other people steer you?",
+          tr: "Hayatının dümeni sende mi, yoksa olaylar ve başkaları mı sürüklüyor?"
+        },
         open: true,
         kind: "polarity",
         sources: ["currentPosition", "selfNarrative"],
@@ -126,6 +130,10 @@
         label: { en: "Together", tr: "Bir aradayım" },
         lowLabel: { en: "On my own", tr: "Kendi başımayım" },
         highLabel: { en: "I see myself within an us", tr: "Kendimi bir biz içinde görüyorum" },
+        hint: {
+          en: "Do you tell your story as alone, or as part of a we?",
+          tr: "Hikâyeni yalnız mı anlatıyorsun, yoksa bir bizin parçası olarak mı?"
+        },
         open: true,
         kind: "polarity",
         sources: ["selfNarrative", "personalCode"],
@@ -165,6 +173,10 @@
         label: { en: "Clear code", tr: "Kuralım net" },
         lowLabel: { en: "Depends on the situation", tr: "Duruma göre değişir" },
         highLabel: { en: "What's right for me is clear", tr: "Benim için doğru olan net" },
+        hint: {
+          en: "Are your rules firm, or do they bend with the room?",
+          tr: "Kuralların sert mi, yoksa ortama göre mi esniyor?"
+        },
         open: true,
         kind: "polarity",
         sources: ["personalCode"],
@@ -204,6 +216,10 @@
         label: { en: "Turns out fine", tr: "Düze çıkıyor" },
         lowLabel: { en: "The story ends worse", tr: "Hikaye bozularak bitiyor" },
         highLabel: { en: "The story ends repaired", tr: "Hikaye düzelerek bitiyor" },
+        hint: {
+          en: "In the story you tell, do things repair — or fall apart?",
+          tr: "Anlattığın hikâyede işler düzelerek mi bitiyor, yoksa dağılarak mı?"
+        },
         open: true,
         kind: "polarity",
         sources: ["selfNarrative"],
@@ -243,6 +259,10 @@
         label: { en: "Said vs. felt", tr: "Söylediğimle içim" },
         lowLabel: { en: "Close to each other", tr: "İkisi birbirine yakın" },
         highLabel: { en: "Strangers to each other", tr: "İkisi birbirine yabancı" },
+        hint: {
+          en: "How far is what you hold true from what you won't say out loud?",
+          tr: "Doğru bildiğin ile dışarıda söylemediğin ne kadar uzak?"
+        },
         open: false,
         kind: "distance",
         left: ["personalCode"],
@@ -254,6 +274,10 @@
         label: { en: "Leaning on power", tr: "Güce yaslanma" },
         lowLabel: { en: "Power should be resisted", tr: "Güce karşı durulur" },
         highLabel: { en: "The strong decide, the weak comply", tr: "Güçlü olan çözer, zayıf olan uyar" },
+        hint: {
+          en: "In what you keep private: do you lean toward obedience to strength, or resistance?",
+          tr: "Gizli tuttuğun tarafta: güce itaat mi, yoksa karşı duruş mu ağır basıyor?"
+        },
         open: false,
         kind: "polarity",
         sources: ["unsayableAttitude"],
@@ -297,6 +321,10 @@
         label: { en: "Desire apart", tr: "Arzu ayrı duruyor" },
         lowLabel: { en: "Desire is woven into the life I describe", tr: "Arzu anlatılan hayata karışık" },
         highLabel: { en: "Desire stands apart from the life I describe", tr: "Arzu anlatılan hayattan ayrı" },
+        hint: {
+          en: "Is desire woven into the life you describe, or does it sit apart?",
+          tr: "Arzu anlattığın hayata karışık mı, yoksa ayrı mı duruyor?"
+        },
         open: false,
         kind: "distance",
         left: ["desireScript"],
@@ -308,6 +336,10 @@
         label: { en: "Confession far", tr: "İtiraf uzak" },
         lowLabel: { en: "Close to the person I describe", tr: "İtiraf anlattığım kişiye yakın" },
         highLabel: { en: "A stranger to the person I describe", tr: "İtiraf anlattığım kişiye yabancı" },
+        hint: {
+          en: "How far is the side you're ashamed of from the person you describe in public?",
+          tr: "Utandığın yan, dışarıda anlattığın kişiden ne kadar uzak?"
+        },
         open: false,
         kind: "distance",
         left: ["disownedSelf"],

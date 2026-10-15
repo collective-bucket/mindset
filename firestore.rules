@@ -164,8 +164,10 @@ service cloud.firestore {
           'ownerUid', 'number', 'numberKey', 'published', 'createdAt', 'updatedAt',
           'lens', 'agency', 'communion', 'codeClarity', 'redemption', 'known', 'bucket',
           'ageBand', 'gender', 'country', 'history', 'seed',
-          'currentPosition', 'personalCode', 'selfNarrative'
+          'currentPosition', 'personalCode', 'selfNarrative', 'headline', 'blurb'
         ])
+        && shortText(data.get('headline', ''))
+        && shortText(data.get('blurb', ''))
         && data.ownerUid == request.auth.uid
         && data.number is int
         && data.number > 0
@@ -191,8 +193,10 @@ service cloud.firestore {
           'ownerUid', 'number', 'createdAt', 'lens',
           'agency', 'communion', 'codeClarity', 'redemption', 'known',
           'ageBand', 'gender', 'country',
-          'currentPosition', 'personalCode', 'selfNarrative'
+          'currentPosition', 'personalCode', 'selfNarrative', 'headline', 'blurb'
         ])
+        && shortText(data.get('headline', ''))
+        && shortText(data.get('blurb', ''))
         && versionId.matches('^\\d{14,20}$')
         && data.ownerUid == request.auth.uid
         && data.number is int

@@ -176,11 +176,19 @@
     });
   }
 
+  function axisHint(axis) {
+    return axis && axis.hint ? i18n.pick(axis.hint) : "";
+  }
+
   function bar(axis, score) {
     var label = escapeHtml(i18n.pick(axis.label));
+    var hint = axisHint(axis);
+    var tip = hint ? ' title="' + escapeHtml(hint) + '"' : "";
     if (typeof score !== "number" || score < 0) {
       return (
-        '<div class="bar-row is-unknown"><div class="bar-label"><span>' +
+        '<div class="bar-row is-unknown"' +
+        tip +
+        '><div class="bar-label"><span>' +
         label +
         "</span><span>" +
         escapeHtml(t("common.unknown")) +
@@ -188,7 +196,9 @@
       );
     }
     return (
-      '<div class="bar-row"><div class="bar-label"><span>' +
+      '<div class="bar-row"' +
+      tip +
+      '><div class="bar-label"><span>' +
       label +
       "</span><span>" +
       score +
@@ -199,6 +209,36 @@
       "</span><span>" +
       escapeHtml(i18n.pick(axis.highLabel)) +
       "</span></div></div>"
+    );
+  }
+
+  function howToReadHtml(openOnly) {
+    var axes = window.MindsetLens.axes.filter(function (axis) {
+      if (openOnly === "closed") return !axis.open;
+      return openOnly ? axis.open : true;
+    });
+    var titleKey = openOnly === "closed" ? "guide.closedHowTo" : "guide.howTo";
+    var items = axes
+      .map(function (axis) {
+        return (
+          "<li><strong>" +
+          escapeHtml(i18n.pick(axis.label)) +
+          "</strong> — " +
+          escapeHtml(axisHint(axis) || i18n.pick(axis.lowLabel) + " ↔ " + i18n.pick(axis.highLabel)) +
+          "</li>"
+        );
+      })
+      .join("");
+    return (
+      '<details class="how-to-read"><summary>' +
+      escapeHtml(t(titleKey)) +
+      "</summary><p class=\"hint\">" +
+      escapeHtml(t(openOnly === "closed" ? "guide.closedLead" : "guide.lead")) +
+      "</p><ul class=\"plain-list\">" +
+      items +
+      "</ul><p class=\"hint\">" +
+      escapeHtml(t("common.notTest")) +
+      "</p></details>"
     );
   }
 
@@ -278,9 +318,18 @@
           spot = [cx + radius + 8, cy - 12];
           anchor = "end";
         }
+        var axis = axisByKey(key);
+        var tip = axisHint(axis);
         return (
-          '<text class="radar-label" x="' + spot[0] + '" y="' + spot[1] + '" text-anchor="' + anchor + '">' +
-          escapeHtml(i18n.pick(axisByKey(key).label)) +
+          '<text class="radar-label" x="' +
+          spot[0] +
+          '" y="' +
+          spot[1] +
+          '" text-anchor="' +
+          anchor +
+          '">' +
+          (tip ? "<title>" + escapeHtml(tip) + "</title>" : "") +
+          escapeHtml(i18n.pick(axis.label)) +
           "</text>"
         );
       })
@@ -350,6 +399,7 @@
   }
 
   function plainSummary(doc) {
+    if (doc.blurb) return String(doc.blurb);
     var scores = window.MindsetReading.scoresOf(doc);
     return window.MindsetReading.summary(doc.id || doc.number, scores, i18n.lang).replace(/^\d+\.\s*/, "");
   }
@@ -382,6 +432,9 @@
       '<strong class="entry-number">' +
       escapeHtml(doc.id) +
       "</strong>" +
+      (doc.headline
+        ? '<span class="entry-headline">' + escapeHtml(doc.headline) + "</span>"
+        : "") +
       (alias ? '<span class="alias">@' + escapeHtml(alias) + "</span>" : "") +
       '<span class="entry-side">' +
       escapeHtml(side) +
@@ -389,7 +442,7 @@
       '<span class="entry-summary">' +
       escapeHtml(plainSummary(doc)) +
       "</span>" +
-      (quote ? '<span class="entry-quote">' + escapeHtml(quote) + "</span>" : "") +
+      (!doc.blurb && quote ? '<span class="entry-quote">' + escapeHtml(quote) + "</span>" : "") +
       (badgeText(doc) ? '<span class="entry-meta">' + escapeHtml(badgeText(doc)) + "</span>" : "") +
       "</a>"
     );
@@ -691,6 +744,8 @@
     axisByKey: axisByKey,
     renderBars: renderBars,
     renderRadar: renderRadar,
+    howToReadHtml: howToReadHtml,
+    axisHint: axisHint,
     renderOpenTexts: renderOpenTexts,
     avatar: avatar,
     badges: badges,

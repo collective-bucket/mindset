@@ -58,7 +58,17 @@
       math.CLOSED_KEYS.forEach(function (key) {
         scores[key] = closed[key];
       });
-      document.querySelector("#summary").textContent = math.summary(number, scores, i18n.lang);
+      document.querySelector("#summary").textContent = doc.blurb || math.summary(number, scores, i18n.lang);
+      var openGuide = document.querySelector("#reading-guide");
+      if (openGuide && !openGuide.dataset.ready) {
+        openGuide.innerHTML = ui.howToReadHtml(true);
+        openGuide.dataset.ready = "1";
+      }
+      var closedGuide = document.querySelector("#closed-guide");
+      if (closedGuide && !closedGuide.dataset.ready) {
+        closedGuide.innerHTML = ui.howToReadHtml("closed");
+        closedGuide.dataset.ready = "1";
+      }
       ui.renderRadar(document.querySelector("#radar"), scores);
       ui.renderBars(document.querySelector("#open-bars"), scores, math.OPEN_KEYS);
       ui.renderBars(document.querySelector("#closed-bars"), scores, math.CLOSED_KEYS);

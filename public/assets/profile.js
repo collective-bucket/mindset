@@ -121,7 +121,17 @@
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);
       document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
+      var headlineNode = document.querySelector("#headline");
+      if (headlineNode) {
+        headlineNode.textContent = doc.headline || "";
+        headlineNode.hidden = !doc.headline;
+      }
       document.querySelector("#summary").textContent = ui.plainSummary(doc);
+      var guide = document.querySelector("#reading-guide");
+      if (guide && !guide.dataset.ready) {
+        guide.innerHTML = ui.howToReadHtml(true);
+        guide.dataset.ready = "1";
+      }
       showReading(doc);
       renderTexts(doc);
       if (doc.published === false) ui.setStatus(status, t("profile.onlyYou"));

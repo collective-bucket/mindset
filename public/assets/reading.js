@@ -227,6 +227,32 @@
     return String(when).replace(/\D/g, "").slice(0, 17);
   }
 
+  function firstSentence(text, max) {
+    var clean = String(text || "").replace(/\s+/g, " ").trim();
+    if (!clean) return "";
+    var match = clean.match(/^(.+?[.!?…])(?:\s|$)/);
+    var line = match ? match[1] : clean;
+    if (line.length > max) line = line.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+    return line;
+  }
+
+  // Short title from open text; not user-editable.
+  function deriveHeadline(texts) {
+    return firstSentence(texts.personalCode || texts.currentPosition || "", 70);
+  }
+
+  // Card blurb: score phrase + a short quote. Not user-editable.
+  function deriveBlurb(number, texts, scores, lang) {
+    var line = summary(number, scores, lang).replace(/^\d+\.\s*/, "");
+    var quote = firstSentence(texts.personalCode || texts.currentPosition || "", 120);
+    if (quote && line.indexOf(quote) < 0) {
+      var joined = line + " «" + quote + "»";
+      if (joined.length > 220) joined = joined.slice(0, 217) + "…";
+      return joined;
+    }
+    return line;
+  }
+
   // Only the open side is ever copied into history.
   function buildVersion(publicDoc) {
     return {
@@ -244,11 +270,13 @@
       country: publicDoc.country || "",
       currentPosition: publicDoc.currentPosition,
       personalCode: publicDoc.personalCode,
-      selfNarrative: publicDoc.selfNarrative
+      selfNarrative: publicDoc.selfNarrative,
+      headline: publicDoc.headline || "",
+      blurb: publicDoc.blurb || ""
     };
   }
 
-  function buildDocuments(uid, number, texts, scores, published, createdAt, now, demo, history, seed) {
+  function buildDocuments(uid, number, texts, scores, published, createdAt, now, demo, history, seed, lang) {
     var numberKey = String(number);
     var when = now || new Date().toISOString();
     var profile = demographics.normalize(demo);
@@ -272,7 +300,9 @@
         country: profile.country,
         currentPosition: texts.currentPosition,
         personalCode: texts.personalCode,
-        selfNarrative: texts.selfNarrative
+        selfNarrative: texts.selfNarrative,
+        headline: deriveHeadline(texts),
+        blurb: deriveBlurb(number, texts, scores, lang || "en")
       };
     if (seed) publicDoc.seed = true;
     return {
@@ -333,6 +363,8 @@
     joinFields: joinFields,
     buildDocuments: buildDocuments,
     buildVersion: buildVersion,
+    deriveHeadline: deriveHeadline,
+    deriveBlurb: deriveBlurb,
     versionId: versionId,
     historyLevel: historyLevel,
     HISTORY_LEVELS: HISTORY_LEVELS,
