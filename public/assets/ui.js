@@ -154,12 +154,12 @@
       escapeHtml(crumb) +
       "</span></nav>" +
       '<div class="top-actions">' +
-      '<span class="lang" role="group" aria-label="' +
+      '<span class="lang dock" role="group" aria-label="' +
       escapeHtml(t("footer.language")) +
       '">' +
       i18n.LANGS.map(function (code) {
         return (
-          '<button type="button" data-lang="' +
+          '<button type="button" class="dock-item" data-lang="' +
           code +
           '"' +
           (code === i18n.lang ? ' aria-pressed="true"' : "") +
@@ -176,7 +176,7 @@
     });
 
     var nav = document.createElement("nav");
-    nav.className = "gamebar";
+    nav.className = "gamebar dock";
     nav.id = "gamebar";
     nav.hidden = true;
     nav.setAttribute("aria-label", t("bar.label"));
@@ -184,7 +184,7 @@
       return (
         '<a href="' +
         item.href +
-        '" class="gamebar-button gamebar-' +
+        '" class="gamebar-button dock-item gamebar-' +
         item.id +
         '"' +
         (item.id === active ? ' aria-current="page"' : "") +

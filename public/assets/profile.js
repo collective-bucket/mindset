@@ -262,7 +262,7 @@
         html || '<p class="empty">' + ui.escapeHtml(t("feed.empty")) + "</p>";
     }
 
-    // Locked teasers only — closed text never enters the DOM.
+    // Locked field shells only — closed text never enters the DOM.
     function renderBottom() {
       document.querySelector("#bottom").innerHTML = window.MindsetLens.fields
         .filter(function (field) {
@@ -280,17 +280,46 @@
             (plain ? '<p class="field-plain">' + ui.escapeHtml(plain) + "</p>" : "") +
             '<p class="hint">' +
             ui.escapeHtml(t("profile.lockedUntilSchool")) +
-            '</p><div class="locked-blur" aria-hidden="true"><span></span><span></span><span></span></div></article>'
+            "</p></article>"
           );
         })
         .join("");
     }
 
-    function renderTailHint() {
-      var hint = document.querySelector("#tail-hint");
-      var show = !buttons.tail.hidden && !state.self;
-      hint.hidden = !show;
+    function setTailPopover(open) {
+      var pop = document.querySelector("#tail-popover");
+      if (!pop) return;
+      if (buttons.tail.hidden || state.self) {
+        pop.hidden = true;
+        return;
+      }
+      pop.hidden = !open;
     }
+
+    function wireTailPopover() {
+      var pop = document.querySelector("#tail-popover");
+      var wrap = document.querySelector(".tail-wrap");
+      if (!pop || !wrap) return;
+      buttons.tail.addEventListener("mouseenter", function () {
+        setTailPopover(true);
+      });
+      buttons.tail.addEventListener("focus", function () {
+        setTailPopover(true);
+      });
+      wrap.addEventListener("mouseleave", function () {
+        setTailPopover(false);
+      });
+      buttons.tail.addEventListener("blur", function () {
+        setTailPopover(false);
+      });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") setTailPopover(false);
+      });
+      document.addEventListener("click", function (event) {
+        if (!wrap.contains(event.target)) setTailPopover(false);
+      });
+    }
+    wireTailPopover();
 
     function showProfile() {
       document.querySelector("#profile").hidden = false;
@@ -335,7 +364,6 @@
       range.setAttribute("aria-valuetext", document.querySelector("#timeline-when").textContent);
       showReading(source, last ? null : math.scoresOf(doc));
       renderSurface(source, last ? null : doc);
-      document.querySelector("#timeline-note").textContent = last ? "" : t("history.ghost");
       ui.renderTrend(document.querySelector("#trend"), versions, index);
     }
 
@@ -360,7 +388,6 @@
       if (versions.length < 2) {
         ui.renderTrend(document.querySelector("#trend"), versions, 0);
         document.querySelector("#timeline-when").textContent = t("history.now");
-        document.querySelector("#timeline-note").textContent = t("history.single");
         return;
       }
       showVersion(versions.length - 1);
@@ -393,7 +420,7 @@
       if (!session) {
         buttons.tail.hidden = false;
         buttons.tail.textContent = t("profile.tail");
-        buttons.tail.className = "btn btn-primary";
+        buttons.tail.className = "btn btn-compact btn-primary";
         buttons.tail.setAttribute("aria-pressed", "false");
       } else if (!state.self) {
         if (state.member) {
@@ -417,7 +444,7 @@
         } else {
           buttons.tail.hidden = false;
           buttons.tail.textContent = t(state.iTail ? "profile.tailing" : "profile.tail");
-          buttons.tail.className = "btn " + (state.iTail ? "" : "btn-primary");
+          buttons.tail.className = "btn btn-compact" + (state.iTail ? "" : " btn-primary");
           buttons.tail.setAttribute("aria-pressed", String(Boolean(state.iTail)));
           var mine = liveGlint(state.myGlint);
           if (state.theyTail) {
@@ -452,8 +479,13 @@
       }
       ritual.innerHTML = notes.join("");
       ritual.hidden = !notes.length;
-      renderTailHint();
+      setTailPopover(false);
       renderSchoolChip();
+      var actions = document.querySelector(".actions-primary");
+      var anyAction = ["shine", "join", "accept", "decline", "withdraw"].some(function (key) {
+        return !buttons[key].hidden;
+      });
+      actions.hidden = !anyAction;
     }
 
     function needLogin() {

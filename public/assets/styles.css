@@ -1468,36 +1468,62 @@ input[type="checkbox"] {
 
 /* ---- Language and game bar ---- */
 
-.lang {
+.dock {
   display: inline-flex;
-  gap: 4px;
-}
-
-.lang button {
-  min-width: 40px;
-  min-height: 36px;
-  border: 1px solid var(--accent-mid);
-  border-radius: 999px;
+  align-items: stretch;
+  overflow: hidden;
   background: var(--paper);
-  color: var(--ink);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  border: 1px solid var(--hair);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(27, 99, 80, 0.12);
 }
 
-.lang button:hover {
+.dock-item {
+  appearance: none;
+  pointer-events: auto;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border: 0;
+  border-right: 1px solid var(--hair);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.dock-item:last-child {
+  border-right: 0;
+}
+
+.dock-item:hover {
   background: var(--accent-soft);
-  border-color: var(--accent);
   color: var(--accent-strong);
 }
 
-.lang button[aria-pressed="true"],
-.lang button[aria-pressed="true"]:hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #ffffff;
+.dock-item[aria-pressed="true"],
+.dock-item[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.lang.dock {
+  align-self: flex-start;
+}
+
+.lang .dock-item {
+  flex-direction: row;
+  letter-spacing: 0.04em;
 }
 
 .auth-wall {
@@ -1512,59 +1538,31 @@ input[type="checkbox"] {
   margin-top: 24px;
 }
 
-.gamebar {
+.gamebar.dock {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  right: auto;
   z-index: 20;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  padding: 0 0 env(safe-area-inset-bottom);
-  background: var(--paper);
-  border-top: 1px solid var(--hair);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 0;
+  border-top: 0;
+  box-shadow: 0 -6px 18px rgba(27, 99, 80, 0.14), 0 4px 12px rgba(27, 99, 80, 0.08);
   pointer-events: none;
 }
 
+.gamebar .dock-item,
 .gamebar-button {
   pointer-events: auto;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  color: var(--muted);
-  background: transparent;
-  border: 0;
-  border-bottom: 0;
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: 600;
+  min-width: 68px;
   min-height: 48px;
-  padding: 6px 4px 4px;
-  -webkit-tap-highlight-color: transparent;
-  transition: color 0.12s ease, background 0.12s ease;
-}
-
-.gamebar-button:hover {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-}
-
-.gamebar-button:active {
-  background: var(--accent-soft);
-  color: var(--accent-deep);
+  padding: 6px 10px 4px;
 }
 
 .gamebar-button span {
   line-height: 1.1;
-}
-
-.gamebar-button[aria-current="page"] {
-  color: var(--accent-strong);
-  background: var(--accent-soft);
 }
 
 .gamebar-button .icon {
@@ -2199,26 +2197,57 @@ input[type="checkbox"] {
   text-decoration: none;
 }
 
-.slides-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.slides-footer .slide-nav {
-  margin-top: 0;
-}
-
 .global-timeline {
-  margin: 10px 0 16px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--hair);
+  margin: 10px 0 12px;
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .global-timeline .timeline-field {
   margin: 0;
+}
+
+.tail-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-compact {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 999px;
+}
+
+.tail-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 8;
+  width: min(240px, 70vw);
+  padding: 10px 12px;
+  border: 1px solid var(--hair);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 8px 20px rgba(27, 99, 80, 0.14);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+#how-to-read-dialog h2,
+#how-to-read-body strong {
+  color: var(--accent-strong);
+}
+
+#how-to-read-body {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+#how-to-read-body .hint {
+  font-size: 12px;
 }
 
 .compass-trend {
@@ -2387,4 +2416,14 @@ button.linkish:hover,
 
 .radar-dialog-axes h3 {
   margin: 12px 0 4px;
+}
+
+.profile-face .depth-section.section {
+  border-top: 0;
+  padding-top: 8px;
+}
+
+.profile-face .actions-primary[hidden] {
+  display: none;
+  margin: 0;
 }
