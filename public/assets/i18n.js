@@ -113,6 +113,7 @@
 
       "guide.howTo": "How should I read this?",
       "guide.lead": "Each bar is a pull between two poles. Hover or tap a label for a short hint.",
+      "guide.fullLead": "Eight poles: four open on the surface, four closed beneath. Each is a pull between two ends.",
       "guide.closedHowTo": "Private axes",
       "guide.closedLead": "Only you and the school you form can see these.",
 
@@ -528,6 +529,7 @@
 
       "guide.howTo": "Nasıl okumalıyım?",
       "guide.lead": "Her çubuk iki kutup arasında bir çekim. Kısa ipucu için etikete dokun veya üzerine gel.",
+      "guide.fullLead": "Sekiz kutup: dördü yüzeyde açık, dördü dipte kapalı. Her biri iki uç arasında bir çekim.",
       "guide.closedHowTo": "Gizli eksenler",
       "guide.closedLead": "Bunları yalnızca sen ve kurduğun sürü görür.",
 

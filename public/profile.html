@@ -32,8 +32,6 @@
       <p class="card-meta meta"><span id="badges"></span><span id="meta" class="card-when"></span></p>
 
       <div id="face-timeline" class="face-timeline global-timeline">
-        <h2 class="slide-title" data-i18n="profile.slideHistory">Change over time</h2>
-        <div id="trend"></div>
         <label class="field timeline-field" for="timeline-range">
           <span class="timeline-when"><span id="timeline-when"></span><span id="timeline-count" class="hint"></span></span>
           <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
@@ -66,10 +64,9 @@
         </div>
 
         <div id="pane-surface" role="tabpanel" aria-labelledby="tab-surface">
-          <div id="surface-slides" class="reading-slides" aria-roledescription="carousel">
+          <div id="surface-slides" class="reading-slides compass" aria-roledescription="carousel">
             <div class="slides-toolbar">
               <h2 class="slide-title" id="surface-slide-title" data-i18n="profile.slideRadar">Radar</h2>
-              <button type="button" id="how-to-read-open" class="linkish how-to-read-link" data-i18n="guide.howTo">How should I read this?</button>
             </div>
             <div class="slides-viewport">
               <div class="slides-track" id="surface-track">
@@ -79,11 +76,18 @@
                 <div class="slide" data-slide="1" id="slide-bars">
                   <div id="face-bars" class="face-bars"></div>
                 </div>
+                <div class="slide" data-slide="2" id="slide-trend">
+                  <div id="trend" class="compass-trend"></div>
+                </div>
               </div>
             </div>
-            <div class="slide-nav" role="tablist" aria-label="Surface reading">
-              <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-radar" data-slide-to="0"></button>
-              <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-bars" data-slide-to="1"></button>
+            <div class="slides-footer">
+              <div class="slide-nav" role="tablist" aria-label="Surface reading">
+                <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-radar" data-slide-to="0"></button>
+                <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-bars" data-slide-to="1"></button>
+                <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-trend" data-slide-to="2"></button>
+              </div>
+              <button type="button" id="how-to-read-open" class="how-to-read-link" data-i18n="guide.howTo">How should I read this?</button>
             </div>
           </div>
           <div id="surface" class="posts"></div>
@@ -92,10 +96,9 @@
         <div id="pane-deep" role="tabpanel" aria-labelledby="tab-deep" hidden>
           <p id="deep-locked" class="empty" hidden data-i18n="profile.lockedUntilSchool">Hidden until you join their school.</p>
           <div id="deep-content" hidden>
-            <div id="deep-slides" class="reading-slides" aria-roledescription="carousel">
+            <div id="deep-slides" class="reading-slides compass" aria-roledescription="carousel">
               <div class="slides-toolbar">
                 <h2 class="slide-title" id="deep-slide-title" data-i18n="profile.slideRadar">Radar</h2>
-                <button type="button" id="how-to-read-closed" class="linkish how-to-read-link" data-i18n="guide.howTo">How should I read this?</button>
               </div>
               <div class="slides-viewport">
                 <div class="slides-track" id="deep-track">
@@ -107,9 +110,12 @@
                   </div>
                 </div>
               </div>
-              <div class="slide-nav" role="tablist" aria-label="Deep reading">
-                <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-deep-radar" data-slide-to="0"></button>
-                <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-deep-bars" data-slide-to="1"></button>
+              <div class="slides-footer">
+                <div class="slide-nav" role="tablist" aria-label="Deep reading">
+                  <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-deep-radar" data-slide-to="0"></button>
+                  <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-deep-bars" data-slide-to="1"></button>
+                </div>
+                <button type="button" id="how-to-read-closed" class="how-to-read-link" data-i18n="guide.howTo">How should I read this?</button>
               </div>
             </div>
             <p id="deep-note" class="hint" hidden data-i18n="profile.deepMissing">No full reading yet.</p>

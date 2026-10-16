@@ -365,6 +365,8 @@
       return openOnly ? axis.open : true;
     });
     var titleKey = openOnly === "closed" ? "guide.closedHowTo" : "guide.howTo";
+    var leadKey =
+      openOnly === "closed" ? "guide.closedLead" : openOnly ? "guide.lead" : "guide.fullLead";
     var items = axes
       .map(function (axis) {
         return (
@@ -378,7 +380,7 @@
       .join("");
     var body =
       '<p class="hint">' +
-      escapeHtml(t(openOnly === "closed" ? "guide.closedLead" : "guide.lead")) +
+      escapeHtml(t(leadKey)) +
       '</p><ul class="plain-list">' +
       items +
       '</ul><p class="hint">' +

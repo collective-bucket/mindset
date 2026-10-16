@@ -2180,18 +2180,50 @@ input[type="checkbox"] {
 }
 
 .how-to-read-link {
-  font-size: 13px;
-  font-weight: 650;
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.how-to-read-link:hover {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.slides-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.slides-footer .slide-nav {
+  margin-top: 0;
 }
 
 .global-timeline {
   margin: 10px 0 16px;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--hair);
 }
 
-.global-timeline .slide-title {
-  margin-bottom: 6px;
+.global-timeline .timeline-field {
+  margin: 0;
+}
+
+.compass-trend {
+  padding: 4px 0 8px;
+  min-height: 200px;
 }
 
 .depth-section .tabs {

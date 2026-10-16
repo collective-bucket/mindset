@@ -56,7 +56,8 @@
     var shownScores = null;
     var surfaceSlide = 0;
     var deepSlide = 0;
-    var SLIDE_TITLES = ["profile.slideRadar", "profile.slideBars"];
+    var SURFACE_TITLES = ["profile.slideRadar", "profile.slideBars", "profile.slideHistory"];
+    var DEEP_TITLES = ["profile.slideRadar", "profile.slideBars"];
 
     ui.closeOnBackdrop(howDialog);
 
@@ -121,10 +122,11 @@
     }
 
     function showSlide(opts) {
-      var index = Math.max(0, Math.min(1, Number(opts.index) || 0));
+      var max = opts.max != null ? opts.max : 1;
+      var index = Math.max(0, Math.min(max, Number(opts.index) || 0));
       opts.setIndex(index);
       document.querySelector(opts.track).style.transform = "translateX(-" + index * 100 + "%)";
-      document.querySelector(opts.title).textContent = t(SLIDE_TITLES[index]);
+      document.querySelector(opts.title).textContent = t(opts.titles[index]);
       document.querySelectorAll(opts.host + " .slide-dot").forEach(function (dot) {
         var on = Number(dot.getAttribute("data-slide-to")) === index;
         dot.classList.toggle("is-active", on);
@@ -135,6 +137,8 @@
     function showSurfaceSlide(index) {
       showSlide({
         index: index,
+        max: 2,
+        titles: SURFACE_TITLES,
         setIndex: function (value) {
           surfaceSlide = value;
         },
@@ -147,6 +151,8 @@
     function showDeepSlide(index) {
       showSlide({
         index: index,
+        max: 1,
+        titles: DEEP_TITLES,
         setIndex: function (value) {
           deepSlide = value;
         },
@@ -181,7 +187,7 @@
       openHowTo(true);
     });
     document.querySelector("#how-to-read-closed").addEventListener("click", function () {
-      openHowTo("closed");
+      openHowTo(false);
     });
 
     function selectDepth(name) {
