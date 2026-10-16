@@ -1746,12 +1746,13 @@ input[type="checkbox"] {
   display: grid;
   gap: 10px;
   margin: 16px 0;
-  justify-items: start;
+  justify-items: center;
 }
 
 .auth-links a {
   color: var(--accent-deep);
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 14px;
   text-decoration: none;
 }
 
