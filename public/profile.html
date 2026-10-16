@@ -16,12 +16,23 @@
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <section id="profile" class="profile-face" hidden>
-      <h1 id="title" class="profile-number">Anonymous fish</h1>
+      <h1 id="title" class="profile-number">#</h1>
       <p id="alias" class="alias" hidden></p>
       <p id="same-current" class="profile-current" hidden data-i18n="profile.sameCurrent">Swimming the same current as you right now.</p>
       <p class="card-meta meta"><span id="badges"></span><span id="meta" class="card-when"></span></p>
 
-      <div id="radar-face" class="radar-face"></div>
+      <div id="reading-slides" class="reading-slides" aria-roledescription="carousel" aria-label="Reading">
+        <div class="slide is-active" data-slide="0" id="slide-radar">
+          <div id="radar-face" class="radar-face"></div>
+        </div>
+        <div class="slide" data-slide="1" id="slide-bars" hidden>
+          <div id="face-bars" class="face-bars"></div>
+        </div>
+        <div class="slide-nav" role="tablist" aria-label="Reading views">
+          <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-radar" data-slide-to="0" data-i18n-aria="profile.slideRadar"></button>
+          <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-bars" data-slide-to="1" data-i18n-aria="profile.slideBars"></button>
+        </div>
+      </div>
 
       <section class="section surface-fields">
         <h2 data-i18n="profile.surfaceTitle">On the surface</h2>

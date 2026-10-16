@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eafbf5" />
+  <title>about · Mindset Bucket</title>
+  <meta name="description" content="Manifesto and architecture of Mindset Bucket: numbers, open and closed readings, schools." />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body data-tab="" data-title="about.pageTitle">
+  <main class="page">
+    <div class="head">
+      <h1 class="visually-hidden" data-i18n="about.pageTitle">About</h1>
+      <a class="head-side" href="/" data-i18n="about.back">Home</a>
+    </div>
+
+    <section class="manifesto about-page">
+      <h2 data-i18n="about.manifestoTitle">Manifesto and architecture</h2>
+      <p class="hint" data-i18n="about.manifestoLead">Mapping a mind, and the digital trail it leaves.</p>
+
+      <h3 data-i18n="about.whyTitle">A trust ecosystem, not a feed</h3>
+      <p data-i18n="about.whyBody">Mindset Bucket rejects the shallow like-and-follow model of ordinary social nets. It joins the anonymous unique-number spirit of the ICQ days with modern algorithmic psychology into a radical trust ecosystem.</p>
+
+      <h3 data-i18n="about.uinTitle">What is a mindset number?</h3>
+      <p data-i18n="about.uinBody">Every mind that enters the lake gets a unique, unchangeable number in the order it arrived. Low numbers are the first fish into the water. When you meet someone, you share your number (#42) or your link instead of a phone number or a social account. The other person skips the interview and opens your mind map.</p>
+
+      <h3 data-i18n="about.layersTitle">Layers of the reading</h3>
+      <p data-i18n="about.layersLead">Your narrative texts are scored into an eight-axis compass: four open on the surface, four closed at the bottom.</p>
+      <div class="layers">
+        <article class="layer layer-open">
+          <h4 data-i18n="about.openTitle">Surface waters</h4>
+          <p class="hint" data-i18n="about.openLead">Visible to anyone with your number.</p>
+          <ul id="about-open-fields" class="plain-list"></ul>
+          <p class="hint" data-i18n="about.openAxes">Plus the four open readings on the radar.</p>
+        </article>
+        <article class="layer layer-closed">
+          <h4 data-i18n="about.closedTitle">Bottom waters</h4>
+          <p class="hint" data-i18n="about.closedLead">Locked. You show one field at a time in the handshake; your school sees the full closed reading.</p>
+          <ul id="about-closed-fields" class="plain-list"></ul>
+        </article>
+      </div>
+
+      <h3 data-i18n="about.aliasTitle">Alias and trust</h3>
+      <p data-i18n="about.aliasBody">A mindset number never shows a face or a real name. The only name anyone ever sees is the alias, and only inside a school. Once you know that name, you are no longer strangers.</p>
+
+      <details class="how-to-read gate-schema" open>
+        <summary data-i18n="gate.schemaTitle">The reading schema</summary>
+        <p class="hint" data-i18n="gate.method">Open texts are embedded in the browser with multilingual-e5-small and scored against bipolar EN/TR anchors on each axis. Scores are approximate polarities, not a validated psychometric scale.</p>
+        <p class="hint" data-i18n="gate.closedNote">Four closed axes (pressure gap, facing the net, different waters, blind-spot gulf) are visible only to you and to the school you form.</p>
+        <p class="hint" data-i18n="common.notTest">This is not a test result. It's an approximate reading.</p>
+      </details>
+    </section>
+  </main>
+
+  <script src="/assets/config.js" defer></script>
+  <script src="/assets/i18n.js" defer></script>
+  <script src="/assets/demographics.js" defer></script>
+  <script src="/assets/lens-v2.js" defer></script>
+  <script src="/assets/reading.js" defer></script>
+  <script src="/assets/firestore.js" defer></script>
+  <script type="module" src="/assets/auth.js"></script>
+  <script src="/assets/store.js" defer></script>
+  <script src="/assets/ui.js" defer></script>
+  <script src="/assets/about.js" defer></script>
+</body>
+</html>

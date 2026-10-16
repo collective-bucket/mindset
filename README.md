@@ -22,8 +22,8 @@ both.
 ## Access
 
 Profiles (`/i/{number}`), the sign-in pages and the 404 page are public. The
-home page (`/`) is also public when signed out: a landing with the manifesto
-and a number lookup that opens `/i/{n}`. Everything else (current, lake,
+home page (`/`) is also public when signed out: a short landing, a number
+lookup that opens `/i/{n}`, and `/about` for the manifesto. Everything else (current, lake,
 school, me, create, `/a/{alias}`) sits behind a sign-in wall. The wall is
 client-side; Firestore rules stay the source of truth for what can be read.
 

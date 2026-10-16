@@ -83,6 +83,24 @@
       );
     });
 
+    document.querySelector("#reading-slides").addEventListener("click", function (event) {
+      var dot = event.target.closest("[data-slide-to]");
+      if (dot) showFaceSlide(Number(dot.getAttribute("data-slide-to")));
+    });
+    (function () {
+      var host = document.querySelector("#reading-slides");
+      var startX = 0;
+      host.addEventListener("touchstart", function (event) {
+        if (event.changedTouches && event.changedTouches[0]) startX = event.changedTouches[0].clientX;
+      }, { passive: true });
+      host.addEventListener("touchend", function (event) {
+        if (!event.changedTouches || !event.changedTouches[0]) return;
+        var dx = event.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) < 40) return;
+        showFaceSlide(dx < 0 ? 1 : 0);
+      }, { passive: true });
+    })();
+
     document.querySelector("#open-sheet").addEventListener("click", function () {
       sheet.showModal();
     });
@@ -97,8 +115,25 @@
     }
 
 
+    var faceSlide = 0;
+
+    function showFaceSlide(index) {
+      faceSlide = index === 1 ? 1 : 0;
+      document.querySelectorAll("#reading-slides .slide").forEach(function (slide) {
+        var on = Number(slide.getAttribute("data-slide")) === faceSlide;
+        slide.hidden = !on;
+        slide.classList.toggle("is-active", on);
+      });
+      document.querySelectorAll("#reading-slides .slide-dot").forEach(function (dot) {
+        var on = Number(dot.getAttribute("data-slide-to")) === faceSlide;
+        dot.classList.toggle("is-active", on);
+        dot.setAttribute("aria-selected", String(on));
+      });
+    }
+
     function drawReading(scores, ghost) {
       ui.renderRadar(document.querySelector("#radar-face"), scores, ghost);
+      ui.renderBars(document.querySelector("#face-bars"), scores, math.OPEN_KEYS);
       ui.renderRadar(document.querySelector("#radar"), scores, ghost);
       ui.renderBars(document.querySelector("#bars"), scores, math.OPEN_KEYS);
     }
@@ -170,7 +205,7 @@
 
     function showProfile() {
       document.querySelector("#profile").hidden = false;
-      document.querySelector("#title").textContent = t("profile.anonFish", { n: doc.id });
+      document.querySelector("#title").textContent = "#" + doc.id;
       ui.setCrumb(String(doc.id));
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);

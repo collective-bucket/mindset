@@ -76,27 +76,38 @@
       });
     }
 
-    function fillLandingFields() {
+    function fillRadarAxes() {
       function fill(id, open) {
         var list = document.querySelector(id);
         if (!list) return;
-        list.innerHTML = window.MindsetLens.fields
-          .filter(function (field) {
-            return Boolean(field.open) === open;
+        list.innerHTML = window.MindsetLens.axes
+          .filter(function (axis) {
+            return Boolean(axis.open) === open;
           })
-          .map(function (field) {
+          .map(function (axis) {
             return (
               "<li><strong>" +
-              ui.escapeHtml(i18n.pick(field.label)) +
-              '</strong> <span class="hint">— ' +
-              ui.escapeHtml(i18n.pick(field.plain || field.label)) +
-              "</span></li>"
+              ui.escapeHtml(i18n.pick(axis.label)) +
+              "</strong> — " +
+              ui.escapeHtml(ui.axisHint(axis) || i18n.pick(axis.lowLabel) + " ↔ " + i18n.pick(axis.highLabel)) +
+              "</li>"
             );
           })
           .join("");
       }
-      fill("#landing-open-fields", true);
-      fill("#landing-closed-fields", false);
+      fill("#radar-open-axes", true);
+      fill("#radar-closed-axes", false);
+    }
+
+    function renderLandingPitch() {
+      var host = document.querySelector("#landing-pitch");
+      if (!host) return;
+      host.innerHTML =
+        ui.escapeHtml(t("landing.pitchBefore")) +
+        '<button type="button" class="linkish" id="open-radar">' +
+        ui.escapeHtml(t("landing.radarLink")) +
+        "</button>" +
+        ui.escapeHtml(t("landing.pitchAfter"));
     }
 
     function showLanding() {
@@ -106,7 +117,8 @@
       document.querySelector("#gamebar").hidden = true;
       ui.setCrumb("");
       document.title = t("brand.name");
-      fillLandingFields();
+      renderLandingPitch();
+      fillRadarAxes();
       var login = document.querySelector('#landing [data-auth-login]');
       if (login) login.setAttribute("href", ui.loginHref());
     }
@@ -126,6 +138,16 @@
     }
 
     document.querySelector("#lookup").addEventListener("submit", openLookup);
+    var radarDialog = document.querySelector("#radar-dialog");
+    if (radarDialog) {
+      ui.closeOnBackdrop(radarDialog);
+      document.querySelector("#landing").addEventListener("click", function (event) {
+        if (event.target && event.target.id === "open-radar") {
+          fillRadarAxes();
+          radarDialog.showModal();
+        }
+      });
+    }
 
     async function load() {
       session = await store.getOptionalSession();

@@ -2050,10 +2050,10 @@ input[type="checkbox"] {
 }
 
 .profile-number {
-  font-size: clamp(28px, 7vw, 40px);
-  line-height: 1.15;
+  font-size: clamp(40px, 10vw, 64px);
+  line-height: 1;
   font-weight: 750;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   margin: 0 0 6px;
 }
@@ -2144,3 +2144,71 @@ input[type="checkbox"] {
 .locked-blur span:nth-child(1) { width: 92%; }
 .locked-blur span:nth-child(2) { width: 78%; }
 .locked-blur span:nth-child(3) { width: 64%; }
+
+/* ---- Reading slides on profile ---- */
+
+.reading-slides {
+  margin: 8px 0 20px;
+}
+
+.reading-slides .slide {
+  min-height: 280px;
+}
+
+.face-bars {
+  padding: 4px 0 8px;
+}
+
+.slide-nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.slide-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-soft);
+  cursor: pointer;
+}
+
+.slide-dot.is-active {
+  background: var(--accent);
+  border-color: var(--accent-deep);
+}
+
+.profile-number {
+  font-variant-numeric: tabular-nums;
+}
+
+button.linkish,
+.linkish {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-deep);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+button.linkish:hover,
+.linkish:hover {
+  color: var(--accent-strong);
+}
+
+.radar-dialog-axes {
+  margin: 10px 0;
+}
+
+.radar-dialog-axes h3 {
+  margin: 12px 0 4px;
+}

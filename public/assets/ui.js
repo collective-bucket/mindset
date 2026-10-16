@@ -390,9 +390,9 @@
       return;
     }
     container.hidden = false;
-    var cx = compact ? 70 : wide ? 220 : 160;
-    var cy = compact ? 70 : wide ? 160 : 150;
-    var radius = compact ? 48 : wide ? 86 : 86;
+    var cx = compact ? 70 : wide ? 220 : 190;
+    var cy = compact ? 70 : wide ? 160 : 155;
+    var radius = compact ? 48 : wide ? 86 : 78;
     var ringScales = compact ? [0.5, 1] : [0.25, 0.5, 0.75, 1];
     var rings = ringScales
       .map(function (scale) {
@@ -434,23 +434,46 @@
       ? ""
       : keys
           .map(function (key, index) {
-            var spot = radarPoint(cx, cy, radius + 26, index, keys.length, 100);
+            var angle = -Math.PI / 2 + (Math.PI * 2 * index) / keys.length;
+            var cos = Math.cos(angle);
+            var sin = Math.sin(angle);
+            var gap = wide ? 18 : 42;
+            var spot = [cx + cos * (radius + gap), cy + sin * (radius + gap)];
             var anchor = "middle";
-            if (wide) {
-              var angle = -Math.PI / 2 + (Math.PI * 2 * index) / keys.length;
-              var cos = Math.cos(angle);
-              var sin = Math.sin(angle);
-              spot = [cx + cos * (radius + 12), cy + sin * (radius + 12) + (sin > 0.3 ? 10 : sin < -0.3 ? -3 : 4)];
-              anchor = cos > 0.3 ? "start" : cos < -0.3 ? "end" : "middle";
-            } else if (spot[0] < cx - 20) {
-              spot = [cx - radius - 8, cy - 12];
+            if (cos > 0.35) {
               anchor = "start";
-            } else if (spot[0] > cx + 20) {
-              spot = [cx + radius + 8, cy - 12];
+              spot[1] += sin * 4;
+            } else if (cos < -0.35) {
               anchor = "end";
+              spot[1] += sin * 4;
+            } else if (sin < 0) {
+              spot[1] -= 4;
+            } else {
+              spot[1] += 12;
             }
             var axis = axisByKey(key);
             var tip = axisHint(axis);
+            var words = String(i18n.pick(axis.label) || "").split(/\s+/);
+            var lines = [];
+            if (!wide && words.length > 2) {
+              var mid = Math.ceil(words.length / 2);
+              lines = [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
+            } else {
+              lines = [words.join(" ")];
+            }
+            var textBody = lines
+              .map(function (line, lineIndex) {
+                return (
+                  '<tspan x="' +
+                  spot[0] +
+                  '" dy="' +
+                  (lineIndex === 0 ? "0" : "1.15em") +
+                  '">' +
+                  escapeHtml(line) +
+                  "</tspan>"
+                );
+              })
+              .join("");
             return (
               '<text class="radar-label" x="' +
               spot[0] +
@@ -460,12 +483,12 @@
               anchor +
               '">' +
               (tip ? "<title>" + escapeHtml(tip) + "</title>" : "") +
-              escapeHtml(i18n.pick(axis.label)) +
+              textBody +
               "</text>"
             );
           })
           .join("");
-    var vb = compact ? "0 0 140 140" : wide ? "0 0 440 320" : "0 0 320 300";
+    var vb = compact ? "0 0 140 140" : wide ? "0 0 440 320" : "0 0 380 330";
     container.innerHTML =
       '<svg class="radar' +
       (compact ? " radar-compact" : "") +
