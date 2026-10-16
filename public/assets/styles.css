@@ -145,9 +145,6 @@ a:hover {
   white-space: nowrap;
 }
 
-.page-narrow {
-  max-width: 440px;
-}
 
 h1,
 h2,
@@ -1747,20 +1744,19 @@ input[type="checkbox"] {
 
 .auth-links {
   display: grid;
-  gap: 4px;
+  gap: 10px;
   margin: 16px 0;
+  justify-items: start;
 }
 
 .auth-links a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  color: var(--accent-strong);
-  text-underline-offset: 3px;
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .auth-links a:hover {
-  color: var(--accent-deep);
+  text-decoration: underline;
 }
 
 /* ---- Motion and small screens ---- */
@@ -2363,7 +2359,7 @@ input[type="checkbox"] {
 .site-footer {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px 24px;
   box-sizing: border-box;
@@ -2402,15 +2398,18 @@ input[type="checkbox"] {
 }
 
 .site-footer-collective {
-  flex: 1 0 100%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-top: 4px;
   color: var(--ink);
   font-weight: 700;
   text-decoration: none;
+  pointer-events: auto;
 }
 
 .site-footer-collective img {
