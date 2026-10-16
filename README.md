@@ -91,6 +91,40 @@ name anyone ever sees, and only inside a school.
   who can watch it: only me (default), my school, or everyone. Profiles show a
   timeline with a scrubber when allowed.
 
+## Root and simulation
+
+**Root** is the owner of mindset 1 (`firstfish`). Root alone can open `/root`
+(linked from the me page, absent from the game bar). It shows lake counts (fish,
+tails, scales, requests, schools) and the handshake funnel, and runs the
+simulation. Root cannot read real fish's closed texts or readings; the rules let
+it read only test fish's.
+
+**Test fish** have no Auth account. Their owner uid is `sim{N}` (`seed: true` on
+the public document), and root writes for them: the rules accept a write "from"
+`sim{N}` only when the signed-in user is root. Nobody else can act for a test
+fish.
+
+One click on **Run one cycle** moves every handshake one stage. Stages run
+newest-first against the world as it stood when the cycle began, so a pair
+never skips ahead (swim after, shine a scale, ask to join, accept take four
+cycles):
+
+1. Test fish answer requests: accept a match, decline the rest.
+2. Test fish that were shown a scale and match ask to join, sealing one of
+   their own closed fields.
+3. Test fish shine one closed field for everyone who swims after them.
+4. Test fish swim after the nearest fish not on their tail yet. Real fish are
+   never approached, except root when "may swim after root" is on.
+
+*Nearby* means the open scores sit within a radius of each other. A *match* is
+100 minus the mean gap over every shared open and closed score. Settings (tails
+per cycle, tail cap, shine chance, threshold, radius, seed, root) live in
+`sim/state`; cycle logs in `simTicks/{n}`. The seed plus the cycle number make a
+cycle reproducible. **Reset simulation** clears every pair touching a test fish
+and returns to cycle 0; the fish stay. The engine is
+[`public/assets/sim.js`](public/assets/sim.js); adding test fish to the lake is a
+separate step.
+
 ## Privacy
 
 Texts are scanned in the browser ([`public/assets/privacy.js`](public/assets/privacy.js))
@@ -119,6 +153,7 @@ for people aged 18 and over.
 | `seals/{from}_{to}` | owner; receiver once in a school | the sealed pledge |
 | `schoolRequests/{from}_{to}` | both sides | pending requests |
 | `schools/{uid}/members/{uid}` | owner and school | accepted members |
+| `sim/state`, `simTicks/{n}` | root | simulation settings, cycle number and log |
 | `stats/public` | everyone | histogram counts per axis, age range, gender, country, city |
 
 Rules live in [`firestore.rules`](firestore.rules). The project shares one
@@ -145,7 +180,7 @@ use it.
 npm install
 npm run check        # syntax, unit tests, i18n parity, rules allowlists
 npm run serve        # hosting emulator on http://127.0.0.1:5055
-npm run test:rules   # Firestore rules against the emulator (needs Java)
+npm run test:rules   # Firestore rules and the simulation against the emulator (needs Java)
 ```
 
 Scripts in [`scripts/`](scripts):

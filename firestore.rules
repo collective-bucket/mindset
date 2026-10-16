@@ -114,6 +114,29 @@ service cloud.firestore {
         );
     }
 
+    // Root is the owner of mindset 1 ("firstfish"). Test fish ("sim12") have no
+    // account: root writes on their behalf, and only for them.
+    function isRoot() {
+      return signedIn() && get(docPath('mindsets', '1')).data.ownerUid == request.auth.uid;
+    }
+
+    function isSim(uid) {
+      return uid is string && uid.matches('^sim[0-9]+$');
+    }
+
+    function actor(uid) {
+      return signedIn() && (request.auth.uid == uid || (isSim(uid) && isRoot()));
+    }
+
+    function ownsMindsetFor(uid, number) {
+      return get(docPath('mindsets', string(number))).data.ownerUid == uid;
+    }
+
+    function rootTouchesSim(pairId) {
+      return isRoot()
+        && (pairId.matches('^sim[0-9]+_[A-Za-z0-9]+$') || pairId.matches('^[A-Za-z0-9]+_sim[0-9]+$'));
+    }
+
     function closedField(name) {
       return name in ['unsayableAttitude', 'desireScript', 'disownedSelf'];
     }
@@ -288,7 +311,8 @@ service cloud.firestore {
     }
 
     match /privateMindsets/{privateId} {
-      allow get: if signedIn() && request.auth.uid == resource.data.ownerUid;
+      allow get: if signedIn()
+        && (request.auth.uid == resource.data.ownerUid || (isRoot() && isSim(resource.data.ownerUid)));
       allow list: if false;
 
       allow create: if signedIn() && validPrivate(privateId);
@@ -368,7 +392,11 @@ service cloud.firestore {
     // school can see the full radar. Only the owner and their school can read it.
     match /deepReadings/{numberId} {
       allow get: if signedIn()
-        && (resource.data.ownerUid == request.auth.uid || inSchoolOf(resource.data.ownerUid));
+        && (
+          resource.data.ownerUid == request.auth.uid
+          || inSchoolOf(resource.data.ownerUid)
+          || (isRoot() && isSim(resource.data.ownerUid))
+        );
       allow list: if false;
 
       allow create, update: if signedIn()
@@ -431,24 +459,24 @@ service cloud.firestore {
 
     // Step 1. A swims after B: "tails/{A}_{B}". B sees it on the current screen.
     match /tails/{tailId} {
-      allow get: if pairTouchesMe(tailId);
+      allow get: if pairTouchesMe(tailId) || isRoot();
       allow list: if signedIn()
-        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid || isRoot());
 
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'createdAt'])
-        && request.resource.data.from == request.auth.uid
+        && actor(request.resource.data.from)
         && request.resource.data.to is string
-        && request.resource.data.to != request.auth.uid
+        && request.resource.data.to != request.resource.data.from
         && tailId == request.resource.data.from + '_' + request.resource.data.to
         && request.resource.data.fromNumber is int
         && request.resource.data.toNumber is int
-        && ownsMindset(request.resource.data.fromNumber)
+        && ownsMindsetFor(request.resource.data.from, request.resource.data.fromNumber)
         && get(docPath('mindsets', string(request.resource.data.toNumber))).data.ownerUid == request.resource.data.to
         && isoTime(request.resource.data.createdAt);
 
       allow update: if false;
-      allow delete: if pairTouchesMe(tailId);
+      allow delete: if pairTouchesMe(tailId) || rootTouchesSim(tailId);
     }
 
     // Step 2. B shines a scale for A: "glints/{B}_{A}". One closed field, copied
@@ -461,21 +489,22 @@ service cloud.firestore {
             resource.data.to == request.auth.uid
             && (resource.data.expiresAt > request.time || inSchoolOf(resource.data.from))
           )
+          || (isRoot() && (isSim(resource.data.from) || isSim(resource.data.to)))
         );
       allow list: if signedIn() && resource.data.from == request.auth.uid;
 
       allow create, update: if signedIn()
-        && (resource == null || resource.data.from == request.auth.uid)
+        && (resource == null || actor(resource.data.from))
         && request.resource.data.keys().hasOnly([
           'from', 'to', 'fromNumber', 'toNumber', 'field', 'text', 'createdAt', 'expiresAt'
         ])
-        && request.resource.data.from == request.auth.uid
+        && actor(request.resource.data.from)
         && request.resource.data.to is string
         && glintId == request.resource.data.from + '_' + request.resource.data.to
         && request.resource.data.fromNumber is int
         && request.resource.data.toNumber is int
-        && ownsMindset(request.resource.data.fromNumber)
-        && exists(docPath('tails', request.resource.data.to + '_' + request.auth.uid))
+        && ownsMindsetFor(request.resource.data.from, request.resource.data.fromNumber)
+        && exists(docPath('tails', request.resource.data.to + '_' + request.resource.data.from))
         && closedField(request.resource.data.field)
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
@@ -486,7 +515,7 @@ service cloud.firestore {
         && request.resource.data.expiresAt > request.time
         && request.resource.data.expiresAt <= request.time + duration.value(7, 'd');
 
-      allow delete: if pairTouchesMe(glintId);
+      allow delete: if pairTouchesMe(glintId) || rootTouchesSim(glintId);
     }
 
     // Step 3. A seals one closed field as a pledge: "seals/{A}_{B}". B can read
@@ -496,20 +525,21 @@ service cloud.firestore {
         && (
           resource.data.from == request.auth.uid
           || (resource.data.to == request.auth.uid && inSchoolOf(resource.data.from))
+          || (isRoot() && (isSim(resource.data.from) || isSim(resource.data.to)))
         );
       allow list: if false;
 
       allow create, update: if signedIn()
-        && (resource == null || resource.data.from == request.auth.uid)
+        && (resource == null || actor(resource.data.from))
         && request.resource.data.keys().hasOnly([
           'from', 'to', 'fromNumber', 'toNumber', 'field', 'text', 'createdAt'
         ])
-        && request.resource.data.from == request.auth.uid
+        && actor(request.resource.data.from)
         && request.resource.data.to is string
         && sealId == request.resource.data.from + '_' + request.resource.data.to
         && request.resource.data.fromNumber is int
         && request.resource.data.toNumber is int
-        && ownsMindset(request.resource.data.fromNumber)
+        && ownsMindsetFor(request.resource.data.from, request.resource.data.fromNumber)
         && existsAfter(docPath('schoolRequests', sealId))
         && closedField(request.resource.data.field)
         && request.resource.data.text is string
@@ -518,36 +548,36 @@ service cloud.firestore {
         && request.resource.data.text == ownClosedText(request.resource.data.fromNumber, request.resource.data.field)
         && isoTime(request.resource.data.createdAt);
 
-      allow delete: if pairTouchesMe(sealId);
+      allow delete: if pairTouchesMe(sealId) || rootTouchesSim(sealId);
     }
 
     // A asks B to join a school: "schoolRequests/{A}_{B}". Only possible after B
     // showed A a scale, and only together with A's sealed pledge.
     match /schoolRequests/{requestId} {
-      allow get: if pairTouchesMe(requestId);
+      allow get: if pairTouchesMe(requestId) || isRoot();
       allow list: if signedIn()
-        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+        && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid || isRoot());
 
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'field', 'createdAt'])
-        && request.resource.data.from == request.auth.uid
+        && actor(request.resource.data.from)
         && request.resource.data.to is string
-        && request.resource.data.to != request.auth.uid
+        && request.resource.data.to != request.resource.data.from
         && requestId == request.resource.data.from + '_' + request.resource.data.to
         && request.resource.data.fromNumber is int
         && request.resource.data.toNumber is int
-        && ownsMindset(request.resource.data.fromNumber)
+        && ownsMindsetFor(request.resource.data.from, request.resource.data.fromNumber)
         && get(docPath('mindsets', string(request.resource.data.toNumber))).data.ownerUid == request.resource.data.to
         && closedField(request.resource.data.field)
-        && exists(docPath('glints', request.resource.data.to + '_' + request.auth.uid))
-        && get(docPath('glints', request.resource.data.to + '_' + request.auth.uid)).data.expiresAt > request.time
+        && exists(docPath('glints', request.resource.data.to + '_' + request.resource.data.from))
+        && get(docPath('glints', request.resource.data.to + '_' + request.resource.data.from)).data.expiresAt > request.time
         && existsAfter(docPath('seals', requestId))
         && getAfter(docPath('seals', requestId)).data.field == request.resource.data.field
-        && !exists(/databases/$(database)/documents/schools/$(request.auth.uid)/members/$(request.resource.data.to))
+        && !exists(/databases/$(database)/documents/schools/$(request.resource.data.from)/members/$(request.resource.data.to))
         && isoTime(request.resource.data.createdAt);
 
       allow update: if false;
-      allow delete: if pairTouchesMe(requestId);
+      allow delete: if pairTouchesMe(requestId) || rootTouchesSim(requestId);
     }
 
     // Both sides write the membership, only when the request exists.
@@ -563,12 +593,12 @@ service cloud.firestore {
         && isoTime(request.resource.data.since)
         && (
           (
-            request.auth.uid == uid
+            actor(uid)
             && exists(docPath('schoolRequests', otherUid + '_' + uid))
             && request.resource.data.number == get(docPath('schoolRequests', otherUid + '_' + uid)).data.fromNumber
           )
           || (
-            request.auth.uid == otherUid
+            actor(otherUid)
             && exists(docPath('schoolRequests', uid + '_' + otherUid))
             && request.resource.data.number == get(docPath('schoolRequests', uid + '_' + otherUid)).data.toNumber
           )
@@ -576,7 +606,22 @@ service cloud.firestore {
 
       allow update: if false;
 
-      allow delete: if signedIn() && (request.auth.uid == uid || request.auth.uid == otherUid);
+      allow delete: if signedIn()
+        && (request.auth.uid == uid || request.auth.uid == otherUid || (isRoot() && (isSim(uid) || isSim(otherUid))));
+    }
+
+    // Root counts every school across the lake (only uid, number and date live here).
+    match /{path=**}/members/{otherUid} {
+      allow list: if isRoot();
+    }
+
+    // Root-only: simulation state and the per-cycle log.
+    match /sim/{id} {
+      allow read, write: if isRoot();
+    }
+
+    match /simTicks/{id} {
+      allow read, write: if isRoot();
     }
   }
 }

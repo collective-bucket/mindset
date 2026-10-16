@@ -10,7 +10,7 @@
     "deploy": "firebase deploy --only hosting:mindset,firestore:rules,firestore:indexes",
     "stamp": "node scripts/stamp-assets.js",
     "check": "node scripts/check.js",
-    "test:rules": "firebase emulators:exec --only firestore \"node tests/rules.emulator.js\""
+    "test:rules": "firebase emulators:exec --only firestore \"node tests/rules.emulator.js && node tests/sim.emulator.js\""
   },
   "devDependencies": {
     "firebase-tools": "^15.26.0"

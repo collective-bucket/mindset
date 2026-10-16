@@ -136,7 +136,9 @@
     return decodeDocument(await request("/" + encodePath(path), { token: token }));
   }
 
-  async function runQuery(structuredQuery, token, parentPath) {
+  // options.paths adds "_path" (relative to the database root) to every row,
+  // which collection group queries need to know whose subcollection a row is.
+  async function runQuery(structuredQuery, token, parentPath, options) {
     var prefix = parentPath ? "/" + encodePath(parentPath) : "";
     var rows = await request(prefix + ":runQuery", {
       method: "POST",
@@ -146,7 +148,11 @@
     if (!Array.isArray(rows)) return [];
     return rows
       .map(function (row) {
-        return decodeDocument(row.document);
+        var doc = decodeDocument(row.document);
+        if (doc && options && options.paths) {
+          doc._path = row.document.name.split("/documents/")[1];
+        }
+        return doc;
       })
       .filter(Boolean);
   }

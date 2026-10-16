@@ -119,6 +119,7 @@
         var entry = await social.aliasOf(own.publicDoc.id, session.idToken);
         renderAlias(entry && entry.alias);
         renderCounts();
+        document.querySelector("#root-link").hidden = own.publicDoc.number !== 1;
         store.ensureFirstVersion(own.publicDoc, session.idToken).catch(function () {});
       }
       ui.setStatus(status, notice ? t(notice) : "", notice ? "error" : "");

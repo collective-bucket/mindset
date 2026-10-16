@@ -450,6 +450,7 @@ a.head-side:hover {
 input[type="text"],
 input[type="email"],
 input[type="password"],
+input[type="number"],
 select,
 textarea {
   width: 100%;
@@ -476,6 +477,7 @@ input:disabled {
 input[type="text"]:focus-visible,
 input[type="email"]:focus-visible,
 input[type="password"]:focus-visible,
+input[type="number"]:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline: none;
@@ -1823,4 +1825,98 @@ input[type="checkbox"] {
   display: block;
   margin-top: 2px;
   font-weight: 400;
+}
+
+/* ---- Root screen ---- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.stat {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--hair);
+  border-radius: 14px;
+  background: var(--paper);
+}
+
+.stat dd {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--accent-deep);
+}
+
+.stat dt {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.funnel {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.funnel-row {
+  display: grid;
+  gap: 4px;
+}
+
+.funnel-row .line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.funnel-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.funnel-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.sim-run {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.sim-tick {
+  font-weight: 700;
+  color: var(--accent-deep);
+}
+
+.sim-config {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0 16px;
+}
+
+.sim-log {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.sim-log li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--hair);
 }
