@@ -29,7 +29,7 @@ truth for what can be read.
 
 The page title doubles as a breadcrumb in the header (`Mindset Bucket › current`),
 with the EN/TR switch on the right. The brand mark is a mint line-drawn bucket
-with two fish ([`public/assets/logo.svg`](public/assets/logo.svg)).
+with one fish leaping out ([`public/assets/logo.svg`](public/assets/logo.svg)).
 
 ## Screens
 
