@@ -197,10 +197,21 @@
     }).join("");
     body.appendChild(nav);
 
+    var siteFooter = document.createElement("footer");
+    siteFooter.className = "site-footer";
+    siteFooter.innerHTML =
+      '<a href="https://collectivebucket.com" rel="noopener noreferrer">' +
+      escapeHtml(t("footer.collective")) +
+      '</a><a href="/about">' +
+      escapeHtml(t("landing.whatIsThis")) +
+      "</a>";
+    body.appendChild(siteFooter);
+
     window.MindsetStore.getOptionalSession().then(function (session) {
       if (session) {
         nav.hidden = false;
         body.classList.add("has-gamebar");
+        siteFooter.hidden = true;
       }
     });
   }

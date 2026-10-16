@@ -56,8 +56,6 @@
     var shownScores = null;
     var surfaceSlide = 0;
     var deepSlide = 0;
-    var SURFACE_TITLES = ["profile.slideRadar", "profile.slideBars", "profile.slideHistory"];
-    var DEEP_TITLES = ["profile.slideRadar", "profile.slideBars"];
 
     ui.closeOnBackdrop(howDialog);
 
@@ -126,7 +124,6 @@
       var index = Math.max(0, Math.min(max, Number(opts.index) || 0));
       opts.setIndex(index);
       document.querySelector(opts.track).style.transform = "translateX(-" + index * 100 + "%)";
-      document.querySelector(opts.title).textContent = t(opts.titles[index]);
       document.querySelectorAll(opts.host + " .slide-dot").forEach(function (dot) {
         var on = Number(dot.getAttribute("data-slide-to")) === index;
         dot.classList.toggle("is-active", on);
@@ -138,12 +135,10 @@
       showSlide({
         index: index,
         max: 2,
-        titles: SURFACE_TITLES,
         setIndex: function (value) {
           surfaceSlide = value;
         },
         track: "#surface-track",
-        title: "#surface-slide-title",
         host: "#surface-slides"
       });
     }
@@ -152,12 +147,10 @@
       showSlide({
         index: index,
         max: 1,
-        titles: DEEP_TITLES,
         setIndex: function (value) {
           deepSlide = value;
         },
         track: "#deep-track",
-        title: "#deep-slide-title",
         host: "#deep-slides"
       });
     }
