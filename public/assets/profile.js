@@ -45,7 +45,7 @@
     var ritual = document.querySelector("#ritual");
     var shareButton = document.querySelector("#share");
     var range = document.querySelector("#timeline-range");
-    var sheet = document.querySelector("#reading-sheet");
+    var howDialog = document.querySelector("#how-to-read-dialog");
     var route = parsePath();
     var doc = null;
     var alias = "";
@@ -54,8 +54,18 @@
     var ownRecord = null;
     var versions = [];
     var shownScores = null;
+    var slideCount = 3;
 
-    ui.closeOnBackdrop(sheet);
+    ui.closeOnBackdrop(howDialog);
+
+    function paintIcons() {
+      shareButton.innerHTML = ui.icon("share");
+      document.querySelector("#edit").innerHTML = ui.icon("edit");
+      document.querySelector("#manage").innerHTML = ui.icon("manage");
+      document.querySelector("#how-to-read-btn").innerHTML = ui.icon("guide");
+      document.querySelector("#tab-bottom .tab-lock").innerHTML = ui.icon("lock");
+    }
+    paintIcons();
 
     var warning = sessionStorage.getItem("mindset-warning");
     if (warning) {
@@ -97,15 +107,27 @@
         if (!event.changedTouches || !event.changedTouches[0]) return;
         var dx = event.changedTouches[0].clientX - startX;
         if (Math.abs(dx) < 40) return;
-        showFaceSlide(dx < 0 ? 1 : 0);
+        showFaceSlide(faceSlide + (dx < 0 ? 1 : -1));
       }, { passive: true });
     })();
 
-    document.querySelector("#open-sheet").addEventListener("click", function () {
-      sheet.showModal();
+    document.querySelector("#how-to-read-btn").addEventListener("click", function () {
+      var body = document.querySelector("#how-to-read-body");
+      if (!body.dataset.ready) {
+        body.innerHTML = ui.howToReadHtml(true);
+        body.dataset.ready = "1";
+      }
+      howDialog.showModal();
     });
-    document.querySelector("#sheet-close").addEventListener("click", function () {
-      sheet.close();
+
+    document.querySelector(".depth-section .tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest("[data-depth]");
+      if (!tab) return;
+      var bottom = tab.getAttribute("data-depth") === "bottom";
+      document.querySelector("#tab-surface").setAttribute("aria-selected", String(!bottom));
+      document.querySelector("#tab-bottom").setAttribute("aria-selected", String(bottom));
+      document.querySelector("#pane-surface").hidden = bottom;
+      document.querySelector("#pane-bottom").hidden = !bottom;
     });
 
     function renderAlias() {
@@ -116,14 +138,14 @@
 
 
     var faceSlide = 0;
+    var SLIDE_TITLES = ["profile.slideRadar", "profile.slideBars", "profile.slideHistory"];
 
     function showFaceSlide(index) {
-      faceSlide = index === 1 ? 1 : 0;
-      document.querySelectorAll("#reading-slides .slide").forEach(function (slide) {
-        var on = Number(slide.getAttribute("data-slide")) === faceSlide;
-        slide.hidden = !on;
-        slide.classList.toggle("is-active", on);
-      });
+      var max = slideCount - 1;
+      faceSlide = Math.max(0, Math.min(max, Number(index) || 0));
+      var track = document.querySelector("#slides-track");
+      track.style.transform = "translateX(-" + faceSlide * 100 + "%)";
+      document.querySelector("#slide-title").textContent = t(SLIDE_TITLES[faceSlide]);
       document.querySelectorAll("#reading-slides .slide-dot").forEach(function (dot) {
         var on = Number(dot.getAttribute("data-slide-to")) === faceSlide;
         dot.classList.toggle("is-active", on);
@@ -134,8 +156,6 @@
     function drawReading(scores, ghost) {
       ui.renderRadar(document.querySelector("#radar-face"), scores, ghost);
       ui.renderBars(document.querySelector("#face-bars"), scores, math.OPEN_KEYS);
-      ui.renderRadar(document.querySelector("#radar"), scores, ghost);
-      ui.renderBars(document.querySelector("#bars"), scores, math.OPEN_KEYS);
     }
 
     function showReading(source, ghost) {
@@ -172,10 +192,6 @@
 
     // Locked teasers only — closed text never enters the DOM.
     function renderBottom() {
-      var lock =
-        '<span class="locked-icon" aria-hidden="true">' +
-        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-        '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>';
       document.querySelector("#bottom").innerHTML = window.MindsetLens.fields
         .filter(function (field) {
           return !field.open;
@@ -183,15 +199,16 @@
         .map(function (field) {
           var plain = field.plain ? i18n.pick(field.plain) : "";
           return (
-            '<article class="locked-field">' +
-            lock +
-            "<div><h3>" +
+            '<article class="post locked-post">' +
+            "<h3>" +
             ui.escapeHtml(i18n.pick(field.label)) +
-            "</h3>" +
+            ' <span class="locked-icon" aria-hidden="true">' +
+            ui.icon("lock") +
+            "</span></h3>" +
             (plain ? '<p class="field-plain">' + ui.escapeHtml(plain) + "</p>" : "") +
             '<p class="hint">' +
             ui.escapeHtml(t("profile.lockedUntilSchool")) +
-            '</p><div class="locked-blur" aria-hidden="true"><span></span><span></span><span></span></div></div></article>'
+            '</p><div class="locked-blur" aria-hidden="true"><span></span><span></span><span></span></div></article>'
           );
         })
         .join("");
@@ -210,14 +227,10 @@
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);
       document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
-      var guide = document.querySelector("#reading-guide");
-      if (guide && !guide.dataset.ready) {
-        guide.innerHTML = ui.howToReadHtml(true);
-        guide.dataset.ready = "1";
-      }
       showReading(doc);
       renderSurface(doc);
       renderBottom();
+      showFaceSlide(0);
       if (doc.published === false) ui.setStatus(status, t("profile.onlyYou"));
     }
 
@@ -240,13 +253,20 @@
     }
 
     async function loadHistory() {
+      var empty = document.querySelector("#timeline-empty");
+      empty.hidden = true;
       try {
         versions = await store.versions(doc.id, session && session.idToken);
       } catch (error) {
         versions = [];
       }
-      if (!versions.length) return;
-      document.querySelector("#timeline").hidden = false;
+      if (!versions.length) {
+        empty.hidden = false;
+        empty.textContent = t("history.noneYet");
+        document.querySelector("#trend").innerHTML = "";
+        range.disabled = true;
+        return;
+      }
       range.max = String(versions.length - 1);
       range.value = range.max;
       range.disabled = versions.length < 2;
@@ -561,16 +581,13 @@
         return;
       }
       try {
-        var members = await social.members(session);
-        var others = members.filter(function (row) {
-          return Number(row.number) !== Number(doc.id);
-        });
-        if (!others.length) {
+        var members = await social.membersOf(doc.ownerUid, session.idToken);
+        if (!members.length) {
           empty.hidden = false;
           empty.textContent = t("profile.schoolTabSolo");
           return;
         }
-        var numbers = others.map(function (row) {
+        var numbers = members.map(function (row) {
           return Number(row.number);
         });
         var docs = await store.byNumbers(numbers, session.idToken);
@@ -582,11 +599,21 @@
             });
           })
         );
+        var myNumber = ownRecord && ownRecord.publicDoc ? Number(ownRecord.publicDoc.id) : null;
+        if (state.self && session) {
+          try {
+            var mine = await store.findOwn(session.uid, session.idToken);
+            if (mine) myNumber = Number(mine.publicDoc.id);
+          } catch (error) {}
+        }
         ui.renderCards(list, docs, "feed.emptySchool", function (row) {
-          return { alias: aliases[row.id] };
+          var extra = { alias: aliases[row.id] };
+          if (myNumber && Number(row.id) === myNumber) extra.chip = t("profile.you");
+          return extra;
         });
       } catch (error) {
         empty.hidden = false;
+        empty.textContent = t("profile.schoolTabEmpty");
       }
     }
 

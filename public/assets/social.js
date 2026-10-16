@@ -302,6 +302,10 @@
     return listChildren("schools/" + session.uid, "members", session.idToken, 300);
   }
 
+  function membersOf(uid, token) {
+    return listChildren("schools/" + uid, "members", token, 300);
+  }
+
   function aliasOf(number, token) {
     return quietGet("aliasOf/" + number, token);
   }
@@ -430,6 +434,7 @@
     incoming: incoming,
     outgoing: outgoing,
     members: members,
+    membersOf: membersOf,
     aliasOf: aliasOf,
     resolveAlias: resolveAlias,
     cleanAlias: cleanAlias,

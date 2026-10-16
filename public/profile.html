@@ -16,33 +16,52 @@
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <section id="profile" class="profile-face" hidden>
-      <h1 id="title" class="profile-number">#</h1>
-      <p id="alias" class="alias" hidden></p>
+      <div class="profile-top">
+        <div class="profile-top-main">
+          <h1 id="title" class="profile-number">#</h1>
+          <p id="alias" class="alias" hidden></p>
+        </div>
+        <div class="profile-tools" role="group">
+          <button type="button" id="share" class="btn-icon" data-i18n-aria="profile.share" aria-label="Share"></button>
+          <a id="edit" class="btn-icon" href="/new" hidden data-i18n-aria="profile.edit" aria-label="Edit"></a>
+          <a id="manage" class="btn-icon" href="/me" hidden data-i18n-aria="profile.manage" aria-label="Manage"></a>
+        </div>
+      </div>
       <p id="same-current" class="profile-current" hidden data-i18n="profile.sameCurrent">Swimming the same current as you right now.</p>
       <p class="card-meta meta"><span id="badges"></span><span id="meta" class="card-when"></span></p>
 
-      <div id="reading-slides" class="reading-slides" aria-roledescription="carousel" aria-label="Reading">
-        <div class="slide is-active" data-slide="0" id="slide-radar">
-          <div id="radar-face" class="radar-face"></div>
+      <div id="reading-slides" class="reading-slides" aria-roledescription="carousel">
+        <div class="slides-toolbar">
+          <h2 class="slide-title" id="slide-title" data-i18n="profile.slideRadar">Radar</h2>
+          <button type="button" id="how-to-read-btn" class="btn-icon" data-i18n-aria="profile.howToRead" aria-label="How to read"></button>
         </div>
-        <div class="slide" data-slide="1" id="slide-bars" hidden>
-          <div id="face-bars" class="face-bars"></div>
+        <div class="slides-viewport">
+          <div class="slides-track" id="slides-track">
+            <div class="slide" data-slide="0" id="slide-radar">
+              <div id="radar-face" class="radar-face"></div>
+            </div>
+            <div class="slide" data-slide="1" id="slide-bars">
+              <div id="face-bars" class="face-bars"></div>
+            </div>
+            <div class="slide" data-slide="2" id="slide-history">
+              <div id="face-timeline" class="face-timeline">
+                <div id="trend"></div>
+                <label class="field timeline-field" for="timeline-range">
+                  <span class="timeline-when"><span id="timeline-when"></span><span id="timeline-count" class="hint"></span></span>
+                  <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
+                </label>
+                <p id="timeline-note" class="hint"></p>
+                <p id="timeline-empty" class="empty" hidden data-i18n="history.noneYet">No versions yet.</p>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="slide-nav" role="tablist" aria-label="Reading views">
-          <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-radar" data-slide-to="0" data-i18n-aria="profile.slideRadar"></button>
-          <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-bars" data-slide-to="1" data-i18n-aria="profile.slideBars"></button>
+          <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-radar" data-slide-to="0"></button>
+          <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-bars" data-slide-to="1"></button>
+          <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-history" data-slide-to="2" id="dot-history"></button>
         </div>
       </div>
-
-      <section class="section surface-fields">
-        <h2 data-i18n="profile.surfaceTitle">On the surface</h2>
-        <div id="surface" class="posts"></div>
-      </section>
-
-      <section class="section bottom-fields">
-        <h2 data-i18n="profile.bottomTitle">Bottom waters</h2>
-        <div id="bottom" class="locked-list"></div>
-      </section>
 
       <div class="actions actions-primary">
         <button type="button" id="tail" class="btn btn-primary" hidden aria-pressed="false" data-i18n="profile.tail">Swim after</button>
@@ -57,12 +76,29 @@
       <div id="ritual" class="ritual" hidden></div>
       <p id="action-status" class="status" role="status" hidden></p>
 
-      <div class="actions actions-secondary">
-        <button type="button" id="share" class="btn" data-i18n="profile.share">Share</button>
-        <button type="button" id="open-sheet" class="btn" data-i18n="profile.details">Reading</button>
-        <a id="edit" class="btn" href="/new" hidden data-i18n="profile.edit">Edit</a>
-        <a id="manage" class="btn" href="/me" hidden data-i18n="profile.manage">Manage</a>
-      </div>
+      <section class="section depth-section">
+        <div class="tabs" role="tablist" aria-label="Depth">
+          <button type="button" id="tab-surface" role="tab" aria-selected="true" aria-controls="pane-surface" data-depth="surface" data-i18n="profile.surfaceTitle">On the surface</button>
+          <button type="button" id="tab-bottom" role="tab" aria-selected="false" aria-controls="pane-bottom" data-depth="bottom">
+            <span data-i18n="profile.bottomTitle">Bottom waters</span>
+            <span class="tab-lock" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div id="pane-surface" role="tabpanel" aria-labelledby="tab-surface">
+          <div id="surface" class="posts"></div>
+        </div>
+        <div id="pane-bottom" role="tabpanel" aria-labelledby="tab-bottom" hidden>
+          <div id="bottom" class="posts locked-posts"></div>
+        </div>
+        <div id="deep" class="section section-private" hidden>
+          <h3 data-i18n="profile.deepTitle">Beneath the surface</h3>
+          <p id="deep-note" class="hint" hidden data-i18n="profile.deepMissing">No full reading yet.</p>
+          <div id="deep-radar"></div>
+          <div id="deep-bars"></div>
+          <h3 data-i18n="profile.sharedTitle">Shown between you</h3>
+          <div id="exchanged" class="posts"></div>
+        </div>
+      </section>
     </section>
 
     <section id="similar-section" class="section" hidden>
@@ -80,31 +116,14 @@
     </section>
   </main>
 
-  <dialog id="reading-sheet" class="modal modal-sheet" aria-labelledby="sheet-title">
-    <div class="head">
-      <h2 id="sheet-title" data-i18n="profile.details">Reading</h2>
-      <button type="button" id="sheet-close" class="btn btn-small" data-i18n="common.close">Close</button>
-    </div>
-    <div id="reading-guide"></div>
-    <div id="radar"></div>
-    <div id="bars"></div>
-    <section id="deep" class="section section-private" hidden>
-      <h3 data-i18n="profile.deepTitle">Beneath the surface</h3>
-      <p id="deep-note" class="hint" hidden data-i18n="profile.deepMissing">No full reading yet.</p>
-      <div id="deep-radar"></div>
-      <div id="deep-bars"></div>
-      <h3 data-i18n="profile.sharedTitle">Shown between you</h3>
-      <div id="exchanged" class="posts"></div>
-    </section>
-    <section id="timeline" class="section" hidden>
-      <h3 data-i18n="history.timeline">Change over time</h3>
-      <div id="trend"></div>
-      <label class="field timeline-field" for="timeline-range">
-        <span class="timeline-when"><span id="timeline-when"></span><span id="timeline-count" class="hint"></span></span>
-        <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
-      </label>
-      <p id="timeline-note" class="hint"></p>
-    </section>
+  <dialog id="how-to-read-dialog" class="modal" aria-labelledby="how-to-read-title">
+    <form method="dialog">
+      <h2 id="how-to-read-title" data-i18n="profile.howToRead">How to read</h2>
+      <div id="how-to-read-body"></div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" value="close" data-i18n="common.close">Close</button>
+      </div>
+    </form>
   </dialog>
 
   <script src="/assets/config.js" defer></script>
