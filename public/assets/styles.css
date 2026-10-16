@@ -2290,14 +2290,25 @@ input[type="checkbox"] {
   justify-content: space-between;
   gap: 16px 24px;
   box-sizing: border-box;
+  position: sticky;
+  bottom: 0;
+  z-index: 15;
   width: 100%;
   max-width: 560px;
   margin: 32px auto 0;
   padding: 16px 20px 24px;
   border-top: 1px solid var(--hair);
-  background: transparent;
+  background: var(--paper);
   color: var(--muted);
   font-size: 13px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  will-change: transform, opacity;
+}
+
+.site-footer.is-away {
+  transform: translateY(110%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .site-footer-col {

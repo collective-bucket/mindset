@@ -231,11 +231,35 @@
       "</a></nav></div>";
     body.appendChild(siteFooter);
 
+    var lastScrollY = window.scrollY || 0;
+    var scrollThreshold = 8;
+    window.addEventListener(
+      "scroll",
+      function () {
+        if (siteFooter.hidden || body.classList.contains("has-gamebar")) {
+          return;
+        }
+        var y = window.scrollY || 0;
+        var delta = y - lastScrollY;
+        if (Math.abs(delta) < scrollThreshold) {
+          return;
+        }
+        if (delta > 0 && y > scrollThreshold) {
+          siteFooter.classList.add("is-away");
+        } else {
+          siteFooter.classList.remove("is-away");
+        }
+        lastScrollY = y;
+      },
+      { passive: true }
+    );
+
     window.MindsetStore.getOptionalSession().then(function (session) {
       if (session) {
         nav.hidden = false;
         body.classList.add("has-gamebar");
         siteFooter.hidden = true;
+        siteFooter.classList.remove("is-away");
       }
     });
   }
