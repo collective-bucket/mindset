@@ -73,6 +73,16 @@
       return false;
     }
 
+    var registerFields = document.querySelector("#register-fields");
+    if (page === "register" && adult && registerFields) {
+      function syncRegisterFields() {
+        registerFields.hidden = !adult.checked;
+        if (!adult.checked) ui.setStatus(status, "");
+      }
+      adult.addEventListener("change", syncRegisterFields);
+      syncRegisterFields();
+    }
+
     authReady().then(function (auth) {
       auth.ready.then(function (user) {
         if (user && page !== "forgot") done();

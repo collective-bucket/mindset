@@ -10,14 +10,21 @@
 </head>
 <body data-tab="" data-page="register" data-title="auth.registerTitle">
   <main class="page page-narrow">
-    <h1 class="visually-hidden" data-i18n="auth.registerTitle">Create account</h1>
+    <div class="head">
+      <h1 data-i18n="auth.registerTitle">Create account</h1>
+      <a class="head-side" href="/" data-i18n="footer.home">Home</a>
+    </div>
+    <p class="lead" data-i18n="auth.registerLead">Take a number in the lake. An account lets you write a mindset and form a school.</p>
     <form id="auth-form" class="auth-form" novalidate>
+      <p class="hint" data-i18n="auth.adultWhy">Schools and closed readings can get personal. Mindset Bucket is for people 18 and older.</p>
       <label class="check"><input id="adult" type="checkbox" required /> <span data-i18n="auth.adult">I am 18 or older.</span></label>
-      <button type="button" id="google" class="btn btn-ghost btn-block btn-google"><span class="g" aria-hidden="true">G</span><span data-i18n="auth.google">Continue with Google</span></button>
-      <p class="divider"><span data-i18n="auth.or">or</span></p>
-      <label class="field"><span data-i18n="auth.email">Email</span><input id="email" type="email" autocomplete="email" required /></label>
-      <label class="field"><span data-i18n="auth.password">Password</span><input id="password" type="password" autocomplete="new-password" required minlength="6" /><small data-i18n="auth.passwordHint">At least 6 characters.</small></label>
-      <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.submitRegister">Create account</button>
+      <div id="register-fields" hidden>
+        <button type="button" id="google" class="btn btn-ghost btn-block btn-google"><span class="g" aria-hidden="true">G</span><span data-i18n="auth.google">Continue with Google</span></button>
+        <p class="divider"><span data-i18n="auth.or">or</span></p>
+        <label class="field"><span data-i18n="auth.email">Email</span><input id="email" type="email" autocomplete="email" required /></label>
+        <label class="field"><span data-i18n="auth.password">Password</span><input id="password" type="password" autocomplete="new-password" required minlength="6" /><small data-i18n="auth.passwordHint">At least 6 characters.</small></label>
+        <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.submitRegister">Create account</button>
+      </div>
     </form>
     <p id="auth-status" class="status" hidden></p>
     <p class="auth-links">
