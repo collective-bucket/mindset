@@ -208,7 +208,7 @@
       });
     }
 
-    document.querySelector(".depth-section .tabs").addEventListener("click", function (event) {
+    document.querySelector(".depth-tabs").addEventListener("click", function (event) {
       var tab = event.target.closest("[data-depth]");
       if (!tab) return;
       selectDepth(tab.getAttribute("data-depth"));

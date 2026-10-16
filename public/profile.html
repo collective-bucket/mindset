@@ -16,31 +16,48 @@
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <section id="profile" class="profile-face" hidden>
-      <div class="profile-top">
-        <div class="profile-top-main">
-          <h1 id="title" class="profile-number">#</h1>
-          <p id="alias" class="alias" hidden></p>
+      <div class="profile-sticky">
+        <div class="profile-top">
+          <div class="profile-top-main">
+            <h1 id="title" class="profile-number">#</h1>
+          </div>
+          <div class="profile-tools" role="group">
+            <span id="in-school" class="school-chip" hidden data-i18n="profile.inSchool">In your school</span>
+            <span class="tail-wrap">
+              <button type="button" id="tail" class="btn btn-compact btn-primary" hidden aria-pressed="false" data-i18n="profile.tail" aria-describedby="tail-popover">Swim after</button>
+              <span id="tail-popover" class="tail-popover" role="tooltip" hidden data-i18n="profile.tailHint">If this frequency draws you, enter its current and send a signal.</span>
+            </span>
+            <button type="button" id="share" class="btn-icon" data-i18n-aria="profile.share" aria-label="Share"></button>
+            <a id="edit" class="btn-icon" href="/new" hidden data-i18n-aria="profile.edit" aria-label="Edit"></a>
+            <a id="manage" class="btn-icon" href="/me" hidden data-i18n-aria="profile.manage" aria-label="Manage"></a>
+          </div>
         </div>
-        <div class="profile-tools" role="group">
-          <span id="in-school" class="school-chip" hidden data-i18n="profile.inSchool">In your school</span>
-          <span class="tail-wrap">
-            <button type="button" id="tail" class="btn btn-compact btn-primary" hidden aria-pressed="false" data-i18n="profile.tail" aria-describedby="tail-popover">Swim after</button>
-            <span id="tail-popover" class="tail-popover" role="tooltip" hidden data-i18n="profile.tailHint">If this frequency draws you, enter its current and send a signal.</span>
-          </span>
-          <button type="button" id="share" class="btn-icon" data-i18n-aria="profile.share" aria-label="Share"></button>
-          <a id="edit" class="btn-icon" href="/new" hidden data-i18n-aria="profile.edit" aria-label="Edit"></a>
-          <a id="manage" class="btn-icon" href="/me" hidden data-i18n-aria="profile.manage" aria-label="Manage"></a>
-        </div>
-      </div>
-      <p id="same-current" class="profile-current" hidden data-i18n="profile.sameCurrent">Swimming the same current as you right now.</p>
-      <p class="card-meta meta"><span id="badges"></span><span id="meta" class="card-when"></span></p>
+        <p id="same-current" class="profile-current" hidden data-i18n="profile.sameCurrent">Swimming the same current as you right now.</p>
+        <p class="profile-subline card-meta meta">
+          <span id="alias" class="alias" hidden></span>
+          <span id="badges"></span>
+          <span id="meta" class="card-when"></span>
+        </p>
 
-      <div id="face-timeline" class="face-timeline global-timeline">
-        <label class="field timeline-field" for="timeline-range">
-          <span class="timeline-when"><span id="timeline-when"></span><span id="timeline-count" class="hint"></span></span>
-          <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
-        </label>
-        <p id="timeline-empty" class="empty" hidden data-i18n="history.noneYet">No versions yet.</p>
+        <div id="face-timeline" class="face-timeline global-timeline">
+          <label class="field timeline-field" for="timeline-range">
+            <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
+            <span class="timeline-when">
+              <span id="timeline-when"></span>
+              <span id="timeline-count"></span>
+            </span>
+          </label>
+          <p id="timeline-empty" class="empty" hidden data-i18n="history.noneYet">No versions yet.</p>
+        </div>
+
+        <div class="tabs depth-tabs" role="tablist" aria-label="Depth">
+          <button type="button" id="tab-surface" role="tab" aria-selected="true" aria-controls="pane-surface" data-depth="surface" data-i18n="profile.surfaceTitle">On the surface</button>
+          <button type="button" id="tab-deep" role="tab" aria-selected="false" aria-controls="pane-deep" data-depth="deep" data-i18n="profile.deepTitle">Beneath the surface</button>
+          <button type="button" id="tab-bottom" role="tab" aria-selected="false" aria-controls="pane-bottom" data-depth="bottom">
+            <span data-i18n="profile.bottomTitle">Bottom waters</span>
+            <span class="tab-lock" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
 
       <div class="actions actions-primary">
@@ -55,15 +72,6 @@
       <p id="action-status" class="status" role="status" hidden></p>
 
       <section class="section depth-section">
-        <div class="tabs" role="tablist" aria-label="Depth">
-          <button type="button" id="tab-surface" role="tab" aria-selected="true" aria-controls="pane-surface" data-depth="surface" data-i18n="profile.surfaceTitle">On the surface</button>
-          <button type="button" id="tab-deep" role="tab" aria-selected="false" aria-controls="pane-deep" data-depth="deep" data-i18n="profile.deepTitle">Beneath the surface</button>
-          <button type="button" id="tab-bottom" role="tab" aria-selected="false" aria-controls="pane-bottom" data-depth="bottom">
-            <span data-i18n="profile.bottomTitle">Bottom waters</span>
-            <span class="tab-lock" aria-hidden="true"></span>
-          </button>
-        </div>
-
         <div id="pane-surface" role="tabpanel" aria-labelledby="tab-surface">
           <div id="surface-slides" class="reading-slides compass" aria-roledescription="carousel">
             <div class="slides-toolbar">

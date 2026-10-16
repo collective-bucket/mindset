@@ -214,7 +214,7 @@ p {
 .alias {
   color: var(--accent);
   font-weight: 600;
-  margin: 4px 0 0;
+  margin: 0;
 }
 
 .alias.is-missing {
@@ -877,13 +877,24 @@ input[type="checkbox"] {
 .card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  align-items: baseline;
+  gap: 4px 0;
   margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
-.card-meta #badges:not(:empty) + .card-when:not(:empty)::before {
+.profile-subline.card-meta {
+  margin: 0 0 6px;
+}
+
+.profile-subline > span:not(:empty):not([hidden]) {
+  display: inline;
+}
+
+.profile-subline > span:not(:empty):not([hidden]) ~ span:not(:empty):not([hidden])::before {
   content: "·";
-  margin-right: 14px;
+  margin: 0 8px;
   color: var(--muted);
 }
 
@@ -996,11 +1007,17 @@ input[type="checkbox"] {
 .timeline-when {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .timeline-field input[type="range"] {
   width: 100%;
-  min-height: 44px;
+  min-height: 28px;
+  margin: 0;
   accent-color: var(--accent);
 }
 
@@ -2198,13 +2215,34 @@ input[type="checkbox"] {
 }
 
 .global-timeline {
-  margin: 10px 0 12px;
+  margin: 4px 0 2px;
   padding-bottom: 0;
   border-bottom: 0;
 }
 
 .global-timeline .timeline-field {
+  display: grid;
+  gap: 2px;
   margin: 0;
+}
+
+.profile-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  margin: 0 -4px;
+  padding: 0 4px 6px;
+  background: var(--paper);
+  box-shadow: 0 8px 16px -12px rgba(27, 99, 80, 0.35);
+}
+
+.profile-sticky .depth-tabs {
+  margin: 4px 0 0;
+  border-bottom: 1px solid var(--hair);
+}
+
+.profile-sticky .depth-tabs button {
+  min-height: 40px;
 }
 
 .tail-wrap {
@@ -2255,9 +2293,10 @@ input[type="checkbox"] {
   min-height: 200px;
 }
 
-.depth-section .tabs {
+.depth-section .tabs,
+.depth-tabs {
   flex-wrap: wrap;
-  gap: 12px 16px;
+  gap: 8px 14px;
 }
 
 #how-to-read-body .plain-list {
@@ -2307,21 +2346,15 @@ input[type="checkbox"] {
 }
 
 .face-timeline {
-  padding: 4px 0 8px;
-}
-
-.timeline-when {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
+  padding: 0;
 }
 
 .depth-section {
-  margin-top: 18px;
+  margin-top: 0;
 }
 
-.depth-section .tabs button {
+.depth-section .tabs button,
+.depth-tabs button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2420,7 +2453,12 @@ button.linkish:hover,
 
 .profile-face .depth-section.section {
   border-top: 0;
-  padding-top: 8px;
+  padding-top: 4px;
+  margin-top: 0;
+}
+
+.profile-face .profile-number {
+  margin-bottom: 0;
 }
 
 .profile-face .actions-primary[hidden] {
