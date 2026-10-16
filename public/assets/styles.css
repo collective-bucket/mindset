@@ -2502,8 +2502,21 @@ body.has-gamebar .site-footer {
 
 .depth-section .tabs,
 .depth-tabs {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.depth-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.depth-tabs button {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 #how-to-read-body .plain-list {
