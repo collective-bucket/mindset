@@ -161,9 +161,9 @@
 
 
       "profile.sameCurrent": "Swimming the same current as you right now.",
-      "profile.surfaceTitle": "On the surface",
+      "profile.surfaceTitle": "Surface waters",
       "profile.bottomTitle": "Bottom waters",
-      "profile.lockedUntilSchool": "Locked until you form a school.",
+      "profile.lockedUntilSchool": "Hidden until you join their school.",
       "profile.tailHint": "If this frequency draws you, enter its current and send a signal.",
       "profile.fish": "Fish",
       "profile.notPublished": "This fish isn't in the lake right now.",
@@ -300,6 +300,7 @@
       "current.state.nothing": "Nothing here yet.",
 
       "profile.deepMissing": "No full reading yet. It appears after they next publish.",
+      "profile.deepOwnHint": "What you and another fish show each other appears here after a handshake.",
       "profile.untilWhen": "until {date}",
 
       "me.root": "Root screen",
@@ -712,6 +713,7 @@
       "current.state.nothing": "Henüz bir şey yok.",
 
       "profile.deepMissing": "Henüz tam okuma yok. Bir sonraki yayınından sonra görünür.",
+      "profile.deepOwnHint": "Başka bir balıkla el sıkıştıktan sonra aranızda gösterilenler burada görünür.",
       "profile.untilWhen": "{date} tarihine kadar",
 
       "me.root": "Root ekranı",

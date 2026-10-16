@@ -54,7 +54,9 @@
     var ownRecord = null;
     var versions = [];
     var shownScores = null;
-    var slideCount = 3;
+    var surfaceSlide = 0;
+    var deepSlide = 0;
+    var SLIDE_TITLES = ["profile.slideRadar", "profile.slideBars"];
 
     ui.closeOnBackdrop(howDialog);
 
@@ -62,7 +64,6 @@
       shareButton.innerHTML = ui.icon("share");
       document.querySelector("#edit").innerHTML = ui.icon("edit");
       document.querySelector("#manage").innerHTML = ui.icon("manage");
-      document.querySelector("#how-to-read-btn").innerHTML = ui.icon("guide");
       document.querySelector("#tab-bottom .tab-lock").innerHTML = ui.icon("lock");
     }
     paintIcons();
@@ -93,41 +94,118 @@
       );
     });
 
-    document.querySelector("#reading-slides").addEventListener("click", function (event) {
-      var dot = event.target.closest("[data-slide-to]");
-      if (dot) showFaceSlide(Number(dot.getAttribute("data-slide-to")));
-    });
-    (function () {
-      var host = document.querySelector("#reading-slides");
+    function wireCarousel(hostId, getIndex, setIndex) {
+      var host = document.querySelector(hostId);
+      host.addEventListener("click", function (event) {
+        var dot = event.target.closest("[data-slide-to]");
+        if (dot) setIndex(Number(dot.getAttribute("data-slide-to")));
+      });
       var startX = 0;
-      host.addEventListener("touchstart", function (event) {
-        if (event.changedTouches && event.changedTouches[0]) startX = event.changedTouches[0].clientX;
-      }, { passive: true });
-      host.addEventListener("touchend", function (event) {
-        if (!event.changedTouches || !event.changedTouches[0]) return;
-        var dx = event.changedTouches[0].clientX - startX;
-        if (Math.abs(dx) < 40) return;
-        showFaceSlide(faceSlide + (dx < 0 ? 1 : -1));
-      }, { passive: true });
-    })();
+      host.addEventListener(
+        "touchstart",
+        function (event) {
+          if (event.changedTouches && event.changedTouches[0]) startX = event.changedTouches[0].clientX;
+        },
+        { passive: true }
+      );
+      host.addEventListener(
+        "touchend",
+        function (event) {
+          if (!event.changedTouches || !event.changedTouches[0]) return;
+          var dx = event.changedTouches[0].clientX - startX;
+          if (Math.abs(dx) < 40) return;
+          setIndex(getIndex() + (dx < 0 ? 1 : -1));
+        },
+        { passive: true }
+      );
+    }
 
-    document.querySelector("#how-to-read-btn").addEventListener("click", function () {
+    function showSlide(opts) {
+      var index = Math.max(0, Math.min(1, Number(opts.index) || 0));
+      opts.setIndex(index);
+      document.querySelector(opts.track).style.transform = "translateX(-" + index * 100 + "%)";
+      document.querySelector(opts.title).textContent = t(SLIDE_TITLES[index]);
+      document.querySelectorAll(opts.host + " .slide-dot").forEach(function (dot) {
+        var on = Number(dot.getAttribute("data-slide-to")) === index;
+        dot.classList.toggle("is-active", on);
+        dot.setAttribute("aria-selected", String(on));
+      });
+    }
+
+    function showSurfaceSlide(index) {
+      showSlide({
+        index: index,
+        setIndex: function (value) {
+          surfaceSlide = value;
+        },
+        track: "#surface-track",
+        title: "#surface-slide-title",
+        host: "#surface-slides"
+      });
+    }
+
+    function showDeepSlide(index) {
+      showSlide({
+        index: index,
+        setIndex: function (value) {
+          deepSlide = value;
+        },
+        track: "#deep-track",
+        title: "#deep-slide-title",
+        host: "#deep-slides"
+      });
+    }
+
+    wireCarousel(
+      "#surface-slides",
+      function () {
+        return surfaceSlide;
+      },
+      showSurfaceSlide
+    );
+    wireCarousel(
+      "#deep-slides",
+      function () {
+        return deepSlide;
+      },
+      showDeepSlide
+    );
+
+    function openHowTo(mode) {
       var body = document.querySelector("#how-to-read-body");
-      if (!body.dataset.ready) {
-        body.innerHTML = ui.howToReadHtml(true);
-        body.dataset.ready = "1";
-      }
+      body.innerHTML = ui.howToReadHtml(mode, { plain: true });
       howDialog.showModal();
+    }
+
+    document.querySelector("#how-to-read-open").addEventListener("click", function () {
+      openHowTo(true);
     });
+    document.querySelector("#how-to-read-closed").addEventListener("click", function () {
+      openHowTo("closed");
+    });
+
+    function selectDepth(name) {
+      var panes = {
+        surface: document.querySelector("#pane-surface"),
+        deep: document.querySelector("#pane-deep"),
+        bottom: document.querySelector("#pane-bottom")
+      };
+      var tabs = {
+        surface: document.querySelector("#tab-surface"),
+        deep: document.querySelector("#tab-deep"),
+        bottom: document.querySelector("#tab-bottom")
+      };
+      Object.keys(panes).forEach(function (key) {
+        var on = key === name;
+        panes[key].hidden = !on;
+        tabs[key].setAttribute("aria-selected", String(on));
+      });
+    }
 
     document.querySelector(".depth-section .tabs").addEventListener("click", function (event) {
       var tab = event.target.closest("[data-depth]");
       if (!tab) return;
-      var bottom = tab.getAttribute("data-depth") === "bottom";
-      document.querySelector("#tab-surface").setAttribute("aria-selected", String(!bottom));
-      document.querySelector("#tab-bottom").setAttribute("aria-selected", String(bottom));
-      document.querySelector("#pane-surface").hidden = bottom;
-      document.querySelector("#pane-bottom").hidden = !bottom;
+      selectDepth(tab.getAttribute("data-depth"));
     });
 
     function renderAlias() {
@@ -136,21 +214,9 @@
       node.textContent = alias ? "@" + alias : "";
     }
 
-
-    var faceSlide = 0;
-    var SLIDE_TITLES = ["profile.slideRadar", "profile.slideBars", "profile.slideHistory"];
-
-    function showFaceSlide(index) {
-      var max = slideCount - 1;
-      faceSlide = Math.max(0, Math.min(max, Number(index) || 0));
-      var track = document.querySelector("#slides-track");
-      track.style.transform = "translateX(-" + faceSlide * 100 + "%)";
-      document.querySelector("#slide-title").textContent = t(SLIDE_TITLES[faceSlide]);
-      document.querySelectorAll("#reading-slides .slide-dot").forEach(function (dot) {
-        var on = Number(dot.getAttribute("data-slide-to")) === faceSlide;
-        dot.classList.toggle("is-active", on);
-        dot.setAttribute("aria-selected", String(on));
-      });
+    function renderSchoolChip() {
+      var chip = document.querySelector("#in-school");
+      chip.hidden = !(session && state.member && !state.self);
     }
 
     function drawReading(scores, ghost) {
@@ -230,8 +296,23 @@
       showReading(doc);
       renderSurface(doc);
       renderBottom();
-      showFaceSlide(0);
+      showSurfaceSlide(0);
+      showDeepSlide(0);
+      updateDeepAccess();
       if (doc.published === false) ui.setStatus(status, t("profile.onlyYou"));
+    }
+
+    function canSeeDeep() {
+      return Boolean(session && (state.self || state.member));
+    }
+
+    function updateDeepAccess() {
+      var locked = document.querySelector("#deep-locked");
+      var content = document.querySelector("#deep-content");
+      var ok = canSeeDeep();
+      locked.hidden = ok;
+      content.hidden = !ok;
+      renderSchoolChip();
     }
 
     function showVersion(index) {
@@ -310,7 +391,7 @@
         buttons.tail.setAttribute("aria-pressed", "false");
       } else if (!state.self) {
         if (state.member) {
-          notes.push('<p class="ritual-line"><strong>' + ui.escapeHtml(t("profile.inSchool")) + "</strong></p>");
+          // School badge lives next to share; keep ritual for handshake notes only.
         } else if (state.incoming) {
           buttons.accept.hidden = false;
           buttons.decline.hidden = false;
@@ -366,12 +447,12 @@
       ritual.innerHTML = notes.join("");
       ritual.hidden = !notes.length;
       renderTailHint();
+      renderSchoolChip();
     }
 
     function needLogin() {
       window.location.assign(ui.loginHref());
     }
-
 
     function updateSameCurrent() {
       var node = document.querySelector("#same-current");
@@ -388,6 +469,7 @@
       state = await social.relation(session, doc.ownerUid);
       renderActions();
       updateSameCurrent();
+      updateDeepAccess();
       await Promise.all([loadDeep(), loadSchoolTab(), loadAlias()]);
     }
 
@@ -504,13 +586,14 @@
       }
     }
 
-    // A school sees the full radar and what each side showed.
+    // Owner or school members see the deep radar and what each side showed.
     async function loadDeep() {
-      var section = document.querySelector("#deep");
-      section.hidden = true;
-      if (!session || !state.member) return;
+      updateDeepAccess();
+      if (!canSeeDeep()) return;
       var deep = await social.deepReading(doc.id, session.idToken);
-      var exchanged = await social.exchanged(session, doc.ownerUid);
+      var exchanged = state.self
+        ? { theirGlint: null, theirSeal: null, myGlint: null, mySeal: null }
+        : await social.exchanged(session, doc.ownerUid);
       var scores = math.scoresOf(doc);
       var note = document.querySelector("#deep-note");
       if (deep) {
@@ -518,12 +601,17 @@
           if (typeof deep[key] === "number") scores[key] = deep[key];
         });
       }
-      section.hidden = false;
       note.hidden = Boolean(deep);
       ui.renderRadar(document.querySelector("#deep-radar"), scores, null, {
         keys: math.OPEN_KEYS.concat(math.CLOSED_KEYS)
       });
       ui.renderBars(document.querySelector("#deep-bars"), scores, math.CLOSED_KEYS);
+      showDeepSlide(deepSlide);
+      if (state.self) {
+        document.querySelector("#exchanged").innerHTML =
+          '<p class="empty">' + ui.escapeHtml(t("profile.deepOwnHint")) + "</p>";
+        return;
+      }
       var shownByThem = [exchanged.theirGlint, exchanged.theirSeal].filter(Boolean);
       var shownByMe = [exchanged.myGlint, exchanged.mySeal].filter(Boolean);
       document.querySelector("#exchanged").innerHTML =
@@ -542,6 +630,7 @@
     async function loadSocial() {
       if (!session) {
         renderActions();
+        updateDeepAccess();
         return;
       }
       if (doc.ownerUid === session.uid) {
@@ -550,7 +639,8 @@
         state = { self: true };
         renderActions();
         updateSameCurrent();
-        await loadAlias();
+        updateDeepAccess();
+        await Promise.all([loadDeep(), loadAlias()]);
         return;
       }
       ownRecord = await store.findOwn(session.uid, session.idToken).catch(function () {

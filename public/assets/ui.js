@@ -358,7 +358,8 @@
     );
   }
 
-  function howToReadHtml(openOnly) {
+  function howToReadHtml(openOnly, options) {
+    options = options || {};
     var axes = window.MindsetLens.axes.filter(function (axis) {
       if (openOnly === "closed") return !axis.open;
       return openOnly ? axis.open : true;
@@ -375,16 +376,21 @@
         );
       })
       .join("");
+    var body =
+      '<p class="hint">' +
+      escapeHtml(t(openOnly === "closed" ? "guide.closedLead" : "guide.lead")) +
+      '</p><ul class="plain-list">' +
+      items +
+      '</ul><p class="hint">' +
+      escapeHtml(t("common.notTest")) +
+      "</p>";
+    if (options.plain) return body;
     return (
       '<details class="how-to-read"><summary>' +
       escapeHtml(t(titleKey)) +
-      "</summary><p class=\"hint\">" +
-      escapeHtml(t(openOnly === "closed" ? "guide.closedLead" : "guide.lead")) +
-      "</p><ul class=\"plain-list\">" +
-      items +
-      "</ul><p class=\"hint\">" +
-      escapeHtml(t("common.notTest")) +
-      "</p></details>"
+      "</summary>" +
+      body +
+      "</details>"
     );
   }
 
