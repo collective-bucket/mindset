@@ -6,7 +6,7 @@
 
   function fillFields(id, open) {
     var list = document.querySelector(id);
-    if (!list) return;
+    if (!list || !window.MindsetLens) return;
     list.innerHTML = window.MindsetLens.fields
       .filter(function (field) {
         return Boolean(field.open) === open;
@@ -26,9 +26,5 @@
   document.addEventListener("DOMContentLoaded", function () {
     fillFields("#about-open-fields", true);
     fillFields("#about-closed-fields", false);
-    window.MindsetStore.getOptionalSession().then(function (session) {
-      var bar = document.querySelector("#gamebar");
-      if (bar) bar.hidden = !session;
-    });
   });
 })();

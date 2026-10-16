@@ -1986,14 +1986,47 @@ input[type="checkbox"] {
   flex: 0 0 auto;
 }
 
+.static-page {
+  margin: 0 0 24px;
+}
+
+.static-page > .lead {
+  margin: 0 0 20px;
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.static-page > h2 {
+  margin: 28px 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--accent-strong);
+}
+
+.static-page > h2:first-of-type {
+  margin-top: 8px;
+}
+
+.static-page > p {
+  margin: 0 0 12px;
+}
+
+.static-page .gate-schema {
+  margin-top: 28px;
+}
+
+/* Legacy manifesto pages (if any) share the same rhythm. */
 .manifesto {
-  margin: 36px 0 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--hair);
+  margin: 0 0 24px;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .manifesto h2 {
-  margin-top: 0;
+  margin-top: 28px;
 }
 
 .manifesto h3 {
@@ -2020,9 +2053,11 @@ input[type="checkbox"] {
   background: var(--accent-pastel);
 }
 
+.layer h3,
 .layer h4 {
   margin: 0 0 4px;
   font-size: 15px;
+  color: var(--accent-deep);
 }
 
 .layer .plain-list {
