@@ -2411,6 +2411,20 @@ input[type="checkbox"] {
   color: var(--accent-strong);
 }
 
+.site-footer-collective {
+  flex: 1 0 100%;
+  display: block;
+  margin-top: 4px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-footer-collective:hover {
+  color: var(--accent-strong);
+}
+
 .site-footer-stack {
   display: flex;
   flex-direction: column;
