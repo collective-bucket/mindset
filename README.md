@@ -1,4 +1,4 @@
-# mindset
+# Mindset Bucket
 
 Build a bucket of minds together. A mindset is a number and a fish in a lake.
 Number 212 lives at `/i/212`. Outside, nobody has a name: only numbers travel.
@@ -19,18 +19,43 @@ The interface is English by default with a Turkish option
 language: every anchor exists in English and Turkish, and a pole is the mean of
 both.
 
+## Access
+
+Only profiles (`/i/{number}`), the sign-in pages and the 404 page are public.
+Everything else (flow, hunt, me, create, net, tribe, `/a/{alias}`) sits behind
+a sign-in wall: signed-out visitors see a short pitch, the reading scheme and a
+button to enter. The wall is client-side; Firestore rules stay the source of
+truth for what can be read.
+
+The page title doubles as a breadcrumb in the header (`Mindset Bucket › flow`),
+with the EN/TR switch on the right. The brand mark is a mint line-drawn bucket
+with two fish ([`public/assets/logo.svg`](public/assets/logo.svg)).
+
 ## Screens
 
-The game bar at the bottom has three buttons, left to right:
+When signed in, the game bar at the bottom has three buttons, left to right:
 
-- **Flow** (bucket): your tribe and your net first, then recent changes across
+- **flow** (bucket): your tribe and your net first, then recent changes across
   the lake.
-- **Hunt** (fisherman, the big one): the lake. Each fish is a mind placed by two
+- **hunt** (angler, the big one): the lake. Each fish is a mind placed by two
   open readings. The panel narrows the scale with ranges and demographic
   filters; the lake zooms to what is left. Tap a fish to hook it or invite it.
   The Bucket tab shows aggregate distributions.
-- **Me** (jumping fish): your number, alias, history consent, reading, closed
+- **me** (jumping fish): your number, alias, history consent, reading, closed
   texts, net, tribe and account.
+
+**Create** (`/new`) is a three-step wizard (open texts, closed texts, alias and
+details) with a "how to read" guide for each lens, plus suggestions for
+demographics drawn from what you wrote.
+
+### Profile as a calling card
+
+A profile is the card you would hand to everyone you meet: a short **headline**
+("retired traveller") and a one-paragraph **blurb**, both derived in the browser
+from the open texts ([`public/assets/reading.js`](public/assets/reading.js)),
+with badges, a small radar and the demographics you chose to show. The full
+reading (radar, bars, texts, timeline) opens in a sheet. Nearby fish and the
+tribe sit below in tabs; only mutual members can see a tribe.
 
 ## Social layer
 
@@ -63,8 +88,8 @@ for people aged 18 and over.
 
 | Collection | Who reads | Holds |
 | --- | --- | --- |
-| `mindsets/{number}` | everyone if published, owner always | open texts, open readings, bucket, age range, gender, country, history level |
-| `mindsets/{number}/versions/{id}` | owner; tribe or everyone per history level | past open texts and readings |
+| `mindsets/{number}` | everyone if published, owner always | open texts, open readings, headline, blurb, bucket, age range, gender, country, history level |
+| `mindsets/{number}/versions/{id}` | owner; tribe or everyone per history level | past open texts, readings, headline and blurb |
 | `privateMindsets/{number}` | owner | closed texts, closed readings, city |
 | `aliases/{alias}`, `aliasOf/{number}` | owner, tribe | alias |
 | `follows/{uid}/items/{number}` | owner | net |
@@ -82,6 +107,14 @@ Accounts use Firebase Auth inside the app (email and password, password reset,
 Google). They are shared with other Collective Bucket apps on the same Firebase
 project.
 
+## Design
+
+Static HTML and vanilla JS, no build step. Line drawings with ink for text and
+structure; the accent is mint (`--accent` and its soft, mid, strong, deep and
+pastel variations in [`public/assets/styles.css`](public/assets/styles.css)).
+Hover, active, selected and focus states, primary buttons and chart fills all
+use it.
+
 ## Local
 
 ```bash
@@ -90,6 +123,16 @@ npm run check        # syntax, unit tests, i18n parity, rules allowlists
 npm run serve        # hosting emulator on http://127.0.0.1:5055
 npm run test:rules   # Firestore rules against the emulator (needs Java)
 ```
+
+Scripts in [`scripts/`](scripts):
+
+- `check.js`: syntax check of every asset, then the unit tests.
+- `stamp-assets.js`: cache-busts asset URLs; CI runs it before deploy.
+- `wipe-except.js [number ...]`: deletes all mindset data and Auth users except
+  the listed numbers (default `1`). Needs a fresh `firebase-tools` login. Never
+  touches `ads/` or `trips/`.
+- `seed-accounts.js`: creates 100 Turkish demo mindsets (`seed: true`,
+  `{N}@ms.com`). Not run in production; clean up with `wipe-except.js`.
 
 ## Deploy
 
