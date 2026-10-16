@@ -1953,14 +1953,6 @@ input[type="checkbox"] {
   margin: 20px 0 6px;
 }
 
-.lookup-label {
-  display: block;
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
 .lookup-row {
   display: flex;
   flex-wrap: wrap;
@@ -2027,7 +2019,9 @@ input[type="checkbox"] {
 }
 
 .lookup-field:focus-within {
+  outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .lookup-hash {
@@ -2039,9 +2033,12 @@ input[type="checkbox"] {
 
 .lookup-field input {
   border: 0;
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
   padding: 10px 8px 10px 0;
-  min-height: 42px;
+  min-height: 0;
+  height: 42px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   font-size: 18px;
@@ -2050,6 +2047,7 @@ input[type="checkbox"] {
 .lookup-field input:focus-visible {
   outline: none;
   border-color: transparent;
+  box-shadow: none;
 }
 
 .lookup .btn {
