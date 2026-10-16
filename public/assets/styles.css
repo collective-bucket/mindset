@@ -1992,9 +1992,7 @@ input[type="checkbox"] {
 }
 
 .landing-dive a {
-  display: inline;
-  margin-left: 0.35em;
-  white-space: nowrap;
+  margin-left: 0.25em;
 }
 
 .landing-actions {
