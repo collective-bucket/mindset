@@ -25,38 +25,33 @@
       <div id="radar-mini" class="radar-mini"></div>
 
       <div class="actions">
-        <button type="button" id="follow" class="btn btn-primary" hidden aria-pressed="false" data-i18n="profile.follow">Hook</button>
-        <button type="button" id="tribe" class="btn" hidden data-i18n="profile.addTribe">Invite to tribe</button>
+        <button type="button" id="tail" class="btn btn-primary" hidden aria-pressed="false" data-i18n="profile.tail">Swim after</button>
+        <button type="button" id="shine" class="btn" hidden data-i18n="profile.shine">Shine a scale</button>
+        <button type="button" id="join" class="btn btn-primary" hidden data-i18n="profile.joinSchool">Join the school</button>
+        <button type="button" id="accept" class="btn btn-primary" hidden data-i18n="profile.acceptSchool">Accept into the school</button>
+        <button type="button" id="decline" class="btn" hidden data-i18n="profile.decline">Decline</button>
+        <button type="button" id="withdraw" class="btn" hidden data-i18n="profile.withdraw">Withdraw</button>
         <button type="button" id="share" class="btn" data-i18n="profile.share">Share</button>
         <button type="button" id="open-sheet" class="btn" data-i18n="profile.details">Reading</button>
         <a id="edit" class="btn" href="/new" hidden data-i18n="profile.edit">Edit</a>
         <a id="manage" class="btn" href="/me" hidden data-i18n="profile.manage">Manage</a>
       </div>
 
-      <form id="invite-form" class="invite" hidden novalidate>
-        <label class="field" for="invite-alias"><span data-i18n="invite.label">Their alias</span>
-          <span class="prefix-input"><span aria-hidden="true">@</span><input id="invite-alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" aria-describedby="invite-hint" /></span>
-        </label>
-        <small id="invite-hint" class="hint" data-i18n="invite.hint">You can only invite someone whose alias you know.</small>
-        <div class="actions">
-          <button type="submit" class="btn btn-primary" data-i18n="invite.send">Send invite</button>
-          <button type="button" id="invite-cancel" class="btn" data-i18n="common.cancel">Cancel</button>
-        </div>
-      </form>
+      <div id="ritual" class="ritual" hidden></div>
       <p id="action-status" class="status" role="status" hidden></p>
     </section>
 
     <section id="similar-section" class="section" hidden>
-      <div class="tabs" role="tablist" aria-label="Nearby and tribe">
+      <div class="tabs" role="tablist" aria-label="Nearby and school">
         <button type="button" id="tab-nearby" role="tab" aria-selected="true" aria-controls="pane-nearby" data-i18n="profile.similar">Fish nearby</button>
-        <button type="button" id="tab-tribe" role="tab" aria-selected="false" aria-controls="pane-tribe" data-i18n="profile.tribeTab">Tribe</button>
+        <button type="button" id="tab-school" role="tab" aria-selected="false" aria-controls="pane-school" data-i18n="profile.schoolTab">School</button>
       </div>
       <div id="pane-nearby" role="tabpanel" aria-labelledby="tab-nearby">
         <div id="similar" class="feed"></div>
       </div>
-      <div id="pane-tribe" role="tabpanel" aria-labelledby="tab-tribe" hidden>
-        <div id="tribe-list" class="feed"></div>
-        <p id="tribe-empty" class="empty" hidden data-i18n="profile.tribeTabEmpty">Join their tribe to see this school.</p>
+      <div id="pane-school" role="tabpanel" aria-labelledby="tab-school" hidden>
+        <div id="school-list" class="feed"></div>
+        <p id="school-empty" class="empty" hidden data-i18n="profile.schoolTabEmpty">Be in their school to see this.</p>
       </div>
     </section>
   </main>
@@ -69,6 +64,14 @@
     <div id="reading-guide"></div>
     <div id="radar"></div>
     <div id="bars"></div>
+    <section id="deep" class="section section-private" hidden>
+      <h3 data-i18n="profile.deepTitle">Beneath the surface</h3>
+      <p id="deep-note" class="hint" hidden data-i18n="profile.deepMissing">No full reading yet.</p>
+      <div id="deep-radar"></div>
+      <div id="deep-bars"></div>
+      <h3 data-i18n="profile.sharedTitle">Shown between you</h3>
+      <div id="exchanged" class="posts"></div>
+    </section>
     <div id="texts" class="posts"></div>
     <section id="timeline" class="section" hidden>
       <h3 data-i18n="history.timeline">Change over time</h3>

@@ -16,8 +16,12 @@
     "redirects": [
       { "source": "/m/:number", "destination": "/i/:number", "type": 301 },
       { "source": "/yeni", "destination": "/new", "type": 301 },
-      { "source": "/liste", "destination": "/hunt", "type": 301 },
-      { "source": "/explore", "destination": "/hunt", "type": 301 },
+      { "source": "/liste", "destination": "/lake", "type": 301 },
+      { "source": "/explore", "destination": "/lake", "type": 301 },
+      { "source": "/hunt", "destination": "/lake", "type": 301 },
+      { "source": "/tribe", "destination": "/school", "type": 301 },
+      { "source": "/following", "destination": "/", "type": 301 },
+      { "source": "/flow", "destination": "/", "type": 301 },
       { "source": "/ben", "destination": "/me", "type": 301 }
     ],
     "rewrites": [

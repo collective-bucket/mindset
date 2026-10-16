@@ -34,6 +34,7 @@
     if (Array.isArray(value)) {
       return { arrayValue: { values: value.map(encodeValue) } };
     }
+    if (value instanceof Date) return { timestampValue: value.toISOString() };
     if (typeof value === "object") {
       return { mapValue: { fields: encodeFields(value) } };
     }

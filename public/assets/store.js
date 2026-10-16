@@ -73,6 +73,20 @@
     }
   }
 
+  // The four closed readings (scores only) are copied so a school can see the full radar.
+  async function writeDeep(uid, number, privateDoc, token) {
+    var data = {
+      ownerUid: uid,
+      number: Number(number),
+      updatedAt: privateDoc.updatedAt,
+      codeGap: privateDoc.codeGap,
+      authorityLean: privateDoc.authorityLean,
+      desireSplit: privateDoc.desireSplit,
+      shadowDistance: privateDoc.shadowDistance
+    };
+    await db().commit([db().writes.set("deepReadings/" + number, data)], token);
+  }
+
   async function ensureOwner(uid, number, token) {
     var owner = await db().get("owners/" + uid, token);
     if (owner && owner.number === number) return;
@@ -153,6 +167,7 @@
         continue;
       }
       await writePrivate(number, docs.privateDoc, token, false);
+      await writeDeep(uid, number, docs.privateDoc, token).catch(function () {});
       await ensureOwner(uid, number, token);
       try {
         await bumpCounter(token, number + 1);
@@ -198,6 +213,7 @@
       );
       await db().update("mindsets/" + number, docs.publicDoc, token);
       await writePrivate(number, docs.privateDoc, token, Boolean(existing.privateDoc));
+      await writeDeep(session.uid, number, docs.privateDoc, token).catch(function () {});
       await ensureOwner(session.uid, number, token);
       saved = {
         number: number,
@@ -318,6 +334,7 @@
     }
     await window.MindsetSocial.cleanup(session, number);
     await removeVersions(number, token);
+    await db().remove("deepReadings/" + number, token).catch(function () {});
     if (existing.privateDoc) await db().remove("privateMindsets/" + number, token);
     await db().remove("mindsets/" + number, token);
     await db().remove("owners/" + session.uid, token);

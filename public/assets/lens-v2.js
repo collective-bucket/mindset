@@ -12,7 +12,8 @@
       {
         key: "currentPosition",
         code: "current_position",
-        label: { en: "Right now", tr: "Şu an" },
+        label: { en: "The waters I swim", tr: "Yüzdüğüm sular" },
+        plain: { en: "Right now", tr: "Şu an" },
         placeholder: {
           en: "Your work, your money, who you look after, where you stand.",
           tr: "İşin, paran, baktığın kişi, durduğun yer."
@@ -23,7 +24,8 @@
       {
         key: "personalCode",
         code: "personal_code",
-        label: { en: "What I hold true", tr: "Doğru bildiğim" },
+        label: { en: "My scales", tr: "Pullarım" },
+        plain: { en: "What I hold true", tr: "Doğru bildiğim" },
         placeholder: {
           en: "Rules you set for yourself, a line you keep repeating.",
           tr: "Kendine koyduğun kurallar, sık tekrar ettiğin cümle."
@@ -34,7 +36,8 @@
       {
         key: "selfNarrative",
         code: "self_narrative",
-        label: { en: "How I tell my story", tr: "Kendimi nasıl anlatırım" },
+        label: { en: "The foam I leave", tr: "Bıraktığım köpük" },
+        plain: { en: "How I tell my story", tr: "Kendimi nasıl anlatırım" },
         placeholder: {
           en: "How you tie what happened to you to who you are.",
           tr: "Başına gelenleri kendine nasıl bağlarsın."
@@ -45,7 +48,8 @@
       {
         key: "unsayableAttitude",
         code: "unsayable_attitude",
-        label: { en: "What I don't say out loud", tr: "Dışarıda söylemediğim" },
+        label: { en: "The mud I swallowed", tr: "Yuttuğum çamur" },
+        plain: { en: "What I don't say out loud", tr: "Dışarıda söylemediğim" },
         placeholder: {
           en: "A leaning that would never leave your mouth in public.",
           tr: "Toplum içinde ağzından çıkmayacak eğilim."
@@ -56,7 +60,8 @@
       {
         key: "desireScript",
         code: "desire_script",
-        label: { en: "Desire", tr: "Arzu" },
+        label: { en: "The pull from below", tr: "Dipteki çekim" },
+        plain: { en: "Desire", tr: "Arzu" },
         placeholder: {
           en: "Attraction, sex, wanting.",
           tr: "Çekim, cinsellik, istemek."
@@ -67,7 +72,8 @@
       {
         key: "disownedSelf",
         code: "disowned_self",
-        label: { en: "The side I'm ashamed of", tr: "Utandığım yan" },
+        label: { en: "The wound in my belly", tr: "Karnımdaki yara" },
+        plain: { en: "The side I'm ashamed of", tr: "Utandığım yan" },
         placeholder: {
           en: "A confession with no place in the person you describe.",
           tr: "Anlattığın kişide yeri olmayan itiraf."
@@ -80,9 +86,9 @@
       {
         key: "agency",
         code: "agency",
-        label: { en: "In charge", tr: "İş bende" },
-        lowLabel: { en: "Drifting", tr: "Sürükleniyorum" },
-        highLabel: { en: "I have the last word", tr: "Son söz bende" },
+        label: { en: "Facing the current", tr: "Akıntı karşısında" },
+        lowLabel: { en: "Swept along", tr: "Akıntıya kapılan" },
+        highLabel: { en: "Swimming upstream", tr: "Akıntıya karşı yüzen" },
         hint: {
           en: "Do you steer your life, or do events and other people steer you?",
           tr: "Hayatının dümeni sende mi, yoksa olaylar ve başkaları mı sürüklüyor?"
@@ -127,9 +133,9 @@
       {
         key: "communion",
         code: "communion",
-        label: { en: "Together", tr: "Bir aradayım" },
-        lowLabel: { en: "On my own", tr: "Kendi başımayım" },
-        highLabel: { en: "I see myself within an us", tr: "Kendimi bir biz içinde görüyorum" },
+        label: { en: "School or deep", tr: "Sürüde mi dipte mi" },
+        lowLabel: { en: "Loner of the deep", tr: "Dip balığı" },
+        highLabel: { en: "Schooling fish", tr: "Sürü balığı" },
         hint: {
           en: "Do you tell your story as alone, or as part of a we?",
           tr: "Hikâyeni yalnız mı anlatıyorsun, yoksa bir bizin parçası olarak mı?"
@@ -170,9 +176,9 @@
       {
         key: "codeClarity",
         code: "code_clarity",
-        label: { en: "Clear code", tr: "Kuralım net" },
-        lowLabel: { en: "Depends on the situation", tr: "Duruma göre değişir" },
-        highLabel: { en: "What's right for me is clear", tr: "Benim için doğru olan net" },
+        label: { en: "Scale hardness", tr: "Pul sertliği" },
+        lowLabel: { en: "Slippery, supple", tr: "Kıvrak, kaygan" },
+        highLabel: { en: "Hard scaled", tr: "Sert pullu" },
         hint: {
           en: "Are your rules firm, or do they bend with the room?",
           tr: "Kuralların sert mi, yoksa ortama göre mi esniyor?"
@@ -213,9 +219,9 @@
       {
         key: "redemption",
         code: "redemption",
-        label: { en: "Turns out fine", tr: "Düze çıkıyor" },
-        lowLabel: { en: "The story ends worse", tr: "Hikaye bozularak bitiyor" },
-        highLabel: { en: "The story ends repaired", tr: "Hikaye düzelerek bitiyor" },
+        label: { en: "Course of the story", tr: "Hikâyenin seyri" },
+        lowLabel: { en: "Sinking", tr: "Dibe çöken" },
+        highLabel: { en: "Surfacing", tr: "Yüzeye çıkan" },
         hint: {
           en: "In the story you tell, do things repair — or fall apart?",
           tr: "Anlattığın hikâyede işler düzelerek mi bitiyor, yoksa dağılarak mı?"
@@ -256,7 +262,7 @@
       {
         key: "codeGap",
         code: "code_gap",
-        label: { en: "Said vs. felt", tr: "Söylediğimle içim" },
+        label: { en: "Pressure gap", tr: "Basınç farkı" },
         lowLabel: { en: "Close to each other", tr: "İkisi birbirine yakın" },
         highLabel: { en: "Strangers to each other", tr: "İkisi birbirine yabancı" },
         hint: {
@@ -271,9 +277,9 @@
       {
         key: "authorityLean",
         code: "authority_lean",
-        label: { en: "Leaning on power", tr: "Güce yaslanma" },
-        lowLabel: { en: "Power should be resisted", tr: "Güce karşı durulur" },
-        highLabel: { en: "The strong decide, the weak comply", tr: "Güçlü olan çözer, zayıf olan uyar" },
+        label: { en: "Facing the net", tr: "Ağ karşısında" },
+        lowLabel: { en: "Net-tearer", tr: "Ağı yırtan" },
+        highLabel: { en: "Net-yielding", tr: "Ağa uysal gelen" },
         hint: {
           en: "In what you keep private: do you lean toward obedience to strength, or resistance?",
           tr: "Gizli tuttuğun tarafta: güce itaat mi, yoksa karşı duruş mu ağır basıyor?"
@@ -318,7 +324,7 @@
       {
         key: "desireSplit",
         code: "desire_split",
-        label: { en: "Desire apart", tr: "Arzu ayrı duruyor" },
+        label: { en: "Different waters", tr: "Farklı sular" },
         lowLabel: { en: "Desire is woven into the life I describe", tr: "Arzu anlatılan hayata karışık" },
         highLabel: { en: "Desire stands apart from the life I describe", tr: "Arzu anlatılan hayattan ayrı" },
         hint: {
@@ -333,7 +339,7 @@
       {
         key: "shadowDistance",
         code: "shadow_distance",
-        label: { en: "Confession far", tr: "İtiraf uzak" },
+        label: { en: "Blind-spot gulf", tr: "Kör nokta uçurumu" },
         lowLabel: { en: "Close to the person I describe", tr: "İtiraf anlattığım kişiye yakın" },
         highLabel: { en: "A stranger to the person I describe", tr: "İtiraf anlattığım kişiye yabancı" },
         hint: {

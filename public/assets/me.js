@@ -92,12 +92,16 @@
       var results = await Promise.all([
         social.incoming(session).catch(function () { return []; }),
         social.members(session).catch(function () { return []; }),
-        social.followingNumbers(session).catch(function () { return []; })
+        social.tailersOf(session).catch(function () { return []; }),
+        social.trailOf(session).catch(function () { return []; })
       ]);
       var incoming = results[0].length;
-      document.querySelector("#tribe-count").textContent =
+      document.querySelector("#school-count").textContent =
         String(results[1].length) + (incoming ? " · " + t("me.requests", { n: incoming }) : "");
-      document.querySelector("#net-count").textContent = String(results[2].length);
+      document.querySelector("#current-count").textContent = t("me.currentCount", {
+        a: results[2].length,
+        b: results[3].length
+      });
     }
 
     async function load(notice) {

@@ -4,22 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#eafbf5" />
-  <title>hunt · Mindset Bucket</title>
-  <meta name="description" content="Minds swim in a lake. Narrow the scale, find yours, hook them." />
+  <title>lake · Mindset Bucket</title>
+  <meta name="description" content="Minds swim in a lake. Narrow the scale, find yours, swim after them." />
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="hunt" data-title="hunt.title">
-  <main class="page page-hunt">
+<body data-tab="lake" data-title="lake.title">
+  <main class="page page-lake">
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <div id="gated" hidden>
     <div class="head">
       <div>
-        <h1 class="visually-hidden" data-i18n="hunt.title">Hunt</h1>
-        <p class="hint" data-i18n="hunt.lead">Every fish is a mind. Narrow the scale and hook the ones you want to follow.</p>
+        <h1 class="visually-hidden" data-i18n="lake.title">Lake</h1>
+        <p class="hint" data-i18n="lake.lead">Every fish is a mind. Narrow the scale and swim after the ones you want to follow.</p>
       </div>
-      <span id="hunt-count" class="head-side" aria-live="polite"></span>
+      <span id="lake-count" class="head-side" aria-live="polite"></span>
     </div>
     <p id="page-status" class="status" role="status" hidden></p>
 
@@ -29,27 +29,27 @@
       <span class="lake-label lake-label-bottom" id="y-low"></span>
       <div class="lake-x"><span id="x-low"></span><span id="x-high"></span></div>
       <div class="lake-tools">
-        <button type="button" id="zoom-reset" class="btn btn-small" data-i18n="hunt.wholeLake">Whole lake</button>
-        <button type="button" id="view-toggle" class="btn btn-small" aria-pressed="false" data-i18n="hunt.asList">Show as list</button>
+        <button type="button" id="zoom-reset" class="btn btn-small" data-i18n="lake.wholeLake">Whole lake</button>
+        <button type="button" id="view-toggle" class="btn btn-small" aria-pressed="false" data-i18n="lake.asList">Show as list</button>
       </div>
     </div>
     <div id="fish-list" class="feed" hidden></div>
 
     <section class="panel" id="panel">
       <button type="button" id="panel-toggle" class="panel-handle" aria-expanded="false" aria-controls="panel-body">
-        <span data-i18n="hunt.narrow">Narrow the scale</span>
+        <span data-i18n="lake.narrow">Narrow the scale</span>
         <span id="panel-summary" class="hint"></span>
       </button>
       <div id="panel-body" hidden>
         <div class="tabs" role="tablist">
-          <button type="button" role="tab" id="tab-filter" aria-selected="true" aria-controls="filter-pane" data-i18n="hunt.filter">Filter</button>
-          <button type="button" role="tab" id="tab-bucket" aria-selected="false" aria-controls="bucket-pane" data-i18n="hunt.bucket">Bucket</button>
+          <button type="button" role="tab" id="tab-filter" aria-selected="true" aria-controls="filter-pane" data-i18n="lake.filter">Filter</button>
+          <button type="button" role="tab" id="tab-bucket" aria-selected="false" aria-controls="bucket-pane" data-i18n="lake.bucket">Bucket</button>
         </div>
 
         <div id="filter-pane" role="tabpanel" aria-labelledby="tab-filter">
           <div class="demo-grid">
-            <label class="field"><span data-i18n="hunt.across">Across</span><select id="axis-x"></select></label>
-            <label class="field"><span data-i18n="hunt.up">Up</span><select id="axis-y"></select></label>
+            <label class="field"><span data-i18n="lake.across">Across</span><select id="axis-x"></select></label>
+            <label class="field"><span data-i18n="lake.up">Up</span><select id="axis-y"></select></label>
           </div>
           <div id="ranges"></div>
           <div class="demo-grid">
@@ -57,13 +57,12 @@
             <label class="field"><span data-i18n="demo.gender">Gender</span><select id="f-gender"></select></label>
             <label class="field"><span data-i18n="demo.country">Country</span><select id="f-country"></select></label>
           </div>
-          <label class="check"><input type="checkbox" id="f-uncaught" /> <span data-i18n="hunt.uncaught">Only fish not in my net</span></label>
-          <label class="check"><input type="checkbox" id="f-hide-seed" /> <span data-i18n="hunt.hideSeed">Hide seed fish</span></label>
-          <div class="actions"><button type="button" id="f-clear" class="btn btn-small" data-i18n="hunt.clear">Clear</button></div>
+          <label class="check"><input type="checkbox" id="f-uncaught" /> <span data-i18n="lake.untrailed">Only fish not on my trail</span></label>
+                    <div class="actions"><button type="button" id="f-clear" class="btn btn-small" data-i18n="lake.clear">Clear</button></div>
         </div>
 
         <div id="bucket-pane" role="tabpanel" aria-labelledby="tab-bucket" hidden>
-          <p class="hint" data-i18n="hunt.bucketLead">The whole bucket, counted. Nobody is identifiable here.</p>
+          <p class="hint" data-i18n="lake.bucketLead">The whole bucket, counted. Nobody is identifiable here.</p>
           <p id="total" class="meta"></p>
           <div id="axis-chart" class="hist-grid"></div>
           <h3 data-i18n="explore.byAge">By age</h3>
@@ -95,17 +94,9 @@
     <p id="card-summary" class="summary"></p>
     <p id="card-quote" class="quote"></p>
     <div class="actions">
-      <button type="button" id="card-hook" class="btn btn-primary" aria-pressed="false" data-i18n="profile.follow">Hook</button>
-      <button type="button" id="card-invite" class="btn" data-i18n="profile.addTribe">Invite to tribe</button>
-      <a id="card-view" class="btn" href="/" data-i18n="hunt.view">View</a>
+      <button type="button" id="card-tail" class="btn btn-primary" aria-pressed="false" data-i18n="profile.tail">Swim after</button>
+      <a id="card-view" class="btn" href="/" data-i18n="lake.view">View</a>
     </div>
-    <form id="card-invite-form" class="invite" hidden novalidate>
-      <label class="field" for="card-invite-alias"><span data-i18n="invite.label">Their alias</span>
-        <span class="prefix-input"><span aria-hidden="true">@</span><input id="card-invite-alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" aria-describedby="card-invite-hint" /></span>
-      </label>
-      <small id="card-invite-hint" class="hint" data-i18n="invite.hint">You can only invite someone whose alias you know.</small>
-      <div class="actions"><button type="submit" class="btn btn-primary" data-i18n="invite.send">Send invite</button></div>
-    </form>
     <p id="card-status" class="status" role="status" hidden></p>
   </dialog>
 
@@ -119,6 +110,6 @@
   <script src="/assets/store.js" defer></script>
   <script src="/assets/social.js" defer></script>
   <script src="/assets/ui.js" defer></script>
-  <script src="/assets/hunt.js" defer></script>
+  <script src="/assets/lake.js" defer></script>
 </body>
 </html>

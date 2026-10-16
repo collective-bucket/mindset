@@ -34,19 +34,24 @@
   document.addEventListener("DOMContentLoaded", function () {
     var status = document.querySelector("#page-status");
     var actionStatus = document.querySelector("#action-status");
-    var followButton = document.querySelector("#follow");
-    var tribeButton = document.querySelector("#tribe");
+    var buttons = {
+      tail: document.querySelector("#tail"),
+      shine: document.querySelector("#shine"),
+      join: document.querySelector("#join"),
+      accept: document.querySelector("#accept"),
+      decline: document.querySelector("#decline"),
+      withdraw: document.querySelector("#withdraw")
+    };
+    var ritual = document.querySelector("#ritual");
     var shareButton = document.querySelector("#share");
-    var inviteForm = document.querySelector("#invite-form");
-    var inviteInput = document.querySelector("#invite-alias");
     var range = document.querySelector("#timeline-range");
     var sheet = document.querySelector("#reading-sheet");
     var route = parsePath();
     var doc = null;
     var alias = "";
     var session = null;
-    var following = false;
-    var relation = "none";
+    var state = { self: false };
+    var ownRecord = null;
     var versions = [];
     var shownScores = null;
 
@@ -198,135 +203,265 @@
       showVersion(Number(range.value));
     });
 
-    function renderFollow() {
-      followButton.hidden = false;
-      followButton.textContent = t(following ? "profile.following" : "profile.follow");
-      followButton.className = "btn " + (following ? "" : "btn-primary");
-      followButton.setAttribute("aria-pressed", String(following));
+    function liveGlint(glint) {
+      return social.glintLive(glint) ? glint : null;
     }
 
-    function renderTribe() {
-      tribeButton.hidden = false;
-      var key = {
-        none: "profile.addTribe",
-        outgoing: "profile.requested",
-        incoming: "profile.accept",
-        member: "profile.inTribe"
-      }[relation];
-      tribeButton.textContent = t(key);
-      tribeButton.disabled = relation === "member";
-      tribeButton.className = "btn " + (relation === "incoming" ? "btn-primary" : "");
+    function postHtml(title, text, note) {
+      return (
+        '<article class="post"><h3>' +
+        ui.escapeHtml(title) +
+        (note ? ' <span class="tag">' + ui.escapeHtml(note) + "</span>" : "") +
+        "</h3><p>" +
+        ui.escapeHtml(text) +
+        "</p></article>"
+      );
+    }
+
+    function renderActions() {
+      Object.keys(buttons).forEach(function (key) {
+        buttons[key].hidden = true;
+      });
+      var notes = [];
+      if (!session) {
+        buttons.tail.hidden = false;
+        buttons.tail.textContent = t("profile.tail");
+        buttons.tail.className = "btn btn-primary";
+        buttons.tail.setAttribute("aria-pressed", "false");
+      } else if (!state.self) {
+        if (state.member) {
+          notes.push('<p class="ritual-line"><strong>' + ui.escapeHtml(t("profile.inSchool")) + "</strong></p>");
+        } else if (state.incoming) {
+          buttons.accept.hidden = false;
+          buttons.decline.hidden = false;
+          var heard = liveGlint(state.myGlint);
+          if (heard) {
+            notes.push(
+              '<p class="ritual-line">' +
+                ui.escapeHtml(
+                  t("profile.shown", { field: ui.fieldLabel(heard.field), date: ui.formatWhen(heard.expiresAt) })
+                ) +
+                "</p>"
+            );
+          }
+        } else if (state.outgoing) {
+          buttons.withdraw.hidden = false;
+          notes.push('<p class="ritual-line"><strong>' + ui.escapeHtml(t("profile.requestSent")) + "</strong></p>");
+        } else {
+          buttons.tail.hidden = false;
+          buttons.tail.textContent = t(state.iTail ? "profile.tailing" : "profile.tail");
+          buttons.tail.className = "btn " + (state.iTail ? "" : "btn-primary");
+          buttons.tail.setAttribute("aria-pressed", String(Boolean(state.iTail)));
+          var mine = liveGlint(state.myGlint);
+          if (state.theyTail) {
+            notes.push('<p class="ritual-line"><strong>' + ui.escapeHtml(t("profile.onYourTail")) + "</strong></p>");
+          }
+          if (mine) {
+            buttons.withdraw.hidden = false;
+            notes.push(
+              '<p class="ritual-line">' +
+                ui.escapeHtml(
+                  t("profile.shown", { field: ui.fieldLabel(mine.field), date: ui.formatWhen(mine.expiresAt) })
+                ) +
+                "</p>"
+            );
+          } else if (state.theyTail) {
+            buttons.shine.hidden = false;
+          }
+          var theirs = liveGlint(state.theirGlint);
+          if (theirs) {
+            buttons.join.hidden = false;
+            notes.push(
+              '<div class="ritual-glint"><p class="hint">' +
+                ui.escapeHtml(t("profile.theyShowed", { field: ui.fieldLabel(theirs.field) })) +
+                " · " +
+                ui.escapeHtml(t("profile.untilWhen", { date: ui.formatWhen(theirs.expiresAt) })) +
+                "</p>" +
+                postHtml(ui.fieldLabel(theirs.field), theirs.text) +
+                "</div>"
+            );
+          }
+        }
+      }
+      ritual.innerHTML = notes.join("");
+      ritual.hidden = !notes.length;
     }
 
     function needLogin() {
       window.location.assign(ui.loginHref());
     }
 
-    followButton.addEventListener("click", function () {
-      if (!session) return needLogin();
-      following = !following;
-      renderFollow();
-      var action = following ? social.follow(session, doc.id) : social.unfollow(session, doc.id);
-      action.catch(function (error) {
-        following = !following;
-        renderFollow();
-        ui.setStatus(actionStatus, ui.errorText(error), "error");
-      });
-    });
+    async function refreshState() {
+      state = await social.relation(session, doc.ownerUid);
+      renderActions();
+      await Promise.all([loadDeep(), loadSchoolTab(), loadAlias()]);
+    }
 
     function settle(action) {
-      tribeButton.disabled = true;
+      Object.keys(buttons).forEach(function (key) {
+        buttons[key].disabled = true;
+      });
       return action
         .then(function () {
           ui.setStatus(actionStatus, "");
-          return loadTribeTab();
+          return refreshState();
         })
         .catch(function (error) {
           ui.setStatus(actionStatus, ui.errorText(error), "error");
         })
-        .finally(renderTribe);
+        .finally(function () {
+          Object.keys(buttons).forEach(function (key) {
+            buttons[key].disabled = false;
+          });
+        });
     }
 
-    tribeButton.addEventListener("click", function () {
+    function needOwn() {
+      if (ownRecord && ownRecord.publicDoc) return true;
+      ui.setStatus(actionStatus, t("profile.needsMindset"), "error");
+      return false;
+    }
+
+    buttons.tail.addEventListener("click", function () {
       if (!session) return needLogin();
-      if (relation === "incoming") {
-        settle(
-          social.accept(session, doc.ownerUid).then(function () {
-            relation = "member";
-          })
-        );
-      } else if (relation === "outgoing") {
-        settle(
-          social.cancel(session, doc.ownerUid).then(function () {
-            relation = "none";
-          })
-        );
-      } else if (relation === "none") {
-        inviteForm.hidden = false;
-        inviteInput.focus();
-      }
+      if (!needOwn()) return;
+      var tailing = !state.iTail;
+      state.iTail = tailing;
+      renderActions();
+      var run = tailing
+        ? social.tail(session, ownRecord.publicDoc.id, doc.ownerUid, doc.id)
+        : social.untail(session, doc.ownerUid);
+      run.catch(function (error) {
+        state.iTail = !tailing;
+        renderActions();
+        ui.setStatus(actionStatus, ui.errorText(error), "error");
+      });
     });
 
-    document.querySelector("#invite-cancel").addEventListener("click", function () {
-      inviteForm.hidden = true;
-      tribeButton.focus();
-    });
-
-    inviteForm.addEventListener("submit", function (event) {
-      event.preventDefault();
-      var typed = inviteInput.value;
+    buttons.shine.addEventListener("click", async function () {
+      if (!needOwn()) return;
+      var field = await ui.pickClosedField({
+        title: t("profile.shineTitle"),
+        hint: t("profile.shineHint"),
+        action: t("profile.shineAction"),
+        privateDoc: ownRecord.privateDoc
+      });
+      if (!field) return;
       settle(
-        store.findOwn(session.uid, session.idToken).then(function (own) {
-          if (!own) {
-            throw Object.assign(new Error("needs mindset"), { i18n: "profile.tribeNeedsMindset" });
-          }
-          return social.invite(session, own.publicDoc.id, doc.ownerUid, doc.id, typed).then(function () {
-            relation = "outgoing";
-            inviteForm.hidden = true;
-            inviteInput.value = "";
-          });
-        })
+        social.shine(session, ownRecord.publicDoc.id, doc.ownerUid, doc.id, field, ownRecord.privateDoc[field])
       );
+    });
+
+    buttons.join.addEventListener("click", async function () {
+      if (!needOwn()) return;
+      var field = await ui.pickClosedField({
+        title: t("profile.joinTitle"),
+        hint: t("profile.joinHint"),
+        action: t("profile.joinSend"),
+        privateDoc: ownRecord.privateDoc
+      });
+      if (!field) return;
+      settle(
+        social.requestSchool(
+          session,
+          ownRecord.publicDoc.id,
+          doc.ownerUid,
+          doc.id,
+          field,
+          ownRecord.privateDoc[field]
+        )
+      );
+    });
+
+    buttons.accept.addEventListener("click", function () {
+      settle(social.accept(session, doc.ownerUid));
+    });
+
+    buttons.decline.addEventListener("click", function () {
+      settle(social.decline(session, doc.ownerUid));
+    });
+
+    buttons.withdraw.addEventListener("click", function () {
+      if (state.outgoing) settle(social.cancel(session, doc.ownerUid));
+      else settle(social.withdrawGlint(session, doc.ownerUid));
     });
 
     function selectTab(name) {
       var nearby = name === "nearby";
       document.querySelector("#tab-nearby").setAttribute("aria-selected", String(nearby));
-      document.querySelector("#tab-tribe").setAttribute("aria-selected", String(!nearby));
+      document.querySelector("#tab-school").setAttribute("aria-selected", String(!nearby));
       document.querySelector("#pane-nearby").hidden = !nearby;
-      document.querySelector("#pane-tribe").hidden = nearby;
+      document.querySelector("#pane-school").hidden = nearby;
     }
 
     document.querySelector("#tab-nearby").addEventListener("click", function () {
       selectTab("nearby");
     });
-    document.querySelector("#tab-tribe").addEventListener("click", function () {
-      selectTab("tribe");
+    document.querySelector("#tab-school").addEventListener("click", function () {
+      selectTab("school");
     });
+
+    async function loadAlias() {
+      if (alias || !session || !(state.self || state.member)) return;
+      var entry = await social.aliasOf(doc.id, session.idToken);
+      if (entry && entry.alias) {
+        alias = entry.alias;
+        renderAlias();
+      }
+    }
+
+    // A school sees the full radar and what each side showed.
+    async function loadDeep() {
+      var section = document.querySelector("#deep");
+      section.hidden = true;
+      if (!session || !state.member) return;
+      var deep = await social.deepReading(doc.id, session.idToken);
+      var exchanged = await social.exchanged(session, doc.ownerUid);
+      var scores = math.scoresOf(doc);
+      var note = document.querySelector("#deep-note");
+      if (deep) {
+        math.CLOSED_KEYS.forEach(function (key) {
+          if (typeof deep[key] === "number") scores[key] = deep[key];
+        });
+      }
+      section.hidden = false;
+      note.hidden = Boolean(deep);
+      ui.renderRadar(document.querySelector("#deep-radar"), scores, null, {
+        keys: math.OPEN_KEYS.concat(math.CLOSED_KEYS)
+      });
+      ui.renderBars(document.querySelector("#deep-bars"), scores, math.CLOSED_KEYS);
+      var shownByThem = [exchanged.theirGlint, exchanged.theirSeal].filter(Boolean);
+      var shownByMe = [exchanged.myGlint, exchanged.mySeal].filter(Boolean);
+      document.querySelector("#exchanged").innerHTML =
+        shownByThem
+          .map(function (row) {
+            return postHtml(ui.fieldLabel(row.field), row.text, t("profile.theirs"));
+          })
+          .concat(
+            shownByMe.map(function (row) {
+              return postHtml(ui.fieldLabel(row.field), row.text, t("profile.yours"));
+            })
+          )
+          .join("") || '<p class="empty">' + ui.escapeHtml(t("current.state.nothing")) + "</p>";
+    }
 
     async function loadSocial() {
       if (!session) {
-        renderFollow();
-        renderTribe();
+        renderActions();
         return;
       }
       if (doc.ownerUid === session.uid) {
         document.querySelector("#edit").hidden = false;
         document.querySelector("#manage").hidden = false;
-        relation = "member";
-      } else {
-        following = await social.isFollowing(session, doc.id);
-        renderFollow();
-        relation = await social.relation(session, doc.ownerUid);
-        renderTribe();
+        state = { self: true };
+        renderActions();
+        await loadAlias();
+        return;
       }
-      if (!alias) {
-        var entry = await social.aliasOf(doc.id, session.idToken);
-        if (entry && entry.alias) {
-          alias = entry.alias;
-          renderAlias();
-        }
-      }
+      ownRecord = await store.findOwn(session.uid, session.idToken).catch(function () {
+        return null;
+      });
+      await refreshState();
     }
 
     async function loadSimilar() {
@@ -340,13 +475,14 @@
       }
     }
 
-    async function loadTribeTab() {
-      var list = document.querySelector("#tribe-list");
-      var empty = document.querySelector("#tribe-empty");
+    async function loadSchoolTab() {
+      var list = document.querySelector("#school-list");
+      var empty = document.querySelector("#school-empty");
       list.innerHTML = "";
       empty.hidden = true;
-      if (!session || relation !== "member") {
+      if (!session || !(state.self || state.member)) {
         empty.hidden = false;
+        empty.textContent = t("profile.schoolTabEmpty");
         return;
       }
       try {
@@ -356,10 +492,9 @@
         });
         if (!others.length) {
           empty.hidden = false;
-          empty.textContent = t("profile.tribeTabSolo");
+          empty.textContent = t("profile.schoolTabSolo");
           return;
         }
-        empty.textContent = t("profile.tribeTabEmpty");
         var numbers = others.map(function (row) {
           return Number(row.number);
         });
@@ -372,7 +507,7 @@
             });
           })
         );
-        ui.renderCards(list, docs, "feed.emptyTribe", function (row) {
+        ui.renderCards(list, docs, "feed.emptySchool", function (row) {
           return { alias: aliases[row.id] };
         });
       } catch (error) {
@@ -415,7 +550,7 @@
       showProfile();
       if (!session) session = await store.getOptionalSession();
       await Promise.all([loadSocial(), loadSimilar(), loadHistory()]);
-      await loadTribeTab();
+      await loadSchoolTab();
     }
 
     load().catch(function (error) {

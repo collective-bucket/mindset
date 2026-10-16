@@ -54,7 +54,7 @@
 
     function fill(container, rows, actions) {
       if (!rows.length) {
-        container.innerHTML = '<p class="empty">' + ui.escapeHtml(t("tribe.none")) + "</p>";
+        container.innerHTML = '<p class="empty">' + ui.escapeHtml(t("school.none")) + "</p>";
         return;
       }
       container.innerHTML = rows
@@ -92,16 +92,16 @@
         });
       });
       fill(document.querySelector("#incoming"), incoming, [
-        { id: "accept", label: "tribe.accept", primary: true },
-        { id: "decline", label: "tribe.decline" }
+        { id: "accept", label: "school.accept", primary: true },
+        { id: "decline", label: "school.decline" }
       ]);
-      fill(document.querySelector("#members"), members, [{ id: "remove", label: "tribe.remove" }]);
-      fill(document.querySelector("#outgoing"), outgoing, [{ id: "cancel", label: "tribe.cancel" }]);
-      document.querySelector("#tribe-body").hidden = false;
+      fill(document.querySelector("#members"), members, [{ id: "remove", label: "school.remove" }]);
+      fill(document.querySelector("#outgoing"), outgoing, [{ id: "cancel", label: "school.cancel" }]);
+      document.querySelector("#school-body").hidden = false;
       ui.setStatus(status, "");
     }
 
-    document.querySelector("#tribe-body").addEventListener("click", function (event) {
+    document.querySelector("#school-body").addEventListener("click", function (event) {
       var button = event.target.closest("[data-action]");
       if (!button) return;
       var uid = button.closest("[data-uid]").getAttribute("data-uid");

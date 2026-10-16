@@ -198,16 +198,13 @@
     var list = document.querySelector("#fish-list");
     var card = document.querySelector("#fish-card");
     var cardStatus = document.querySelector("#card-status");
-    var inviteForm = document.querySelector("#card-invite-form");
-    var inviteInput = document.querySelector("#card-invite-alias");
-    var hookButton = document.querySelector("#card-hook");
-    var inviteButton = document.querySelector("#card-invite");
+    var tailButton = document.querySelector("#card-tail");
 
     var pool = [];
     var session = null;
     var ownDoc = null;
-    var net = {};
-    var tribe = {};
+    var onTrail = {};
+    var inSchool = {};
     var stats = null;
     var axes = { x: "agency", y: "redemption" };
     var view = Object.assign({}, FULL);
@@ -215,14 +212,13 @@
     var nodes = {};
     var matches = [];
     var cardDoc = null;
-    var cardRelation = "none";
 
     function blankFilters() {
       var ranges = {};
       math.OPEN_KEYS.forEach(function (key) {
         ranges[key] = [0, 100];
       });
-      return { ranges: ranges, ageBand: "", gender: "", country: "", uncaught: false, hideSeed: false };
+      return { ranges: ranges, ageBand: "", gender: "", country: "", untrailed: false };
     }
 
     // ---- SVG lake ----
@@ -231,7 +227,7 @@
     svg.setAttribute("class", "lake-svg");
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
     svg.setAttribute("role", "group");
-    svg.setAttribute("aria-label", t("hunt.lakeLabel"));
+    svg.setAttribute("aria-label", t("lake.lakeLabel"));
     svg.innerHTML =
       '<defs><pattern id="waves" width="24" height="14" patternUnits="userSpaceOnUse">' +
       '<path class="wave" d="M1 7c2.5-2 5-2 7.5 0s5 2 7.5 0 5-2 7.5 0"/></pattern></defs>' +
@@ -300,9 +296,9 @@
 
     function fishLabel(doc) {
       var parts = [t("common.mindset", { n: doc.id }), ui.plainSummary(doc)];
-      if (ownDoc && doc.id === ownDoc.id) parts.push(t("hunt.you"));
-      if (tribe[doc.id]) parts.push(t("hunt.inTribe"));
-      else if (net[doc.id]) parts.push(t("hunt.inNet"));
+      if (ownDoc && doc.id === ownDoc.id) parts.push(t("lake.you"));
+      if (inSchool[doc.id]) parts.push(t("lake.inSchool"));
+      else if (onTrail[doc.id]) parts.push(t("lake.onTrail"));
       return parts.join(". ");
     }
 
@@ -315,9 +311,8 @@
         var group = document.createElementNS(SVG_NS, "g");
         var classes = ["fish"];
         if (ownDoc && doc.id === ownDoc.id) classes.push("is-mine");
-        if (doc.seed) classes.push("is-seed");
-        if (tribe[doc.id]) classes.push("is-tribe");
-        else if (net[doc.id]) classes.push("is-net");
+        if (inSchool[doc.id]) classes.push("is-school");
+        else if (onTrail[doc.id]) classes.push("is-trail");
         group.setAttribute("class", classes.join(" "));
         group.setAttribute("data-id", doc.id);
         group.setAttribute("role", "button");
@@ -360,8 +355,7 @@
       if (filters.ageBand && doc.ageBand !== filters.ageBand) return false;
       if (filters.gender && doc.gender !== filters.gender) return false;
       if (filters.country && doc.country !== filters.country) return false;
-      if (filters.uncaught && (net[doc.id] || tribe[doc.id])) return false;
-      if (filters.hideSeed && doc.seed) return false;
+      if (filters.untrailed && (onTrail[doc.id] || inSchool[doc.id])) return false;
       return true;
     }
 
@@ -370,7 +364,7 @@
         var range = filters.ranges[key];
         return range[0] > 0 || range[1] < 100;
       }).length;
-      ["ageBand", "gender", "country", "uncaught", "hideSeed"].forEach(function (key) {
+      ["ageBand", "gender", "country", "untrailed"].forEach(function (key) {
         if (filters[key]) countActive += 1;
       });
       return countActive;
@@ -392,10 +386,10 @@
       var placed = matches.filter(function (doc) {
         return nodes[doc.id];
       });
-      document.querySelector("#hunt-count").textContent = t("hunt.count", { n: matches.length, total: pool.length });
+      document.querySelector("#lake-count").textContent = t("lake.count", { n: matches.length, total: pool.length });
       var active = activeFilterCount();
-      document.querySelector("#panel-summary").textContent = active ? t("hunt.active", { n: active }) : "";
-      if (!list.hidden) ui.renderCards(list, matches, "hunt.none", optionsFor);
+      document.querySelector("#panel-summary").textContent = active ? t("lake.active", { n: active }) : "";
+      if (!list.hidden) ui.renderCards(list, matches, "lake.none", optionsFor);
       if (zoomToFit) fitTo(active ? placed : []);
       renderAxisCharts(document.querySelector("#axis-chart"), stats, sliceField(), filters[sliceField()]);
     }
@@ -430,9 +424,9 @@
     }
 
     function optionsFor(doc) {
-      if (ownDoc && doc.id === ownDoc.id) return { tag: t("hunt.you") };
-      if (tribe[doc.id]) return { tag: t("hunt.inTribe") };
-      if (net[doc.id]) return { tag: t("hunt.inNet") };
+      if (ownDoc && doc.id === ownDoc.id) return { tag: t("lake.you") };
+      if (inSchool[doc.id]) return { tag: t("lake.inSchool") };
+      if (onTrail[doc.id]) return { tag: t("lake.onTrail") };
       return null;
     }
 
@@ -479,9 +473,9 @@
             ' <span class="range-value">' + range[0] + "–" + range[1] + "</span></legend>" +
             '<div class="range-pair">' +
             '<input type="range" min="0" max="100" step="5" value="' + range[0] + '" data-end="0" aria-label="' +
-            ui.escapeHtml(t("hunt.from", { axis: i18n.pick(axis.label) })) + '" />' +
+            ui.escapeHtml(t("lake.from", { axis: i18n.pick(axis.label) })) + '" />' +
             '<input type="range" min="0" max="100" step="5" value="' + range[1] + '" data-end="1" aria-label="' +
-            ui.escapeHtml(t("hunt.to", { axis: i18n.pick(axis.label) })) + '" />' +
+            ui.escapeHtml(t("lake.to", { axis: i18n.pick(axis.label) })) + '" />' +
             '</div><div class="range-poles"><span>' +
             ui.escapeHtml(i18n.pick(axis.lowLabel)) +
             "</span><span>" +
@@ -546,12 +540,7 @@
         window.location.assign(ui.loginHref());
         return;
       }
-      filters.uncaught = event.target.checked;
-      refresh(true);
-    });
-
-    document.querySelector("#f-hide-seed").addEventListener("change", function (event) {
-      filters.hideSeed = event.target.checked;
+      filters.untrailed = event.target.checked;
       refresh(true);
     });
 
@@ -562,7 +551,6 @@
         document.querySelector("#f-" + key).value = "";
       });
       document.querySelector("#f-uncaught").checked = false;
-      document.querySelector("#f-hide-seed").checked = false;
       refresh(true);
     });
 
@@ -584,9 +572,9 @@
       var showList = list.hidden;
       list.hidden = !showList;
       viewToggle.setAttribute("aria-pressed", String(showList));
-      viewToggle.textContent = t(showList ? "hunt.asLake" : "hunt.asList");
+      viewToggle.textContent = t(showList ? "lake.asLake" : "lake.asList");
       document.querySelector(".lake-wrap").classList.toggle("is-collapsed", showList);
-      if (showList) ui.renderCards(list, matches, "hunt.none", optionsFor);
+      if (showList) ui.renderCards(list, matches, "lake.none", optionsFor);
     });
 
     var panelToggle = document.querySelector("#panel-toggle");
@@ -711,22 +699,11 @@
       card.close();
     });
 
-    function renderHook() {
-      var hooked = Boolean(net[cardDoc.id]);
-      hookButton.textContent = t(hooked ? "profile.following" : "profile.follow");
-      hookButton.className = "btn " + (hooked ? "" : "btn-primary");
-      hookButton.setAttribute("aria-pressed", String(hooked));
-    }
-
-    function renderInvite() {
-      var key = {
-        none: "profile.addTribe",
-        outgoing: "profile.requested",
-        incoming: "profile.accept",
-        member: "profile.inTribe"
-      }[cardRelation];
-      inviteButton.textContent = t(key || "profile.addTribe");
-      inviteButton.disabled = cardRelation === "member" || cardRelation === "loading";
+    function renderTail() {
+      var tailing = Boolean(onTrail[cardDoc.id]);
+      tailButton.textContent = t(tailing ? "profile.tailing" : "profile.tail");
+      tailButton.className = "btn " + (tailing ? "" : "btn-primary");
+      tailButton.setAttribute("aria-pressed", String(tailing));
     }
 
     async function openCard(doc) {
@@ -744,96 +721,49 @@
       document.querySelector("#card-view").href = "/i/" + doc.id;
       var aliasNode = document.querySelector("#card-alias");
       aliasNode.hidden = true;
-      inviteForm.hidden = true;
       ui.setStatus(cardStatus, "");
-      hookButton.hidden = mine;
-      inviteButton.hidden = mine;
-      if (!mine) {
-        renderHook();
-        cardRelation = session ? "loading" : "none";
-        renderInvite();
-      }
+      tailButton.hidden = mine || Boolean(inSchool[doc.id]);
+      if (!mine) renderTail();
       card.showModal();
-      if (!session || mine) return;
-      cardRelation = await social.relation(session, doc.ownerUid);
-      if (cardDoc !== doc) return;
-      renderInvite();
-      if (cardRelation === "member") {
-        var entry = await social.aliasOf(doc.id, session.idToken);
-        if (entry && entry.alias && cardDoc === doc) {
-          aliasNode.textContent = "@" + entry.alias;
-          aliasNode.hidden = false;
-        }
+      if (!session || mine || !inSchool[doc.id]) return;
+      var entry = await social.aliasOf(doc.id, session.idToken);
+      if (entry && entry.alias && cardDoc === doc) {
+        aliasNode.textContent = "@" + entry.alias;
+        aliasNode.hidden = false;
       }
     }
 
     function markNode(doc) {
       var node = nodes[doc.id];
       if (!node) return;
-      node.el.classList.toggle("is-net", Boolean(net[doc.id]) && !tribe[doc.id]);
+      node.el.classList.toggle("is-trail", Boolean(onTrail[doc.id]) && !inSchool[doc.id]);
       node.el.setAttribute("aria-label", fishLabel(doc));
     }
 
-    hookButton.addEventListener("click", function () {
+    tailButton.addEventListener("click", function () {
       if (!session) return window.location.assign(ui.loginHref());
-      var doc = cardDoc;
-      var hooking = !net[doc.id];
-      if (hooking) net[doc.id] = true;
-      else delete net[doc.id];
-      renderHook();
-      markNode(doc);
-      (hooking ? social.follow(session, doc.id) : social.unfollow(session, doc.id))
-        .then(function () {
-          ui.setStatus(cardStatus, t(hooking ? "hunt.hooked" : "hunt.released"));
-        })
-        .catch(function (error) {
-          if (hooking) delete net[doc.id];
-          else net[doc.id] = true;
-          renderHook();
-          markNode(doc);
-          ui.setStatus(cardStatus, ui.errorText(error), "error");
-        });
-    });
-
-    inviteButton.addEventListener("click", function () {
-      if (!session) return window.location.assign(ui.loginHref());
-      if (cardRelation === "incoming") {
-        social.accept(session, cardDoc.ownerUid).then(function () {
-          cardRelation = "member";
-          tribe[cardDoc.id] = true;
-          renderInvite();
-        }).catch(function (error) {
-          ui.setStatus(cardStatus, ui.errorText(error), "error");
-        });
-      } else if (cardRelation === "outgoing") {
-        social.cancel(session, cardDoc.ownerUid).then(function () {
-          cardRelation = "none";
-          renderInvite();
-        }).catch(function (error) {
-          ui.setStatus(cardStatus, ui.errorText(error), "error");
-        });
-      } else if (cardRelation === "none") {
-        inviteForm.hidden = false;
-        inviteInput.focus();
-      }
-    });
-
-    inviteForm.addEventListener("submit", function (event) {
-      event.preventDefault();
       if (!ownDoc) {
-        ui.setStatus(cardStatus, t("profile.tribeNeedsMindset"), "error");
+        ui.setStatus(cardStatus, t("profile.needsMindset"), "error");
         return;
       }
-      social
-        .invite(session, ownDoc.id, cardDoc.ownerUid, cardDoc.id, inviteInput.value)
+      var doc = cardDoc;
+      var tailing = !onTrail[doc.id];
+      if (tailing) onTrail[doc.id] = true;
+      else delete onTrail[doc.id];
+      renderTail();
+      markNode(doc);
+      (tailing
+        ? social.tail(session, ownDoc.id, doc.ownerUid, doc.id)
+        : social.untail(session, doc.ownerUid)
+      )
         .then(function () {
-          cardRelation = "outgoing";
-          inviteForm.hidden = true;
-          inviteInput.value = "";
-          renderInvite();
-          ui.setStatus(cardStatus, t("invite.sent"));
+          ui.setStatus(cardStatus, t(tailing ? "lake.tailed" : "lake.released"));
         })
         .catch(function (error) {
+          if (tailing) delete onTrail[doc.id];
+          else onTrail[doc.id] = true;
+          renderTail();
+          markNode(doc);
           ui.setStatus(cardStatus, ui.errorText(error), "error");
         });
     });
@@ -854,15 +784,15 @@
       stats = loaded[1];
       var social3 = await Promise.all([
         store.findOwn(session.uid, session.idToken).catch(function () { return null; }),
-        social.followingNumbers(session).catch(function () { return []; }),
+        social.trailNumbers(session).catch(function () { return []; }),
         social.members(session).catch(function () { return []; })
       ]);
       ownDoc = social3[0] && social3[0].publicDoc;
       social3[1].forEach(function (number) {
-        net[number] = true;
+        onTrail[number] = true;
       });
       social3[2].forEach(function (row) {
-        if (row.number) tribe[row.number] = true;
+        if (row.number) inSchool[row.number] = true;
       });
       if (ownDoc && !pool.some(function (doc) { return doc.id === ownDoc.id; })) pool.push(ownDoc);
       fillAxisSelect(document.querySelector("#axis-x"), axes.x);
@@ -875,7 +805,7 @@
       applyView();
       refresh(false);
       var hidden = pool.length - Object.keys(nodes).length;
-      ui.setStatus(status, hidden > 0 ? t("hunt.unplaced", { n: hidden }) : "");
+      ui.setStatus(status, hidden > 0 ? t("lake.unplaced", { n: hidden }) : "");
     }
 
     load().catch(function (error) {

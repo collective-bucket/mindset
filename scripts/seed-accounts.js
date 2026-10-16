@@ -150,7 +150,7 @@ function buildPersona(index) {
       country: place.country,
       city: pick(place.cities, index)
     },
-    history: historyRoll < 0.7 ? "none" : historyRoll < 0.9 ? "tribe" : "public"
+    history: historyRoll < 0.7 ? "none" : historyRoll < 0.9 ? "school" : "public"
   };
 }
 

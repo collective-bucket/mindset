@@ -31,6 +31,7 @@ function encode(value) {
   if (typeof value === "boolean") return { booleanValue: value };
   if (typeof value === "number") return { integerValue: String(value) };
   if (typeof value === "string") return { stringValue: value };
+  if (value instanceof Date) return { timestampValue: value.toISOString() };
   if (Array.isArray(value)) return { arrayValue: { values: value.map(encode) } };
   var fields = {};
   Object.keys(value).forEach(function (key) {
@@ -161,10 +162,6 @@ async function expect(label, status, wanted) {
   await expect("private doc with city", await commit("alice", [w.create("privateMindsets/1", privateDoc("alice", 1))]), "ok");
   await expect("others cannot read private", await get("privateMindsets/1", "bob"), 403);
 
-  await expect("bob follows 1", await commit("bob", [w.set("follows/bob/items/1", { number: 1, createdAt: NOW })]), "ok");
-  await expect("alice cannot read bob's follows", await get("follows/bob/items/1", "alice"), 403);
-  await expect("follow id must match number", await commit("bob", [w.set("follows/bob/items/3", { number: 1, createdAt: NOW })]), 403);
-
   function setAlias(uid, number, alias) {
     return commit(uid, [
       w.set("aliases/" + alias, { ownerUid: uid, number: number }),
@@ -190,37 +187,113 @@ async function expect(label, status, wanted) {
     await commit("bob", [w.set("aliases/bobby", { ownerUid: "bob", number: 2 })]),
     403
   );
-  await expect("mindhunter reserved for mindset 1", await setAlias("bob", 2, "mindhunter"), 403);
+  await expect("firstfish reserved for mindset 1", await setAlias("bob", 2, "firstfish"), 403);
   await expect("bob back to his alias", await setAlias("bob", 2, "bobfish"), "ok");
 
-  var request = { from: "bob", to: "alice", fromNumber: 2, toNumber: 1, alias: "alicefish", createdAt: NOW };
-  await expect("invite without alias denied", await commit("bob", [w.create("tribeRequests/bob_alice", (function () {
-    var copy = Object.assign({}, request);
-    delete copy.alias;
-    return copy;
-  })())]), 403);
-  await expect("invite with wrong alias denied", await commit("bob", [w.create("tribeRequests/bob_alice", Object.assign({}, request, { alias: "carolfish" }))]), 403);
-  await expect("invite with unknown alias denied", await commit("bob", [w.create("tribeRequests/bob_alice", Object.assign({}, request, { alias: "ghostfish" }))]), 403);
-  await expect("bob invites alice with her alias", await commit("bob", [w.create("tribeRequests/bob_alice", request)]), "ok");
-  await expect("forged request denied", await commit("carol", [w.create("tribeRequests/bob_carol", Object.assign({}, request, { to: "carol", toNumber: 3, alias: "carolfish" }))]), 403);
-  await expect("request with someone else's number denied", await commit("bob", [w.create("tribeRequests/bob_carol", { from: "bob", to: "carol", fromNumber: 1, toNumber: 3, alias: "carolfish", createdAt: NOW })]), 403);
-  await expect("carol cannot read bob->alice request", await get("tribeRequests/bob_alice", "carol"), 403);
-  await expect("alice reads incoming request", await get("tribeRequests/bob_alice", "alice"), "ok");
-  await expect("bob cannot self-join alice's tribe", await commit("bob", [w.create("tribes/alice/members/bob", { uid: "bob", number: 2, since: NOW })]), 403);
-  await expect("bob cannot add alice to his tribe", await commit("bob", [w.create("tribes/bob/members/alice", { uid: "alice", number: 1, since: NOW })]), 403);
+  // ---- Step 0: closed texts (used verbatim by glints and seals) ----
+  await expect("alice writes closed text", await commit("alice", [w.set("privateMindsets/1", privateDoc("alice", 1, { desireScript: "I want to be seen." }))]), "ok");
+  await expect("bob writes private doc", await commit("bob", [w.create("privateMindsets/2", privateDoc("bob", 2, { unsayableAttitude: "I envy quietly." }))]), "ok");
+
+  // ---- Step 1: tails ----
+  function tail(from, to, fromNumber, toNumber) {
+    return { from: from, to: to, fromNumber: fromNumber, toNumber: toNumber, createdAt: NOW };
+  }
+  await expect("bob tails alice", await commit("bob", [w.create("tails/bob_alice", tail("bob", "alice", 2, 1))]), "ok");
+  await expect("cannot tail with someone else's number", await commit("bob", [w.create("tails/bob_carol", tail("bob", "carol", 1, 3))]), 403);
+  await expect("cannot tail yourself", await commit("bob", [w.create("tails/bob_bob", tail("bob", "bob", 2, 2))]), 403);
+  await expect("target number must belong to target uid", await commit("bob", [w.create("tails/bob_carol", tail("bob", "carol", 2, 1))]), 403);
+  await expect("forged tail denied", await commit("carol", [w.create("tails/bob_carol", tail("bob", "carol", 2, 3))]), 403);
+  await expect("alice sees who tails her", await get("tails/bob_alice", "alice"), "ok");
+  await expect("carol cannot read the tail", await get("tails/bob_alice", "carol"), 403);
+  await expect(
+    "alice lists tails on her",
+    await call("POST", ROOT + ":runQuery", "alice", { structuredQuery: { from: [{ collectionId: "tails" }], where: { fieldFilter: { field: { fieldPath: "to" }, op: "EQUAL", value: { stringValue: "alice" } } } } }),
+    "ok"
+  );
+  await expect("unfiltered tail list denied", await call("POST", ROOT + ":runQuery", "alice", { structuredQuery: { from: [{ collectionId: "tails" }] } }), 403);
+
+  // ---- Step 2: glint (alice shows bob one closed field for a few days) ----
+  var inDays = function (days) {
+    return new Date(Date.now() + days * 86400000);
+  };
+  function glint(extra) {
+    return Object.assign({ from: "alice", to: "bob", fromNumber: 1, toNumber: 2, field: "desireScript", text: "I want to be seen.", createdAt: NOW, expiresAt: inDays(6) }, extra || {});
+  }
+  await expect("glint needs a tail from the receiver", await commit("alice", [w.set("glints/alice_carol", glint({ to: "carol", toNumber: 3 }))]), 403);
+  await expect("tail the other way first", await commit("alice", [w.create("tails/alice_bob", tail("alice", "bob", 1, 2))]), "ok");
+  await commit("bob", [w.remove("tails/bob_alice")]);
+  await expect("tail from bob needed for alice's glint", await commit("alice", [w.set("glints/alice_bob", glint())]), 403);
+  await expect("bob tails alice again", await commit("bob", [w.create("tails/bob_alice", tail("bob", "alice", 2, 1))]), "ok");
+  await expect("glint with edited text denied", await commit("alice", [w.set("glints/alice_bob", glint({ text: "Something else." }))]), 403);
+  await expect("glint with unknown field denied", await commit("alice", [w.set("glints/alice_bob", glint({ field: "city" }))]), 403);
+  await expect("glint expiring in 8 days denied", await commit("alice", [w.set("glints/alice_bob", glint({ expiresAt: inDays(8) }))]), 403);
+  await expect("glint already expired denied", await commit("alice", [w.set("glints/alice_bob", glint({ expiresAt: inDays(-1) }))]), 403);
+  await expect("glint with a string expiry denied", await commit("alice", [w.set("glints/alice_bob", glint({ expiresAt: NOW }))]), 403);
+  await expect("forged glint from carol denied", await commit("carol", [w.set("glints/alice_bob", glint())]), 403);
+  await expect("alice shines a scale for bob", await commit("alice", [w.set("glints/alice_bob", glint())]), "ok");
+  await expect("bob reads the live glint", await get("glints/alice_bob", "bob"), "ok");
+  await expect("alice reads her own glint", await get("glints/alice_bob", "alice"), "ok");
+  await expect("carol cannot read it", await get("glints/alice_bob", "carol"), 403);
+  await expect("glints cannot be listed by recipient", await call("POST", ROOT + ":runQuery", "bob", { structuredQuery: { from: [{ collectionId: "glints" }] } }), 403);
+  await expect("bob cannot edit alice's glint", await commit("bob", [w.set("glints/alice_bob", glint())]), 403);
+
+  // ---- Step 3: bob asks to form a school, with a sealed pledge ----
+  function seal(extra) {
+    return Object.assign({ from: "bob", to: "alice", fromNumber: 2, toNumber: 1, field: "unsayableAttitude", text: "I envy quietly.", createdAt: NOW }, extra || {});
+  }
+  function schoolRequest(extra) {
+    return Object.assign({ from: "bob", to: "alice", fromNumber: 2, toNumber: 1, field: "unsayableAttitude", createdAt: NOW }, extra || {});
+  }
+  await expect("request without a glint denied", await commit("carol", [
+    w.set("seals/carol_alice", seal({ from: "carol", fromNumber: 3 })),
+    w.create("schoolRequests/carol_alice", schoolRequest({ from: "carol", fromNumber: 3 }))
+  ]), 403);
+  await expect("request without seal denied", await commit("bob", [w.create("schoolRequests/bob_alice", schoolRequest())]), 403);
+  await expect("request with a seal that differs from the shown text denied", await commit("bob", [
+    w.set("seals/bob_alice", seal({ text: "Something else." })),
+    w.create("schoolRequests/bob_alice", schoolRequest())
+  ]), 403);
+  await expect("request and seal field mismatch denied", await commit("bob", [
+    w.set("seals/bob_alice", seal()),
+    w.create("schoolRequests/bob_alice", schoolRequest({ field: "desireScript" }))
+  ]), 403);
+  await expect("bob requests with a sealed pledge", await commit("bob", [
+    w.set("seals/bob_alice", seal()),
+    w.create("schoolRequests/bob_alice", schoolRequest())
+  ]), "ok");
+  await expect("alice reads the incoming request", await get("schoolRequests/bob_alice", "alice"), "ok");
+  await expect("carol cannot read the request", await get("schoolRequests/bob_alice", "carol"), 403);
+  await expect("alice cannot read the seal before the school exists", await get("seals/bob_alice", "alice"), 403);
+  await expect("bob reads his own seal", await get("seals/bob_alice", "bob"), "ok");
+  await expect("bob cannot self-join alice's school", await commit("bob", [w.create("schools/alice/members/bob", { uid: "bob", number: 2, since: NOW })]), 403);
+  await expect("bob cannot add alice to his school", await commit("bob", [w.create("schools/bob/members/alice", { uid: "alice", number: 1, since: NOW })]), 403);
+  
+  await expect("alice writes deep reading", await commit("alice", [w.create("deepReadings/1", { ownerUid: "alice", number: 1, updatedAt: NOW, codeGap: 40, authorityLean: 30, desireSplit: 80, shadowDistance: 55 })]), "ok");
+  await expect("deep reading with a text denied", await commit("alice", [w.set("deepReadings/1", { ownerUid: "alice", number: 1, updatedAt: NOW, codeGap: 40, authorityLean: 30, desireSplit: 80, shadowDistance: 55, desireScript: "x" })]), 403);
+  await expect("deep reading for someone else's number denied", await commit("bob", [w.create("deepReadings/1", { ownerUid: "bob", number: 1, updatedAt: NOW, codeGap: 1, authorityLean: 1, desireSplit: 1, shadowDistance: 1 })]), 403);
+  await expect("outsider cannot read deep reading", await get("deepReadings/1", "bob"), 403);
+
   await expect(
     "alice accepts",
     await commit("alice", [
-      w.create("tribes/alice/members/bob", { uid: "bob", number: 2, since: NOW }),
-      w.create("tribes/bob/members/alice", { uid: "alice", number: 1, since: NOW }),
-      w.remove("tribeRequests/bob_alice")
+      w.create("schools/alice/members/bob", { uid: "bob", number: 2, since: NOW }),
+      w.create("schools/bob/members/alice", { uid: "alice", number: 1, since: NOW }),
+      w.remove("schoolRequests/bob_alice")
     ]),
     "ok"
   );
-  await expect("request gone after accept", await get("tribeRequests/bob_alice", "alice"), 404);
-  await expect("tribe member sees alias", await get("aliases/alicefish", "bob"), "ok");
-  await expect("tribe member sees aliasOf", await get("aliasOf/1", "bob"), "ok");
+  await expect("request gone after accept", await get("schoolRequests/bob_alice", "alice"), 404);
+  await expect("school member sees alias", await get("aliases/alicefish", "bob"), "ok");
+  await expect("school member sees aliasOf", await get("aliasOf/1", "bob"), "ok");
   await expect("outsider still blocked", await get("aliases/alicefish", "carol"), 403);
+  await expect("alice reads the pledge now", await get("seals/bob_alice", "alice"), "ok");
+  await expect("school member reads deep reading", await get("deepReadings/1", "bob"), "ok");
+  await expect("outsider still cannot read deep reading", await get("deepReadings/1", "carol"), 403);
+  await expect("school member keeps the glint", await get("glints/alice_bob", "bob"), "ok");
+  await expect("no duplicate request once in a school", await commit("bob", [
+    w.set("seals/bob_alice", seal()),
+    w.create("schoolRequests/bob_alice", schoolRequest())
+  ]), 403);
 
   function version(uid, number, extra) {
     var doc = mindset(uid, number, extra);
@@ -234,22 +307,21 @@ async function expect(label, status, wanted) {
   await expect("bob cannot write alice's version", await commit("bob", [w.create("mindsets/1/versions/20261015000000001", version("bob", 1))]), 403);
   await expect("version with closed text denied", await commit("alice", [w.create("mindsets/1/versions/20261015000000002", version("alice", 1, { desireScript: "x" }))]), 403);
   await expect("versions are immutable", await commit("alice", [w.set(versionPath, version("alice", 1, { personalCode: "Changed." }))]), 403);
-  await expect("history none: tribe member blocked", await get(versionPath, "bob"), 403);
+  await expect("history none: school member blocked", await get(versionPath, "bob"), 403);
   await expect("history none: owner reads", await get(versionPath, "alice"), "ok");
   await expect("bad history level denied", await commit("alice", [w.patch("mindsets/1", { history: "friends" })]), 403);
-  await expect("alice opens history to tribe", await commit("alice", [w.patch("mindsets/1", { history: "tribe" })]), "ok");
-  await expect("history tribe: member reads", await get(versionPath, "bob"), "ok");
-  await expect("history tribe: outsider blocked", await get(versionPath, "carol"), 403);
-  await expect("history tribe: anonymous blocked", await get(versionPath), 403);
+  await expect("alice opens history to school", await commit("alice", [w.patch("mindsets/1", { history: "school" })]), "ok");
+  await expect("history school: member reads", await get(versionPath, "bob"), "ok");
+  await expect("history school: outsider blocked", await get(versionPath, "carol"), 403);
+  await expect("history school: anonymous blocked", await get(versionPath), 403);
   await expect("alice opens history to everyone", await commit("alice", [w.patch("mindsets/1", { history: "public" })]), "ok");
   await expect("history public: anonymous reads", await get(versionPath), "ok");
   await expect("history public: list versions", await call("POST", ROOT + "/mindsets/1:runQuery", null, { structuredQuery: { from: [{ collectionId: "versions" }] } }), "ok");
   await expect("unpublished hides history", await commit("alice", [w.patch("mindsets/1", { published: false })]), "ok");
   await expect("history public but unpublished: blocked", await get(versionPath, "carol"), 403);
   await expect("alice republishes", await commit("alice", [w.patch("mindsets/1", { published: true, history: "none" })]), "ok");
-  await expect("member reads tribe list", await call("POST", ROOT + "/tribes/alice:runQuery", "bob", { structuredQuery: { from: [{ collectionId: "members" }] } }), "ok");
-  await expect("outsider cannot read tribe list", await call("POST", ROOT + "/tribes/alice:runQuery", "carol", { structuredQuery: { from: [{ collectionId: "members" }] } }), 403);
-  await expect("no duplicate request once in tribe", await commit("bob", [w.create("tribeRequests/bob_alice", request)]), 403);
+  await expect("member reads school list", await call("POST", ROOT + "/schools/alice:runQuery", "bob", { structuredQuery: { from: [{ collectionId: "members" }] } }), "ok");
+  await expect("outsider cannot read school list", await call("POST", ROOT + "/schools/alice:runQuery", "carol", { structuredQuery: { from: [{ collectionId: "members" }] } }), 403);
 
   await expect("stats create", await commit("alice", [w.create("stats/public", { lens: "v2", count: 0, axes: {} })]), "ok");
   await expect("stats increment slice", await commit("alice", [w.increment("stats/public", "byAge.a25_34.n")]), "ok");
@@ -258,17 +330,20 @@ async function expect(label, status, wanted) {
   await expect("stats unknown top-level denied", await commit("alice", [w.increment("stats/public", "junk")]), 403);
 
   await expect(
-    "bob leaves the tribe",
-    await commit("bob", [w.remove("tribes/bob/members/alice"), w.remove("tribes/alice/members/bob")]),
+    "bob leaves the school",
+    await commit("bob", [w.remove("schools/bob/members/alice"), w.remove("schools/alice/members/bob")]),
     "ok"
   );
   await expect("alias hidden again after leaving", await get("aliases/alicefish", "bob"), 403);
+  await expect("deep reading hidden again after leaving", await get("deepReadings/1", "bob"), 403);
+  await expect("pledge hidden again after leaving", await get("seals/bob_alice", "alice"), 403);
+  await expect("deleting a missing pair doc is fine", await commit("bob", [w.remove("tails/bob_carol")]), "ok");
   await expect(
-    "owner of mindset 1 can take mindhunter",
+    "owner of mindset 1 can take firstfish",
     await commit("alice", [
       w.remove("aliases/alicefish"),
-      w.set("aliases/mindhunter", { ownerUid: "alice", number: 1 }),
-      w.set("aliasOf/1", { ownerUid: "alice", alias: "mindhunter" })
+      w.set("aliases/firstfish", { ownerUid: "alice", number: 1 }),
+      w.set("aliasOf/1", { ownerUid: "alice", alias: "firstfish" })
     ]),
     "ok"
   );

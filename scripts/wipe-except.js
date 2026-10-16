@@ -199,6 +199,7 @@ async function main() {
     deleteNames.push(DOC_PREFIX + "mindsets/" + n);
     deleteNames.push(DOC_PREFIX + "privateMindsets/" + n);
     deleteNames.push(DOC_PREFIX + "aliasOf/" + n);
+    deleteNames.push(DOC_PREFIX + "deepReadings/" + n);
     if (m.ownerUid && !keepUids[m.ownerUid]) {
       deleteNames.push(DOC_PREFIX + "owners/" + m.ownerUid);
     }
@@ -220,29 +221,28 @@ async function main() {
     authUids.push(row.id);
   });
 
-  var follows = await listCollection(token, "follows");
-  for (var f = 0; f < follows.length; f += 1) {
-    var followUid = follows[f].id;
-    var items = await listChildren(token, "follows/" + followUid, "items");
-    items.forEach(function (item) {
-      if (keepUids[followUid] && (isKeepNumber(item.number) || isKeepNumber(item.id))) return;
-      deleteNames.push(item._name);
+  // Pair documents survive only when both ends are kept accounts.
+  var pairCollections = ["tails", "glints", "seals", "schoolRequests"];
+  for (var pc = 0; pc < pairCollections.length; pc += 1) {
+    (await listCollection(token, pairCollections[pc])).forEach(function (row) {
+      if (keepUids[row.from] && keepUids[row.to]) return;
+      deleteNames.push(row._name);
     });
-    if (!keepUids[followUid]) deleteNames.push(follows[f]._name);
   }
 
-  var tribes = await listCollection(token, "tribes");
-  for (var t = 0; t < tribes.length; t += 1) {
-    var tribeUid = tribes[t].id;
-    var members = await listChildren(token, "tribes/" + tribeUid, "members");
+  var schools = await listCollection(token, "schools");
+  for (var t = 0; t < schools.length; t += 1) {
+    var schoolUid = schools[t].id;
+    var members = await listChildren(token, "schools/" + schoolUid, "members");
     members.forEach(function (member) {
-      if (keepUids[tribeUid] && keepUids[member.id]) return;
+      if (keepUids[schoolUid] && keepUids[member.id]) return;
       deleteNames.push(member._name);
     });
-    if (!keepUids[tribeUid]) deleteNames.push(tribes[t]._name);
+    if (!keepUids[schoolUid]) deleteNames.push(schools[t]._name);
   }
 
-  (await listCollection(token, "tribeRequests")).forEach(function (row) {
+  (await listCollection(token, "deepReadings")).forEach(function (row) {
+    if (isKeepNumber(row.id)) return;
     deleteNames.push(row._name);
   });
 

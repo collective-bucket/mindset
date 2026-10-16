@@ -217,9 +217,10 @@
       .trim();
   }
 
-  var HISTORY_LEVELS = ["none", "tribe", "public"];
+  var HISTORY_LEVELS = ["none", "school", "public"];
 
   function historyLevel(value) {
+    if (value === "tribe") return "school";
     return HISTORY_LEVELS.indexOf(value) >= 0 ? value : "none";
   }
 

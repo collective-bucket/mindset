@@ -22,27 +22,30 @@ both.
 ## Access
 
 Only profiles (`/i/{number}`), the sign-in pages and the 404 page are public.
-Everything else (flow, hunt, me, create, net, tribe, `/a/{alias}`) sits behind
+Everything else (current, lake, school, me, create, `/a/{alias}`) sits behind
 a sign-in wall: signed-out visitors see a short pitch, the reading scheme and a
 button to enter. The wall is client-side; Firestore rules stay the source of
 truth for what can be read.
 
-The page title doubles as a breadcrumb in the header (`Mindset Bucket › flow`),
+The page title doubles as a breadcrumb in the header (`Mindset Bucket › current`),
 with the EN/TR switch on the right. The brand mark is a mint line-drawn bucket
 with two fish ([`public/assets/logo.svg`](public/assets/logo.svg)).
 
 ## Screens
 
-When signed in, the game bar at the bottom has three buttons, left to right:
+When signed in, the game bar at the bottom has four buttons, left to right:
 
-- **flow** (bucket): your tribe and your net first, then recent changes across
-  the lake.
-- **hunt** (angler, the big one): the lake. Each fish is a mind placed by two
-  open readings. The panel narrows the scale with ranges and demographic
-  filters; the lake zooms to what is left. Tap a fish to hook it or invite it.
-  The Bucket tab shows aggregate distributions.
-- **me** (jumping fish): your number, alias, history consent, reading, closed
-  texts, net, tribe and account.
+- **current** (`/`): fish on your tail and fish on your trail, school requests
+  waiting for you, then recent changes across the lake.
+- **lake** (`/lake`, the big one): each fish is a mind placed by two open
+  readings. The panel narrows the scale with ranges and demographic filters;
+  the lake zooms to what is left. Tap a fish to swim after it. The Bucket tab
+  shows aggregate distributions.
+- **school** (`/school`): the fish you swim with, and the requests waiting.
+- **me**: your number, alias, history consent, reading, closed texts, school
+  and account.
+
+Old paths (`/hunt`, `/tribe`, `/following`, `/flow`) redirect.
 
 **Create** (`/new`) is a three-step wizard (open texts, closed texts, alias and
 details) with a "how to read" guide for each lens, plus suggestions for
@@ -55,19 +58,37 @@ A profile is the card you would hand to everyone you meet: a short **headline**
 from the open texts ([`public/assets/reading.js`](public/assets/reading.js)),
 with badges, a small radar and the demographics you chose to show. The full
 reading (radar, bars, texts, timeline) opens in a sheet. Nearby fish and the
-tribe sit below in tabs; only mutual members can see a tribe.
+school sit below in tabs; only members can see a school.
 
 ## Social layer
 
-- **Hook** adds a fish to your **net**. It works like a bookmark: no approval,
-  nobody is notified, only you see the list.
-- **Alias** is required to publish: 3-20 lowercase letters, digits or `_`. It is
-  never public. Only your tribe sees it. `mindhunter` is reserved for number 1.
-- **Tribe** is mutual. You can invite a fish only if you know its alias; rules
-  check the alias against the invited number without exposing it. Members see
-  each other's alias.
+Words: the **lake** is everyone, a **current** is what moves around you, a
+**school** is the fish you chose, and **me** is you. A fish **swims after**
+another (its *tail* and *trail*); nobody hunts or hooks anyone.
+
+Getting into a school is a handshake of three small steps, all enforced by
+Firestore rules (no Cloud Functions):
+
+1. **Tail.** A swims after B (`tails/{A}_{B}`). B sees A on their current.
+   Nothing else is revealed and nobody is notified.
+2. **Glint.** If A swims after B, B can shine **one closed field** for A
+   (`glints/{B}_{A}`): a verbatim copy of that closed text. A can read it for
+   seven days, and only the rules' clock decides when it ends.
+3. **School request.** A answers with a request (`schoolRequests/{A}_{B}`) and
+   a sealed pledge of one of A's own closed fields (`seals/{A}_{B}`). B can read
+   the pledge only after accepting. When B accepts, both memberships appear
+   (`schools/{uid}/members/{other}`).
+
+After that, closed texts never open fully: only the one field each side
+showed persists, and the school sees the other's **alias** plus the full
+eight-axis radar (the four closed readings are copied, scores only, to
+`deepReadings/{number}`). There is no real-name field; the alias is the only
+name anyone ever sees, and only inside a school.
+
+- **Alias** is required to publish: 3-20 lowercase letters, digits or `_`. It
+  is never public. `firstfish` is reserved for number 1.
 - **History**: every publish stores a version of the open side. The owner picks
-  who can watch it: only me (default), my tribe, or everyone. Profiles show a
+  who can watch it: only me (default), my school, or everyone. Profiles show a
   timeline with a scrubber when allowed.
 
 ## Privacy
@@ -79,7 +100,7 @@ name show a warning.
 
 ## Demographics
 
-All optional. Age range, gender and country show on the profile and drive Hunt
+All optional. Age range, gender and country show on the profile and drive lake
 filters and charts. City is stored on the private document and only feeds
 aggregate counts; places with fewer than five people are hidden. Accounts are
 for people aged 18 and over.
@@ -89,12 +110,15 @@ for people aged 18 and over.
 | Collection | Who reads | Holds |
 | --- | --- | --- |
 | `mindsets/{number}` | everyone if published, owner always | open texts, open readings, headline, blurb, bucket, age range, gender, country, history level |
-| `mindsets/{number}/versions/{id}` | owner; tribe or everyone per history level | past open texts, readings, headline and blurb |
+| `mindsets/{number}/versions/{id}` | owner; school or everyone per history level | past open texts, readings, headline and blurb |
 | `privateMindsets/{number}` | owner | closed texts, closed readings, city |
-| `aliases/{alias}`, `aliasOf/{number}` | owner, tribe | alias |
-| `follows/{uid}/items/{number}` | owner | net |
-| `tribeRequests/{from}_{to}` | both sides | pending invites |
-| `tribes/{uid}/members/{uid}` | owner and tribe | accepted members |
+| `aliases/{alias}`, `aliasOf/{number}` | owner, school | alias |
+| `deepReadings/{number}` | owner, school | the four closed scores, never texts |
+| `tails/{from}_{to}` | both sides | who swims after whom |
+| `glints/{from}_{to}` | owner; receiver for seven days or as a school | one shown closed field |
+| `seals/{from}_{to}` | owner; receiver once in a school | the sealed pledge |
+| `schoolRequests/{from}_{to}` | both sides | pending requests |
+| `schools/{uid}/members/{uid}` | owner and school | accepted members |
 | `stats/public` | everyone | histogram counts per axis, age range, gender, country, city |
 
 Rules live in [`firestore.rules`](firestore.rules). The project shares one

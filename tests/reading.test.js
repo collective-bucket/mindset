@@ -244,7 +244,8 @@ lens.axes.forEach(function (axis) {
 
 // History defaults to private and versions copy only the open side.
 assert.strictEqual(docs.publicDoc.history, "none");
-assert.strictEqual(reading.historyLevel("tribe"), "tribe");
+assert.strictEqual(reading.historyLevel("school"), "school");
+assert.strictEqual(reading.historyLevel("tribe"), "school", "legacy tribe level maps to school");
 assert.strictEqual(reading.historyLevel("everyone"), "none");
 assert.strictEqual(reading.versionId("2026-10-14T12:00:00.123Z"), "20261014120000123");
 var version = reading.buildVersion(docs.publicDoc);

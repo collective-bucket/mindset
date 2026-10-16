@@ -16,15 +16,15 @@
 
     <div id="gated" hidden>
     <section id="empty" class="section" hidden>
-      <h1 data-i18n="me.hunter">Mindhunter</h1>
-      <p class="lead" data-i18n="me.empty">You haven't cast your line yet.</p>
-      <a class="btn btn-primary" href="/new" data-i18n="home.write">Cast your line</a>
+      <h1 data-i18n="profile.fish">Fish</h1>
+      <p class="lead" data-i18n="me.empty">You haven't dived in yet.</p>
+      <a class="btn btn-primary" href="/new" data-i18n="home.write">Dive in</a>
     </section>
 
     <section id="owner" hidden>
       <div class="head">
         <div>
-          <p class="eyebrow" data-i18n="me.hunter">Mindhunter</p>
+          <p class="eyebrow" data-i18n="profile.fish">Fish</p>
           <h1 id="title" class="number">mindset</h1>
           <p id="alias-line" class="alias"></p>
         </div>
@@ -36,14 +36,14 @@
         <button type="button" id="toggle-publish" class="btn"></button>
       </div>
 
-      <nav class="links" aria-label="Tribe and net">
-        <a class="link-row" href="/tribe"><span data-i18n="tribe.title">Tribe</span><span class="link-side" id="tribe-count"></span></a>
-        <a class="link-row" href="/following"><span data-i18n="following.title">Net</span><span class="link-side" id="net-count"></span></a>
+      <nav class="links" aria-label="School and current">
+        <a class="link-row" href="/school"><span data-i18n="school.title">School</span><span class="link-side" id="school-count"></span></a>
+        <a class="link-row" href="/"><span data-i18n="current.title">Current</span><span class="link-side" id="current-count"></span></a>
       </nav>
 
       <section class="section" id="alias-panel">
         <h2 data-i18n="alias.title">Your alias</h2>
-        <p class="hint" data-i18n="alias.hint">Only your tribe sees it. To invite you, someone has to know it.</p>
+        <p class="hint" data-i18n="alias.hint">Your school sees it; nobody else. It's the only name you show.</p>
         <form id="alias-form" class="inline-form" novalidate>
           <label class="field" for="alias"><span class="visually-hidden" data-i18n="alias.label">Alias</span>
             <span class="prefix-input"><span aria-hidden="true">@</span><input id="alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" pattern="[a-z0-9_]{3,20}" aria-describedby="alias-rule" /></span>
@@ -60,7 +60,7 @@
         <fieldset class="choices" id="history-choices">
           <legend class="visually-hidden" data-i18n="history.title">Your history</legend>
           <label><input type="radio" name="history" value="none" /> <span data-i18n="history.none">Only me</span></label>
-          <label><input type="radio" name="history" value="tribe" /> <span data-i18n="history.tribe">My tribe</span></label>
+          <label><input type="radio" name="history" value="school" /> <span data-i18n="history.school">My school</span></label>
           <label><input type="radio" name="history" value="public" /> <span data-i18n="history.public">Everyone</span></label>
         </fieldset>
         <p id="history-status" class="status" role="status" hidden></p>
@@ -88,8 +88,8 @@
       <p data-i18n="about.goal">We are building a bucket of minds together, for fun or for research.</p>
       <ul class="plain-list">
         <li data-i18n="about.anon">Outside, everyone is only a number. No names, no photos.</li>
-        <li data-i18n="about.alias">Your alias is shared only with your tribe.</li>
-        <li data-i18n="about.closed">Closed texts and their readings never leave your account.</li>
+        <li data-i18n="about.alias">Your alias is shared only with your school.</li>
+        <li data-i18n="about.closed">Closed texts stay with you unless you show a field to someone. Your school also sees your four closed readings.</li>
         <li data-i18n="about.history">Your past versions are visible only if you open them.</li>
         <li data-i18n="about.leak">Texts that could identify someone are flagged before publishing.</li>
         <li data-i18n="about.scale">This is not a test result and not a validated scale.</li>

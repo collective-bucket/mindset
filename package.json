@@ -2,7 +2,7 @@
   "name": "mindset",
   "version": "2.0.0",
   "private": true,
-  "description": "Your mindset as a shareable number: an approximate, in-browser reading with open and closed texts, tribes and following.",
+  "description": "Your mindset as a shareable number: an approximate, in-browser reading with open and closed texts, tails, glints and schools.",
   "license": "MIT",
   "scripts": {
     "serve": "firebase emulators:start --only hosting",

@@ -4,28 +4,34 @@
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
-  // Line drawings: a bucket of three fish, a standing angler, and a jumping fish.
+  // Line drawings: the lake from above, a current, a school of three fish, and a jumping fish.
+  function leafFish(x, y, scale) {
+    return (
+      '<g transform="translate(' + x + " " + y + ") scale(" + scale + ')">' +
+      '<path d="M0 0c2.4-3 6.4-3.6 9.2-1.6-2 3.2-6.4 4-9.2 1.6z"/>' +
+      '<circle cx="6.6" cy="-1.2" r=".45"/></g>'
+    );
+  }
+
   var ICONS = {
-    bucket: {
+    lake: {
       box: "0 0 40 40",
       body:
-        '<path d="M14 13c0-5 3.6-8 6-8s6 3 6 8"/>' +
-        '<path d="M8 15h24"/>' +
-        '<path d="M10 15l2.8 18.2a2 2 0 0 0 2 1.7h10.4a2 2 0 0 0 2-1.7L30 15"/>' +
-        '<path d="M13 22c2.4-3 6.4-3.6 9.2-1.6-2 3.2-6.4 4-9.2 1.6z"/>' +
-        '<path d="M20 26c2-2.4 5.2-2.8 7.6-1.2-1.7 2.6-5.4 3.2-7.6 1.2z"/>' +
-        '<path d="M15 30c1.8-2.2 4.8-2.6 7-1.1-1.5 2.3-4.8 2.8-7 1.1z"/>' +
-        '<circle cx="15.2" cy="21.2" r=".55"/><circle cx="22" cy="25.2" r=".5"/><circle cx="17" cy="29.2" r=".45"/>'
+        '<ellipse cx="20" cy="21" rx="16" ry="9"/>' +
+        '<ellipse cx="20" cy="21" rx="9.6" ry="4.9"/>' +
+        '<ellipse cx="20" cy="21" rx="3.4" ry="1.8"/>' +
+        '<path d="M14 7.4c1.6-1.2 3.2-1.2 4.8 0M21.2 5.4c1.6-1.2 3.2-1.2 4.8 0"/>'
     },
-    scene: {
+    current: {
       box: "0 0 40 40",
       body:
-        '<circle cx="13" cy="8" r="3.2"/>' +
-        '<path d="M13 11.4v12.2"/>' +
-        '<path d="M13 23.6l-4.8 10.4M13 23.6l4.8 10.4"/>' +
-        '<path d="M13 15.2l6.2 3.4"/>' +
-        '<path d="M19.2 18.6L33 7.2"/>' +
-        '<path d="M33 7.2c.4 6.4.8 12.8 2.2 19.6"/>'
+        '<path d="M4 13c4-3.4 7-3.4 10.4 0s6.4 3.4 10.4 0 6-2.6 10.2-1"/>' +
+        '<path d="M4 21.5c4-3.4 7-3.4 10.4 0s6.4 3.4 10.4 0 6-2.6 10.2-1"/>' +
+        '<path d="M4 30c4-3.4 7-3.4 10.4 0s6.4 3.4 10.4 0 6-2.6 10.2-1"/>'
+    },
+    school: {
+      box: "0 0 40 40",
+      body: leafFish(4, 14, 1.9) + leafFish(18, 22, 1.9) + leafFish(7, 31, 1.9)
     },
     fish: {
       box: "0 0 40 40",
@@ -40,8 +46,9 @@
   var FISH_PATH = "M-5 0c2.6-3.4 6.6-4 10-1.2C1.6 2.6-2.4 3.4-5 0zM5-1.2l3-2.2-.8 3.6.8 3-3-2";
 
   var BAR = [
-    { id: "flow", href: "/", icon: "bucket" },
-    { id: "hunt", href: "/hunt", icon: "scene" },
+    { id: "lake", href: "/lake", icon: "lake" },
+    { id: "current", href: "/", icon: "current" },
+    { id: "school", href: "/school", icon: "school" },
     { id: "me", href: "/me", icon: "fish" }
   ];
 
@@ -271,6 +278,17 @@
     element.hidden = !message;
   }
 
+  function fieldByKey(key) {
+    return window.MindsetLens.fields.find(function (field) {
+      return field.key === key;
+    });
+  }
+
+  function fieldLabel(key) {
+    var field = fieldByKey(key);
+    return field ? i18n.pick(field.label) : key;
+  }
+
   function axisByKey(key) {
     return window.MindsetLens.axes.find(function (axis) {
       return axis.key === key;
@@ -361,7 +379,8 @@
   function renderRadar(container, scores, ghost, options) {
     options = options || {};
     var compact = Boolean(options.compact);
-    var keys = window.MindsetReading.OPEN_KEYS;
+    var keys = options.keys || window.MindsetReading.OPEN_KEYS;
+    var wide = keys.length > 4;
     var complete = keys.every(function (key) {
       return scores[key] >= 0;
     });
@@ -371,9 +390,9 @@
       return;
     }
     container.hidden = false;
-    var cx = compact ? 70 : 160;
-    var cy = compact ? 70 : 150;
-    var radius = compact ? 48 : 86;
+    var cx = compact ? 70 : wide ? 220 : 160;
+    var cy = compact ? 70 : wide ? 160 : 150;
+    var radius = compact ? 48 : wide ? 86 : 86;
     var ringScales = compact ? [0.5, 1] : [0.25, 0.5, 0.75, 1];
     var rings = ringScales
       .map(function (scale) {
@@ -417,7 +436,13 @@
           .map(function (key, index) {
             var spot = radarPoint(cx, cy, radius + 26, index, keys.length, 100);
             var anchor = "middle";
-            if (spot[0] < cx - 20) {
+            if (wide) {
+              var angle = -Math.PI / 2 + (Math.PI * 2 * index) / keys.length;
+              var cos = Math.cos(angle);
+              var sin = Math.sin(angle);
+              spot = [cx + cos * (radius + 12), cy + sin * (radius + 12) + (sin > 0.3 ? 10 : sin < -0.3 ? -3 : 4)];
+              anchor = cos > 0.3 ? "start" : cos < -0.3 ? "end" : "middle";
+            } else if (spot[0] < cx - 20) {
               spot = [cx - radius - 8, cy - 12];
               anchor = "start";
             } else if (spot[0] > cx + 20) {
@@ -440,10 +465,11 @@
             );
           })
           .join("");
-    var vb = compact ? "0 0 140 140" : "0 0 320 300";
+    var vb = compact ? "0 0 140 140" : wide ? "0 0 440 320" : "0 0 320 300";
     container.innerHTML =
       '<svg class="radar' +
       (compact ? " radar-compact" : "") +
+      (wide ? " radar-wide" : "") +
       '" viewBox="' +
       vb +
       '" role="img" aria-label="' +
@@ -517,7 +543,6 @@
 
   function badgeText(doc) {
     var items = [];
-    if (doc.seed) items.push(t("common.seed"));
     if (doc.ageBand) items.push(doc.ageBand);
     if (doc.gender) items.push(t("gender." + doc.gender));
     if (doc.country) items.push(i18n.countryName(doc.country));
@@ -533,9 +558,7 @@
     if (quote.length > 140) quote = quote.slice(0, 137) + "…";
     var side = options.tag || relativeWhen(doc.updatedAt);
     return (
-      '<a class="entry' +
-      (doc.seed ? " is-seed" : "") +
-      '" href="' +
+      '<a class="entry" href="' +
       profileHref(doc) +
       '">' +
       '<span class="entry-head">' +
@@ -662,6 +685,7 @@
       field.key +
       '"><span>' +
       escapeHtml(i18n.pick(field.label)) +
+      (field.plain ? ' <em class="field-plain">' + escapeHtml(i18n.pick(field.plain)) + "</em>" : "") +
       '</span><textarea id="' +
       field.key +
       '" name="' +
@@ -828,6 +852,63 @@
     count.textContent = input.value.length + " / 1200";
   }
 
+  // Asks which hidden side to show; resolves with the field key or null.
+  function pickClosedField(options) {
+    return new Promise(function (resolve) {
+      var fields = window.MindsetLens.fields.filter(function (field) {
+        return !field.open && options.privateDoc && options.privateDoc[field.key];
+      });
+      var dialog = document.createElement("dialog");
+      dialog.className = "modal";
+      var choices = fields.length
+        ? '<fieldset class="choices"><legend class="visually-hidden">' +
+          escapeHtml(t("profile.pick")) +
+          "</legend>" +
+          fields
+            .map(function (field, index) {
+              var text = String(options.privateDoc[field.key]);
+              if (text.length > 140) text = text.slice(0, 137) + "…";
+              return (
+                '<label class="pick"><input type="radio" name="field" value="' +
+                field.key +
+                '"' +
+                (index === 0 ? " checked" : "") +
+                " /> <span><strong>" +
+                escapeHtml(i18n.pick(field.label)) +
+                '</strong><small class="hint">' +
+                escapeHtml(text) +
+                "</small></span></label>"
+              );
+            })
+            .join("") +
+          "</fieldset>"
+        : '<p class="empty">' + escapeHtml(t("profile.noClosed")) + "</p>";
+      dialog.innerHTML =
+        '<form method="dialog"><h2>' +
+        escapeHtml(options.title) +
+        '</h2><p class="hint">' +
+        escapeHtml(options.hint) +
+        "</p>" +
+        choices +
+        '<div class="dialog-actions"><button class="btn" value="cancel">' +
+        escapeHtml(t("common.cancel")) +
+        "</button>" +
+        (fields.length
+          ? '<button class="btn btn-primary" value="confirm">' + escapeHtml(options.action) + "</button>"
+          : "") +
+        "</div></form>";
+      document.body.appendChild(dialog);
+      closeOnBackdrop(dialog);
+      dialog.addEventListener("close", function () {
+        var checked = dialog.querySelector('input[name="field"]:checked');
+        var value = dialog.returnValue === "confirm" && checked ? checked.value : null;
+        dialog.remove();
+        resolve(value);
+      });
+      dialog.showModal();
+    });
+  }
+
   function loginHref() {
     return "/login?next=" + encodeURIComponent(window.location.pathname + window.location.search);
   }
@@ -840,6 +921,8 @@
 
   window.MindsetUi = {
     escapeHtml: escapeHtml,
+    fieldLabel: fieldLabel,
+    fieldByKey: fieldByKey,
     icon: icon,
     fishGlyph: fishGlyph,
     FISH_PATH: FISH_PATH,
@@ -873,6 +956,7 @@
     updateCount: updateCount,
     loginHref: loginHref,
     closeOnBackdrop: closeOnBackdrop,
+    pickClosedField: pickClosedField,
     setCrumb: setCrumb,
     requireAuth: requireAuth,
     titleSuffix: titleSuffix,
