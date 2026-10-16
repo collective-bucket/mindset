@@ -63,7 +63,6 @@
       shareButton.innerHTML = ui.icon("share");
       document.querySelector("#edit").innerHTML = ui.icon("edit");
       document.querySelector("#manage").innerHTML = ui.icon("manage");
-      document.querySelector("#tab-bottom .tab-lock").innerHTML = ui.icon("lock");
     }
     paintIcons();
 
@@ -186,13 +185,11 @@
     function selectDepth(name) {
       var panes = {
         surface: document.querySelector("#pane-surface"),
-        deep: document.querySelector("#pane-deep"),
-        bottom: document.querySelector("#pane-bottom")
+        deep: document.querySelector("#pane-deep")
       };
       var tabs = {
         surface: document.querySelector("#tab-surface"),
-        deep: document.querySelector("#tab-deep"),
-        bottom: document.querySelector("#tab-bottom")
+        deep: document.querySelector("#tab-deep")
       };
       Object.keys(panes).forEach(function (key) {
         var on = key === name;
@@ -255,30 +252,6 @@
         html || '<p class="empty">' + ui.escapeHtml(t("feed.empty")) + "</p>";
     }
 
-    // Locked field shells only — closed text never enters the DOM.
-    function renderBottom() {
-      document.querySelector("#bottom").innerHTML = window.MindsetLens.fields
-        .filter(function (field) {
-          return !field.open;
-        })
-        .map(function (field) {
-          var plain = field.plain ? i18n.pick(field.plain) : "";
-          return (
-            '<article class="post locked-post">' +
-            "<h3>" +
-            ui.escapeHtml(i18n.pick(field.label)) +
-            ' <span class="locked-icon" aria-hidden="true">' +
-            ui.icon("lock") +
-            "</span></h3>" +
-            (plain ? '<p class="field-plain">' + ui.escapeHtml(plain) + "</p>" : "") +
-            '<p class="hint">' +
-            ui.escapeHtml(t("profile.lockedUntilSchool")) +
-            "</p></article>"
-          );
-        })
-        .join("");
-    }
-
     function setTailPopover(open) {
       var pop = document.querySelector("#tail-popover");
       if (!pop) return;
@@ -323,7 +296,6 @@
       document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
       showReading(doc);
       renderSurface(doc);
-      renderBottom();
       showSurfaceSlide(0);
       showDeepSlide(0);
       updateDeepAccess();
