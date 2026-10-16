@@ -14,7 +14,10 @@
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <div id="gated" hidden>
-    <h1 id="heading" class="visually-hidden" data-i18n="create.title">Dive in</h1>
+    <div class="head">
+      <h1 id="heading" data-i18n="create.title">Dive in</h1>
+      <a class="head-side" href="/" data-i18n="footer.home">Home</a>
+    </div>
     <p class="lead"><span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span> <span data-i18n="create.lead">The model downloads to your browser on first read. Your text isn't sent anywhere.</span></p>
 
     <nav class="wizard-steps" aria-label="Steps">
@@ -32,7 +35,7 @@
           <div id="open-fields"></div>
         </section>
 
-        <section class="section section-private">
+        <section class="section">
           <h2 data-i18n="create.closedTitle">Stays with you</h2>
           <p class="hint" data-i18n="create.closedHint">What you don't say out loud, your desire and the side you're ashamed of go to no one. Their readings stay with you too.</p>
           <div id="closed-fields"></div>
@@ -62,20 +65,31 @@
 
       <section class="wizard-pane" data-step="3" hidden>
         <section class="section">
-          <h2 data-i18n="common.approx">Approximate reading</h2>
-          <div id="preview-guide"></div>
           <p id="preview-headline" class="entry-headline" hidden></p>
           <p id="preview-summary" class="summary"></p>
-          <div id="preview-radar"></div>
-          <div id="preview-open"></div>
-          <div class="section-private">
-            <h3 data-i18n="create.privateTitle">Only for you</h3>
+
+          <div class="preview-toolbar">
+            <div class="tabs depth-tabs" role="tablist" aria-label="Preview">
+              <button type="button" id="tab-preview-radar" role="tab" aria-selected="true" aria-controls="pane-preview-radar" data-preview-tab="radar" data-i18n="create.tabRadar">Radar</button>
+              <button type="button" id="tab-preview-open" role="tab" aria-selected="false" aria-controls="pane-preview-open" data-preview-tab="open" data-i18n="create.openTitle">On your profile</button>
+              <button type="button" id="tab-preview-closed" role="tab" aria-selected="false" aria-controls="pane-preview-closed" data-preview-tab="closed" data-i18n="create.privateTitle">Only for you</button>
+            </div>
+            <button type="button" id="preview-how-to" class="btn-icon" data-i18n-aria="guide.howTo" aria-label="How should I read this?"></button>
+          </div>
+
+          <div id="pane-preview-radar" role="tabpanel" aria-labelledby="tab-preview-radar">
+            <div id="preview-radar"></div>
+          </div>
+          <div id="pane-preview-open" role="tabpanel" aria-labelledby="tab-preview-open" hidden>
+            <div id="preview-open"></div>
+          </div>
+          <div id="pane-preview-closed" role="tabpanel" aria-labelledby="tab-preview-closed" hidden>
             <div id="preview-closed"></div>
           </div>
         </section>
       </section>
 
-      <div class="actions sticky-actions">
+      <div class="actions">
         <button type="button" id="back" class="btn" hidden data-i18n="create.back">Back</button>
         <button type="button" id="next" class="btn btn-primary" data-i18n="create.next">Next</button>
         <button type="button" id="read" class="btn" hidden data-i18n="create.read">Read</button>
@@ -86,6 +100,16 @@
     </form>
     </div>
   </main>
+
+  <dialog id="how-to-read-dialog" class="modal" aria-labelledby="how-to-read-title">
+    <form method="dialog">
+      <h2 id="how-to-read-title" data-i18n="guide.howTo">How should I read this?</h2>
+      <div id="how-to-read-body"></div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" value="close" data-i18n="common.close">Close</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="publish-dialog" class="modal">
     <form method="dialog">

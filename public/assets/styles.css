@@ -467,6 +467,13 @@ textarea {
   line-height: 1.45;
 }
 
+select {
+  box-sizing: border-box;
+  height: 44px;
+  max-height: 44px;
+  line-height: 1.25;
+}
+
 select:disabled,
 input:disabled {
   opacity: 0.5;
@@ -502,7 +509,12 @@ textarea[aria-invalid="true"] {
 
 .prefix-input input {
   border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   padding-left: 4px;
+  min-height: 0;
+  height: 42px;
 }
 
 .prefix-input:focus-within {
@@ -513,6 +525,8 @@ textarea[aria-invalid="true"] {
 
 .prefix-input input:focus-visible {
   outline: none;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .inline-form {
@@ -1599,58 +1613,112 @@ input[type="checkbox"] {
 
 .wizard-steps {
   display: flex;
-  gap: 8px;
-  margin: 16px 0 8px;
+  align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 16px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.wizard-steps::before,
+.wizard-steps::after {
+  content: "";
+  flex: 1 1 24px;
+  height: 1px;
+  background: var(--hair);
+  min-width: 16px;
 }
 
 .wizard-step {
   appearance: none;
-  border: var(--stroke) solid var(--accent-mid);
-  background: var(--paper);
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 8px 14px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  border-radius: 0;
+  padding: 4px 0;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.wizard-step + .wizard-step::before {
+  content: "---";
+  margin-right: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .wizard-step:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
   color: var(--accent-strong);
+  background: none;
+  border-color: transparent;
 }
 
 .wizard-step span {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  display: inline-grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 700;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  place-items: unset;
 }
 
 .wizard-step.is-active,
 .wizard-step.is-active:hover {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #ffffff;
+  border-color: transparent;
+  background: none;
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .wizard-step.is-active span {
-  background: #ffffff;
-  color: var(--accent-strong);
+  background: none;
+  color: inherit;
 }
 
 .wizard-step em {
   font-style: normal;
+}
+
+#mindset-form > .actions {
+  justify-content: flex-end;
+}
+
+#gated > .lead,
+.page > #gated > .lead {
+  margin: 0 0 20px;
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.section > .hint {
+  margin-bottom: 12px;
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.preview-toolbar .depth-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
 }
 
 .how-to-read {

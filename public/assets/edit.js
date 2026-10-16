@@ -40,9 +40,46 @@
     function boot(session) {
     ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
     ui.renderDemoForm(document.querySelector("#demo-fields"));
-    document.querySelector("#preview-guide").innerHTML = ui.howToReadHtml(true);
     ui.closeOnBackdrop(dialog);
+    var howDialog = document.querySelector("#how-to-read-dialog");
+    if (howDialog) ui.closeOnBackdrop(howDialog);
+    var howButton = document.querySelector("#preview-how-to");
+    if (howButton) howButton.innerHTML = ui.icon("guide");
     document.querySelector("#login-link").href = ui.loginHref();
+
+    function selectPreviewTab(name) {
+      var panes = {
+        radar: document.querySelector("#pane-preview-radar"),
+        open: document.querySelector("#pane-preview-open"),
+        closed: document.querySelector("#pane-preview-closed")
+      };
+      var tabs = {
+        radar: document.querySelector("#tab-preview-radar"),
+        open: document.querySelector("#tab-preview-open"),
+        closed: document.querySelector("#tab-preview-closed")
+      };
+      Object.keys(panes).forEach(function (key) {
+        var on = key === name;
+        if (panes[key]) panes[key].hidden = !on;
+        if (tabs[key]) tabs[key].setAttribute("aria-selected", String(on));
+      });
+    }
+
+    var previewTabs = document.querySelector(".preview-toolbar .depth-tabs");
+    if (previewTabs) {
+      previewTabs.addEventListener("click", function (event) {
+        var tab = event.target.closest("[data-preview-tab]");
+        if (!tab) return;
+        selectPreviewTab(tab.getAttribute("data-preview-tab"));
+      });
+    }
+
+    if (howButton && howDialog) {
+      howButton.addEventListener("click", function () {
+        document.querySelector("#how-to-read-body").innerHTML = ui.howToReadHtml(false, { plain: true });
+        howDialog.showModal();
+      });
+    }
 
     function isTextField(id) {
       return window.MindsetLens.fields.some(function (field) {
