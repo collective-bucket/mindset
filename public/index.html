@@ -4,14 +4,75 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#eafbf5" />
-  <title>current · Mindset Bucket</title>
-  <meta name="description" content="Build a bucket of minds together, for fun or for research. Outside, everyone is only a number." />
+  <title>Mindset Bucket</title>
+  <meta name="description" content="What's your mindset number? Enter the lake as a nameless fish, share your open reading, and keep what lies at the bottom for your school." />
   <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
-<body data-tab="current" data-title="current.title">
+<body data-tab="current">
   <main class="page">
     <section id="auth-wall" class="section auth-wall" hidden></section>
+
+    <section id="landing" class="landing" hidden>
+      <h1 data-i18n="landing.title">What&apos;s your mindset number?</h1>
+      <p class="eyebrow" data-i18n="landing.hook">Tired of telling the same story fifty times?</p>
+      <p class="lead" data-i18n="landing.lead">Welcome to deeper waters, where you are not your masks but your frequency, and you never have to introduce yourself from scratch.</p>
+      <p data-i18n="landing.pitch">Mindset Bucket was made to cut the social noise and the fatigue of first meetings. Here minds go nameless and become an eight-axis radar on a shared lake.</p>
+      <p data-i18n="landing.dive">Enter the lake as a nameless fish. Take a number (#42). Show everyone the scales on the surface and the rules you live by; keep what you swallowed, the pull from below and the wound in your belly for your school alone.</p>
+
+      <form id="lookup" class="lookup" novalidate>
+        <label class="visually-hidden" for="lookup-input" data-i18n="landing.lookupLabel">Mindset number</label>
+        <span class="lookup-field">
+          <span class="lookup-hash" aria-hidden="true">#</span>
+          <input id="lookup-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="80" data-i18n-placeholder="landing.lookupPlaceholder" placeholder="42" />
+        </span>
+        <button type="submit" class="btn btn-primary" data-i18n="landing.lookupGo">Open the mind</button>
+      </form>
+      <p class="hint" data-i18n="landing.lookupHint">Paste the mindset number or link someone gave you.</p>
+      <p id="lookup-status" class="status" role="status" hidden></p>
+
+      <div class="actions">
+        <a class="btn btn-primary" data-auth-login href="/login" data-i18n="gate.enter">Enter the lake</a>
+        <a class="btn" href="/register" data-i18n="auth.submitRegister">Create account</a>
+      </div>
+
+      <section class="manifesto">
+        <h2 data-i18n="landing.manifestoTitle">Manifesto and architecture</h2>
+        <p class="hint" data-i18n="landing.manifestoLead">Mapping a mind, and the digital trail it leaves.</p>
+
+        <h3 data-i18n="landing.whyTitle">A trust ecosystem, not a feed</h3>
+        <p data-i18n="landing.whyBody">Mindset Bucket rejects the shallow like-and-follow model of ordinary social nets. It joins the anonymous unique-number spirit of the ICQ days with modern algorithmic psychology into a radical trust ecosystem.</p>
+
+        <h3 data-i18n="landing.uinTitle">What is a mindset number?</h3>
+        <p data-i18n="landing.uinBody">Every mind that enters the lake gets a unique, unchangeable number in the order it arrived. Low numbers are the first fish into the water. When you meet someone, you share your number (#42) or your link instead of a phone number or a social account. The other person skips the interview and opens your mind map.</p>
+
+        <h3 data-i18n="landing.layersTitle">Layers of the reading</h3>
+        <p data-i18n="landing.layersLead">Your narrative texts are scored into an eight-axis compass: four open on the surface, four closed at the bottom.</p>
+        <div class="layers">
+          <article class="layer layer-open">
+            <h4 data-i18n="landing.openTitle">Surface waters</h4>
+            <p class="hint" data-i18n="landing.openLead">Visible to anyone with your number.</p>
+            <ul id="landing-open-fields" class="plain-list"></ul>
+            <p class="hint" data-i18n="landing.openAxes">Plus the four open readings on the radar.</p>
+          </article>
+          <article class="layer layer-closed">
+            <h4 data-i18n="landing.closedTitle">Bottom waters</h4>
+            <p class="hint" data-i18n="landing.closedLead">Locked. You show one field at a time in the handshake; your school sees the full closed reading.</p>
+            <ul id="landing-closed-fields" class="plain-list"></ul>
+          </article>
+        </div>
+
+        <h3 data-i18n="landing.aliasTitle">Alias and trust</h3>
+        <p data-i18n="landing.aliasBody">A mindset number never shows a face or a real name. The only name anyone ever sees is the alias, and only inside a school. Once you know that name, you are no longer strangers.</p>
+      </section>
+
+      <details class="how-to-read gate-schema">
+        <summary data-i18n="gate.schemaTitle">The reading schema</summary>
+        <p class="hint" data-i18n="gate.method">Open texts are embedded in the browser with multilingual-e5-small and scored against bipolar EN/TR anchors on each axis. Scores are approximate polarities, not a validated psychometric scale.</p>
+        <p class="hint" data-i18n="gate.closedNote">Four closed axes (pressure gap, facing the net, different waters, blind-spot gulf) are visible only to you and to the school you form.</p>
+        <p class="hint" data-i18n="common.notTest">This is not a test result. It's an approximate reading.</p>
+      </details>
+    </section>
 
     <div id="gated" hidden>
       <section id="hero" class="hero" hidden>

@@ -1920,3 +1920,125 @@ input[type="checkbox"] {
   padding: 6px 0;
   border-bottom: 1px solid var(--hair);
 }
+
+/* ---- Signed-out landing ---- */
+
+.landing {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 8px 0 32px;
+}
+
+.landing > h1 {
+  font-size: clamp(28px, 7vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin: 12px 0 10px;
+}
+
+.landing .eyebrow {
+  color: var(--accent-deep);
+  margin: 0 0 12px;
+}
+
+.landing > .lead {
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.lookup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+  margin: 20px 0 6px;
+}
+
+.lookup-field {
+  display: flex;
+  align-items: center;
+  flex: 1 1 180px;
+  min-width: 0;
+  border: var(--stroke) solid var(--ink);
+  border-radius: 12px;
+  background: var(--paper);
+  padding: 0 4px 0 12px;
+  min-height: 44px;
+}
+
+.lookup-field:focus-within {
+  border-color: var(--accent);
+}
+
+.lookup-hash {
+  color: var(--accent-deep);
+  font-weight: 700;
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+.lookup-field input {
+  border: 0;
+  background: transparent;
+  padding: 10px 8px 10px 0;
+  min-height: 42px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.lookup-field input:focus-visible {
+  outline: none;
+  border-color: transparent;
+}
+
+.lookup .btn {
+  flex: 0 0 auto;
+}
+
+.manifesto {
+  margin: 36px 0 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hair);
+}
+
+.manifesto h2 {
+  margin-top: 0;
+}
+
+.manifesto h3 {
+  margin-top: 22px;
+}
+
+.layers {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 8px;
+}
+
+@media (min-width: 640px) {
+  .layers {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.layer {
+  margin: 0;
+  padding: 14px 14px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-pastel);
+}
+
+.layer h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.layer .plain-list {
+  margin: 8px 0;
+}
+
+.landing .gate-schema {
+  margin-top: 8px;
+}

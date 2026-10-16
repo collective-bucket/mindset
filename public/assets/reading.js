@@ -219,6 +219,26 @@
 
   var HISTORY_LEVELS = ["none", "school", "public"];
 
+
+  // Accepts "42", "#42", "/i/42" and full profile URLs. Rejects aliases and junk.
+  function parseNumber(text) {
+    var raw = String(text || "").trim();
+    if (!raw) return null;
+    try {
+      if (/^https?:\/\//i.test(raw) || raw.indexOf("/") >= 0) {
+        var url = new URL(raw, "https://mindsetbucket.com");
+        raw = url.pathname || raw;
+      }
+    } catch (error) {
+      return null;
+    }
+    var match = raw.match(/(?:^|\/)(?:i\/)?#?(\d{1,7})\/?$/i);
+    if (!match) return null;
+    var n = Number(match[1]);
+    if (!Number.isInteger(n) || n < 1) return null;
+    return n;
+  }
+
   function historyLevel(value) {
     if (value === "tribe") return "school";
     return HISTORY_LEVELS.indexOf(value) >= 0 ? value : "none";
@@ -368,6 +388,7 @@
     deriveBlurb: deriveBlurb,
     versionId: versionId,
     historyLevel: historyLevel,
+    parseNumber: parseNumber,
     HISTORY_LEVELS: HISTORY_LEVELS,
     scoresOf: scoresOf,
     demoOf: demoOf

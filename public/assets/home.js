@@ -4,6 +4,7 @@
   var ui = window.MindsetUi;
   var store = window.MindsetStore;
   var social = window.MindsetSocial;
+  var reading = window.MindsetReading;
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
@@ -75,9 +76,68 @@
       });
     }
 
+    function fillLandingFields() {
+      function fill(id, open) {
+        var list = document.querySelector(id);
+        if (!list) return;
+        list.innerHTML = window.MindsetLens.fields
+          .filter(function (field) {
+            return Boolean(field.open) === open;
+          })
+          .map(function (field) {
+            return (
+              "<li><strong>" +
+              ui.escapeHtml(i18n.pick(field.label)) +
+              '</strong> <span class="hint">— ' +
+              ui.escapeHtml(i18n.pick(field.plain || field.label)) +
+              "</span></li>"
+            );
+          })
+          .join("");
+      }
+      fill("#landing-open-fields", true);
+      fill("#landing-closed-fields", false);
+    }
+
+    function showLanding() {
+      document.querySelector("#auth-wall").hidden = true;
+      document.querySelector("#gated").hidden = true;
+      document.querySelector("#landing").hidden = false;
+      document.querySelector("#gamebar").hidden = true;
+      ui.setCrumb("");
+      document.title = t("brand.name");
+      fillLandingFields();
+      var login = document.querySelector('#landing [data-auth-login]');
+      if (login) login.setAttribute("href", ui.loginHref());
+    }
+
+    function openLookup(event) {
+      event.preventDefault();
+      var input = document.querySelector("#lookup-input");
+      var number = reading.parseNumber(input.value);
+      var lookupStatus = document.querySelector("#lookup-status");
+      if (!number) {
+        ui.setStatus(lookupStatus, t("landing.lookupBad"), "error");
+        input.focus();
+        return;
+      }
+      ui.setStatus(lookupStatus, "");
+      window.location.href = "/i/" + number;
+    }
+
+    document.querySelector("#lookup").addEventListener("submit", openLookup);
+
     async function load() {
-      session = await ui.requireAuth();
-      if (!session) return;
+      session = await store.getOptionalSession();
+      if (!session) {
+        showLanding();
+        return;
+      }
+      document.querySelector("#landing").hidden = true;
+      document.querySelector("#auth-wall").hidden = true;
+      document.querySelector("#gated").hidden = false;
+      document.querySelector("#gamebar").hidden = false;
+      ui.setCrumb(t("current.title"));
       document.querySelector("#hero-art").innerHTML = ui.icon("lake");
       ui.setStatus(status, t("common.loading"));
       own = await store.findOwn(session.uid, session.idToken).catch(function () {

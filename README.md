@@ -21,11 +21,18 @@ both.
 
 ## Access
 
-Only profiles (`/i/{number}`), the sign-in pages and the 404 page are public.
-Everything else (current, lake, school, me, create, `/a/{alias}`) sits behind
-a sign-in wall: signed-out visitors see a short pitch, the reading scheme and a
-button to enter. The wall is client-side; Firestore rules stay the source of
-truth for what can be read.
+Profiles (`/i/{number}`), the sign-in pages and the 404 page are public. The
+home page (`/`) is also public when signed out: a landing with the manifesto
+and a number lookup that opens `/i/{n}`. Everything else (current, lake,
+school, me, create, `/a/{alias}`) sits behind a sign-in wall. The wall is
+client-side; Firestore rules stay the source of truth for what can be read.
+
+### Why the landing works
+
+A number box on the home page lets a non-member open a calling card someone
+handed them. The depth of that card is what asks them to join. In the wild the
+ask becomes "what's your mindset number?" or "here's my link" — the ICQ-number
+nostalgia keeps it playful; the manifesto underneath keeps the weight.
 
 The page title doubles as a breadcrumb in the header (`Mindset Bucket › current`),
 with the EN/TR switch on the right. The brand mark is a mint line-drawn bucket

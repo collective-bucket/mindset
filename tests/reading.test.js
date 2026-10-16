@@ -262,3 +262,18 @@ var demo = reading.demoOf({ ageBand: "18-24", country: "US" }, { city: "Austin" 
 assert.deepStrictEqual(demo, { ageBand: "18-24", gender: "", country: "US", city: "Austin" });
 
 console.log("reading.test.js passed");
+
+assert.strictEqual(reading.parseNumber("42"), 42);
+assert.strictEqual(reading.parseNumber("#42"), 42);
+assert.strictEqual(reading.parseNumber("  #042  "), 42);
+assert.strictEqual(reading.parseNumber("/i/42"), 42);
+assert.strictEqual(reading.parseNumber("https://mindsetbucket.com/i/42"), 42);
+assert.strictEqual(reading.parseNumber("https://mindsetbucket.com/i/42?x=1#y"), 42);
+assert.strictEqual(reading.parseNumber("mindsetbucket.com/i/99"), 99);
+assert.strictEqual(reading.parseNumber("0"), null);
+assert.strictEqual(reading.parseNumber("-3"), null);
+assert.strictEqual(reading.parseNumber("4.2"), null);
+assert.strictEqual(reading.parseNumber("firstfish"), null);
+assert.strictEqual(reading.parseNumber("/a/firstfish"), null);
+assert.strictEqual(reading.parseNumber(""), null);
+assert.strictEqual(reading.parseNumber("12345678"), null);
