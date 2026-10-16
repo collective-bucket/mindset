@@ -76,40 +76,6 @@
       });
     }
 
-    function fillRadarAxes() {
-      function fill(id, open) {
-        var list = document.querySelector(id);
-        if (!list) return;
-        list.innerHTML = window.MindsetLens.axes
-          .filter(function (axis) {
-            return Boolean(axis.open) === open;
-          })
-          .map(function (axis) {
-            return (
-              "<li><strong>" +
-              ui.escapeHtml(i18n.pick(axis.label)) +
-              "</strong> — " +
-              ui.escapeHtml(ui.axisHint(axis) || i18n.pick(axis.lowLabel) + " ↔ " + i18n.pick(axis.highLabel)) +
-              "</li>"
-            );
-          })
-          .join("");
-      }
-      fill("#radar-open-axes", true);
-      fill("#radar-closed-axes", false);
-    }
-
-    function renderLandingPitch() {
-      var host = document.querySelector("#landing-pitch");
-      if (!host) return;
-      host.innerHTML =
-        ui.escapeHtml(t("landing.pitchBefore")) +
-        '<button type="button" class="linkish" id="open-radar">' +
-        ui.escapeHtml(t("landing.radarLink")) +
-        "</button>" +
-        ui.escapeHtml(t("landing.pitchAfter"));
-    }
-
     function showLanding() {
       document.querySelector("#auth-wall").hidden = true;
       document.querySelector("#gated").hidden = true;
@@ -117,8 +83,6 @@
       document.querySelector("#gamebar").hidden = true;
       ui.setCrumb("");
       document.title = t("brand.name");
-      renderLandingPitch();
-      fillRadarAxes();
       var login = document.querySelector('#landing [data-auth-login]');
       if (login) login.setAttribute("href", ui.loginHref());
     }
@@ -126,8 +90,14 @@
     function openLookup(event) {
       event.preventDefault();
       var input = document.querySelector("#lookup-input");
-      var number = reading.parseNumber(input.value);
+      var raw = String(input.value || "").trim();
       var lookupStatus = document.querySelector("#lookup-status");
+      if (!raw) {
+        ui.setStatus(lookupStatus, "");
+        window.location.href = "/i/1";
+        return;
+      }
+      var number = reading.parseNumber(raw);
       if (!number) {
         ui.setStatus(lookupStatus, t("landing.lookupBad"), "error");
         input.focus();
@@ -138,16 +108,6 @@
     }
 
     document.querySelector("#lookup").addEventListener("submit", openLookup);
-    var radarDialog = document.querySelector("#radar-dialog");
-    if (radarDialog) {
-      ui.closeOnBackdrop(radarDialog);
-      document.querySelector("#landing").addEventListener("click", function (event) {
-        if (event.target && event.target.id === "open-radar") {
-          fillRadarAxes();
-          radarDialog.showModal();
-        }
-      });
-    }
 
     async function load() {
       session = await store.getOptionalSession();

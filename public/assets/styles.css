@@ -1938,6 +1938,10 @@ input[type="checkbox"] {
 .landing .eyebrow {
   color: var(--accent-deep);
   margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .landing > .lead {
@@ -1946,11 +1950,70 @@ input[type="checkbox"] {
 }
 
 .lookup {
+  margin: 20px 0 6px;
+}
+
+.lookup-label {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lookup-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: stretch;
-  margin: 20px 0 6px;
+}
+
+.landing-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 22px 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.landing-or::before,
+.landing-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--hair);
+}
+
+.landing-dive {
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.landing-dive a {
+  display: inline;
+  margin-left: 0.35em;
+  white-space: nowrap;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 8px 0 0;
+}
+
+.landing-register {
+  color: var(--accent-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-register:hover {
+  text-decoration: underline;
 }
 
 .lookup-field {

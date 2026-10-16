@@ -16,41 +16,31 @@
     <section id="landing" class="landing" hidden>
       <h1 data-i18n="landing.title">What&apos;s your mindset number?</h1>
       <p class="eyebrow" data-i18n="landing.hook">Tired of explaining yourself?</p>
-      <p id="landing-pitch" class="lead"></p>
-      <p data-i18n="landing.dive">Enter the lake as a nameless fish. Take a number (#42). Show everyone the scales on the surface and the rules you live by; keep what you swallowed, the pull from below and the wound in your belly for your school alone.</p>
 
       <form id="lookup" class="lookup" novalidate>
-        <label class="visually-hidden" for="lookup-input" data-i18n="landing.lookupLabel">Mindset number</label>
-        <span class="lookup-field">
-          <span class="lookup-hash" aria-hidden="true">#</span>
-          <input id="lookup-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="80" data-i18n-placeholder="landing.lookupPlaceholder" placeholder="42" />
-        </span>
-        <button type="submit" class="btn btn-primary" data-i18n="landing.lookupGo">Open the mind</button>
+        <label class="lookup-label" for="lookup-input" data-i18n="landing.lookupLabel">Mindset number</label>
+        <div class="lookup-row">
+          <span class="lookup-field">
+            <span class="lookup-hash" aria-hidden="true">#</span>
+            <input id="lookup-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="80" data-i18n-placeholder="landing.lookupPlaceholder" placeholder="42" />
+          </span>
+          <button type="submit" class="btn btn-primary" data-i18n="landing.lookupGo">Open the mind</button>
+        </div>
       </form>
       <p class="hint" data-i18n="landing.lookupHint">Paste the mindset number or link someone gave you.</p>
       <p id="lookup-status" class="status" role="status" hidden></p>
 
-      <div class="actions">
-        <a class="btn btn-primary" data-auth-login href="/login" data-i18n="gate.enter">Enter the lake</a>
-        <a class="btn" href="/register" data-i18n="auth.submitRegister">Create account</a>
-      </div>
+      <p class="landing-or" data-i18n="landing.or">or</p>
 
-      <dialog id="radar-dialog" class="modal" aria-labelledby="radar-dialog-title">
-        <form method="dialog">
-          <h2 id="radar-dialog-title" data-i18n="landing.radarTitle">The eight-axis radar</h2>
-          <p class="hint" data-i18n="landing.radarLead">Your narrative texts are scored in the browser into four open and four closed axes. The scores are approximate polarities, not a test result.</p>
-          <div class="radar-dialog-axes">
-            <h3 data-i18n="landing.openTitle">Surface waters</h3>
-            <ul id="radar-open-axes" class="plain-list"></ul>
-            <h3 data-i18n="landing.closedTitle">Bottom waters</h3>
-            <ul id="radar-closed-axes" class="plain-list"></ul>
-          </div>
-          <p class="hint" data-i18n="common.notTest">This is not a test result. It&apos;s an approximate reading.</p>
-          <div class="dialog-actions">
-            <button class="btn btn-primary" value="close" data-i18n="common.close">Close</button>
-          </div>
-        </form>
-      </dialog>
+      <p class="landing-dive">
+        <span data-i18n="landing.dive">Enter the lake as a nameless fish. Take a number (#42). Show everyone the scales on the surface and the rules you live by; keep what you swallowed, the pull from below and the wound in your belly for your school alone.</span>
+        <a href="/about" data-i18n="landing.whatIsThis">What is this?</a>
+      </p>
+
+      <div class="landing-actions">
+        <a class="landing-register" href="/register" data-i18n="auth.submitRegister">Create account</a>
+        <a class="btn btn-primary" data-auth-login href="/login" data-i18n="gate.enter">Enter the lake</a>
+      </div>
     </section>
 
     <div id="gated" hidden>
