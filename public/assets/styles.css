@@ -2042,3 +2042,105 @@ input[type="checkbox"] {
 .landing .gate-schema {
   margin-top: 8px;
 }
+
+/* ---- Anonymous profile face ---- */
+
+.profile-face {
+  margin-top: 4px;
+}
+
+.profile-number {
+  font-size: clamp(28px, 7vw, 40px);
+  line-height: 1.15;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  margin: 0 0 6px;
+}
+
+.profile-current {
+  margin: 0 0 10px;
+  color: var(--accent-deep);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.radar-face {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 20px;
+}
+
+.radar-face .radar {
+  margin: 0;
+  max-width: 320px;
+}
+
+.surface-fields,
+.bottom-fields {
+  margin-top: 8px;
+}
+
+.surface-fields h2,
+.bottom-fields h2 {
+  margin-top: 0;
+}
+
+.actions-primary {
+  margin-top: 8px;
+}
+
+.profile-tail-hint {
+  margin: 0 0 12px;
+}
+
+.actions-secondary {
+  margin-top: 4px;
+}
+
+.locked-list {
+  display: grid;
+  gap: 10px;
+}
+
+.locked-field {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-pastel);
+}
+
+.locked-field h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.locked-icon {
+  display: inline-flex;
+  color: var(--accent-deep);
+  margin-top: 2px;
+}
+
+.locked-blur {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.locked-blur span {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent-mid);
+  filter: blur(3px);
+  opacity: 0.85;
+}
+
+.locked-blur span:nth-child(1) { width: 92%; }
+.locked-blur span:nth-child(2) { width: 78%; }
+.locked-blur span:nth-child(3) { width: 64%; }

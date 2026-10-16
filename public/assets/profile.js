@@ -96,19 +96,9 @@
       node.textContent = alias ? "@" + alias : "";
     }
 
-    function cardHeadline(source) {
-      return (
-        source.headline ||
-        math.deriveHeadline({
-          personalCode: source.personalCode,
-          currentPosition: source.currentPosition
-        }) ||
-        t("common.mindset", { n: source.id || source.number })
-      );
-    }
 
     function drawReading(scores, ghost) {
-      ui.renderRadar(document.querySelector("#radar-mini"), scores, ghost, { compact: true });
+      ui.renderRadar(document.querySelector("#radar-face"), scores, ghost);
       ui.renderRadar(document.querySelector("#radar"), scores, ghost);
       ui.renderBars(document.querySelector("#bars"), scores, math.OPEN_KEYS);
     }
@@ -121,41 +111,78 @@
       shownScores = next;
     }
 
-    function renderTexts(source, compareTo) {
-      document.querySelector("#texts").innerHTML = window.MindsetLens.fields
+    function renderSurface(source, compareTo) {
+      var html = window.MindsetLens.fields
         .filter(function (field) {
           return field.open && source[field.key];
         })
         .map(function (field) {
           var changed = compareTo && compareTo[field.key] !== source[field.key];
+          var plain = field.plain ? i18n.pick(field.plain) : "";
           return (
             '<article class="post"><h3>' +
             ui.escapeHtml(i18n.pick(field.label)) +
             (changed ? ' <span class="tag">' + ui.escapeHtml(t("history.changedSince")) + "</span>" : "") +
-            "</h3><p>" +
+            "</h3>" +
+            (plain ? '<p class="field-plain">' + ui.escapeHtml(plain) + "</p>" : "") +
+            "<p>" +
             ui.escapeHtml(source[field.key]) +
             "</p></article>"
           );
         })
         .join("");
+      document.querySelector("#surface").innerHTML =
+        html || '<p class="empty">' + ui.escapeHtml(t("feed.empty")) + "</p>";
+    }
+
+    // Locked teasers only — closed text never enters the DOM.
+    function renderBottom() {
+      var lock =
+        '<span class="locked-icon" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>';
+      document.querySelector("#bottom").innerHTML = window.MindsetLens.fields
+        .filter(function (field) {
+          return !field.open;
+        })
+        .map(function (field) {
+          var plain = field.plain ? i18n.pick(field.plain) : "";
+          return (
+            '<article class="locked-field">' +
+            lock +
+            "<div><h3>" +
+            ui.escapeHtml(i18n.pick(field.label)) +
+            "</h3>" +
+            (plain ? '<p class="field-plain">' + ui.escapeHtml(plain) + "</p>" : "") +
+            '<p class="hint">' +
+            ui.escapeHtml(t("profile.lockedUntilSchool")) +
+            '</p><div class="locked-blur" aria-hidden="true"><span></span><span></span><span></span></div></div></article>'
+          );
+        })
+        .join("");
+    }
+
+    function renderTailHint() {
+      var hint = document.querySelector("#tail-hint");
+      var show = !buttons.tail.hidden && !state.self;
+      hint.hidden = !show;
     }
 
     function showProfile() {
       document.querySelector("#profile").hidden = false;
-      document.querySelector("#title").textContent = doc.id;
+      document.querySelector("#title").textContent = t("profile.anonFish", { n: doc.id });
       ui.setCrumb(String(doc.id));
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);
       document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
-      document.querySelector("#headline").textContent = cardHeadline(doc);
-      document.querySelector("#summary").textContent = ui.plainSummary(doc);
       var guide = document.querySelector("#reading-guide");
       if (guide && !guide.dataset.ready) {
         guide.innerHTML = ui.howToReadHtml(true);
         guide.dataset.ready = "1";
       }
       showReading(doc);
-      renderTexts(doc);
+      renderSurface(doc);
+      renderBottom();
       if (doc.published === false) ui.setStatus(status, t("profile.onlyYou"));
     }
 
@@ -171,10 +198,8 @@
         n: versions.length
       });
       range.setAttribute("aria-valuetext", document.querySelector("#timeline-when").textContent);
-      document.querySelector("#summary").textContent = ui.plainSummary(Object.assign({ id: doc.id }, source));
-      document.querySelector("#headline").textContent = cardHeadline(Object.assign({ id: doc.id }, source));
       showReading(source, last ? null : math.scoresOf(doc));
-      renderTexts(source, last ? null : doc);
+      renderSurface(source, last ? null : doc);
       document.querySelector("#timeline-note").textContent = last ? "" : t("history.ghost");
       ui.renderTrend(document.querySelector("#trend"), versions, index);
     }
@@ -285,15 +310,29 @@
       }
       ritual.innerHTML = notes.join("");
       ritual.hidden = !notes.length;
+      renderTailHint();
     }
 
     function needLogin() {
       window.location.assign(ui.loginHref());
     }
 
+
+    function updateSameCurrent() {
+      var node = document.querySelector("#same-current");
+      node.hidden = true;
+      if (!session || !ownRecord || !doc || state.self) return;
+      var mine = ownRecord.publicDoc && ownRecord.publicDoc.bucket;
+      var theirs = doc.bucket;
+      if (!mine || !theirs) return;
+      var nearby = math.neighborBuckets(mine);
+      if (nearby.indexOf(theirs) >= 0 || mine === theirs) node.hidden = false;
+    }
+
     async function refreshState() {
       state = await social.relation(session, doc.ownerUid);
       renderActions();
+      updateSameCurrent();
       await Promise.all([loadDeep(), loadSchoolTab(), loadAlias()]);
     }
 
@@ -455,6 +494,7 @@
         document.querySelector("#manage").hidden = false;
         state = { self: true };
         renderActions();
+        updateSameCurrent();
         await loadAlias();
         return;
       }

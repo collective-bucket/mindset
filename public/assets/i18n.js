@@ -158,6 +158,14 @@
       "error.read_failed": "Couldn't read.",
       "error.save_failed": "Couldn't save.",
 
+
+
+      "profile.anonFish": "Anonymous fish #{n}",
+      "profile.sameCurrent": "Swimming the same current as you right now.",
+      "profile.surfaceTitle": "On the surface",
+      "profile.bottomTitle": "Bottom waters",
+      "profile.lockedUntilSchool": "Locked until you form a school.",
+      "profile.tailHint": "If this frequency draws you, enter its current and send a signal.",
       "profile.fish": "Fish",
       "profile.notPublished": "This fish isn't in the lake right now.",
       "profile.onlyYou": "Not published. Only you can see it.",
@@ -551,6 +559,12 @@
       "error.read_failed": "Okuma yapılamadı.",
       "error.save_failed": "Kaydedilemedi.",
 
+      "profile.anonFish": "Anonim balık #{n}",
+      "profile.sameCurrent": "Şu an seninle aynı akıntıda yüzüyor.",
+      "profile.surfaceTitle": "Su yüzeyindekiler",
+      "profile.bottomTitle": "Dip suları",
+      "profile.lockedUntilSchool": "Sürüsüne katılana dek gizli.",
+      "profile.tailHint": "Bu balığın frekansı ilgini çektiyse akıntısına gir ve ona bir sinyal gönder.",
       "profile.fish": "Balık",
       "profile.notPublished": "Bu balık şu an gölde değil.",
       "profile.onlyYou": "Yayında değil. Yalnız sen görürsün.",

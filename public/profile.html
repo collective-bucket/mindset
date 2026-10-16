@@ -15,30 +15,43 @@
 
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
-    <section id="profile" class="card-face" hidden>
-      <h1 id="title" class="number visually-hidden">mindset</h1>
-      <p id="headline" class="card-headline"></p>
+    <section id="profile" class="profile-face" hidden>
+      <h1 id="title" class="profile-number">Anonymous fish</h1>
       <p id="alias" class="alias" hidden></p>
-      <p id="summary" class="card-blurb summary"></p>
+      <p id="same-current" class="profile-current" hidden data-i18n="profile.sameCurrent">Swimming the same current as you right now.</p>
       <p class="card-meta meta"><span id="badges"></span><span id="meta" class="card-when"></span></p>
 
-      <div id="radar-mini" class="radar-mini"></div>
+      <div id="radar-face" class="radar-face"></div>
 
-      <div class="actions">
+      <section class="section surface-fields">
+        <h2 data-i18n="profile.surfaceTitle">On the surface</h2>
+        <div id="surface" class="posts"></div>
+      </section>
+
+      <section class="section bottom-fields">
+        <h2 data-i18n="profile.bottomTitle">Bottom waters</h2>
+        <div id="bottom" class="locked-list"></div>
+      </section>
+
+      <div class="actions actions-primary">
         <button type="button" id="tail" class="btn btn-primary" hidden aria-pressed="false" data-i18n="profile.tail">Swim after</button>
         <button type="button" id="shine" class="btn" hidden data-i18n="profile.shine">Shine a scale</button>
         <button type="button" id="join" class="btn btn-primary" hidden data-i18n="profile.joinSchool">Join the school</button>
         <button type="button" id="accept" class="btn btn-primary" hidden data-i18n="profile.acceptSchool">Accept into the school</button>
         <button type="button" id="decline" class="btn" hidden data-i18n="profile.decline">Decline</button>
         <button type="button" id="withdraw" class="btn" hidden data-i18n="profile.withdraw">Withdraw</button>
+      </div>
+      <p id="tail-hint" class="hint profile-tail-hint" hidden data-i18n="profile.tailHint">If this frequency draws you, enter its current and send a signal.</p>
+
+      <div id="ritual" class="ritual" hidden></div>
+      <p id="action-status" class="status" role="status" hidden></p>
+
+      <div class="actions actions-secondary">
         <button type="button" id="share" class="btn" data-i18n="profile.share">Share</button>
         <button type="button" id="open-sheet" class="btn" data-i18n="profile.details">Reading</button>
         <a id="edit" class="btn" href="/new" hidden data-i18n="profile.edit">Edit</a>
         <a id="manage" class="btn" href="/me" hidden data-i18n="profile.manage">Manage</a>
       </div>
-
-      <div id="ritual" class="ritual" hidden></div>
-      <p id="action-status" class="status" role="status" hidden></p>
     </section>
 
     <section id="similar-section" class="section" hidden>
@@ -72,7 +85,6 @@
       <h3 data-i18n="profile.sharedTitle">Shown between you</h3>
       <div id="exchanged" class="posts"></div>
     </section>
-    <div id="texts" class="posts"></div>
     <section id="timeline" class="section" hidden>
       <h3 data-i18n="history.timeline">Change over time</h3>
       <div id="trend"></div>
