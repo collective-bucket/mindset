@@ -1749,14 +1749,16 @@ input[type="checkbox"] {
   justify-items: center;
 }
 
-.auth-links a {
+.auth-links a,
+.landing-register {
   color: var(--accent-deep);
   font-weight: 500;
   font-size: 14px;
   text-decoration: none;
 }
 
-.auth-links a:hover {
+.auth-links a:hover,
+.landing-register:hover {
   text-decoration: underline;
 }
 
@@ -2001,16 +2003,6 @@ input[type="checkbox"] {
   align-items: center;
   justify-content: flex-end;
   margin: 8px 0 0;
-}
-
-.landing-register {
-  color: var(--accent-deep);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.landing-register:hover {
-  text-decoration: underline;
 }
 
 .lookup-field {

@@ -10,10 +10,14 @@
 </head>
 <body data-tab="" data-page="login" data-title="auth.loginTitle">
   <main class="page page-narrow">
-    <h1 class="visually-hidden" data-i18n="auth.loginTitle">Sign in</h1>
-    <button type="button" id="google" class="btn btn-ghost btn-block btn-google"><span class="g" aria-hidden="true">G</span><span data-i18n="auth.google">Continue with Google</span></button>
-    <p class="divider"><span data-i18n="auth.or">or</span></p>
+    <div class="head">
+      <h1 data-i18n="auth.loginTitle">Sign in</h1>
+      <a class="head-side" href="/" data-i18n="footer.home">Home</a>
+    </div>
+    <p class="lead" data-i18n="auth.loginLead">Welcome back to the lake.</p>
     <form id="auth-form" class="auth-form" novalidate>
+      <button type="button" id="google" class="btn btn-ghost btn-block btn-google"><span class="g" aria-hidden="true">G</span><span data-i18n="auth.google">Continue with Google</span></button>
+      <p class="landing-or" data-i18n="auth.or">or</p>
       <label class="field"><span data-i18n="auth.email">Email</span><input id="email" type="email" autocomplete="email" required /></label>
       <label class="field"><span data-i18n="auth.password">Password</span><input id="password" type="password" autocomplete="current-password" required minlength="6" /></label>
       <button type="submit" class="btn btn-primary btn-block" data-i18n="auth.submitLogin">Sign in</button>

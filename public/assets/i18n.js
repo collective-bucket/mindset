@@ -442,6 +442,7 @@
       "me.currentCount": "{a} on tail · {b} on trail",
 
       "auth.loginTitle": "Sign in",
+      "auth.loginLead": "Welcome back to the lake.",
       "auth.registerTitle": "Create account",
       "auth.registerLead": "Take a number in the lake. An account lets you write a mindset and form a school.",
       "auth.forgotTitle": "Reset password",
@@ -904,6 +905,7 @@
       "me.currentCount": "{a} kuyrukta · {b} izde",
 
       "auth.loginTitle": "Giriş yap",
+      "auth.loginLead": "Göle tekrar hoş geldin.",
       "auth.registerTitle": "Hesap oluştur",
       "auth.registerLead": "Gölde bir numara al. Hesap, mindset yazmana ve sürü kurmana yarar.",
       "auth.forgotTitle": "Şifreyi sıfırla",
