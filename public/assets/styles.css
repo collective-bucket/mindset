@@ -2393,32 +2393,21 @@ input[type="checkbox"] {
   margin-left: auto;
 }
 
-.site-footer-brand {
+.site-footer-collective {
+  flex: 1 0 100%;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  margin-top: 4px;
   color: var(--ink);
   font-weight: 700;
   text-decoration: none;
 }
 
-.site-footer-brand img {
-  width: 22px;
-  height: 22px;
-}
-
-.site-footer-brand:hover {
-  color: var(--accent-strong);
-}
-
-.site-footer-collective {
-  flex: 1 0 100%;
-  display: block;
-  margin-top: 4px;
-  text-align: center;
-  color: var(--muted);
-  font-weight: 500;
-  text-decoration: none;
+.site-footer-collective img {
+  width: 18px;
+  height: 18px;
 }
 
 .site-footer-collective:hover {

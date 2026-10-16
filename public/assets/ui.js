@@ -201,15 +201,12 @@
     siteFooter.className = "site-footer";
     siteFooter.innerHTML =
       '<div class="site-footer-col site-footer-start">' +
-      '<a class="site-footer-brand" href="/">' +
-      '<img src="/assets/logo.svg" width="22" height="22" alt="" />' +
-      "<span>" +
-      escapeHtml(t("footer.home")) +
-      "</span></a>" +
       '<nav class="site-footer-stack" aria-label="' +
       escapeHtml(t("footer.projectLinks")) +
       '">' +
-      '<a href="https://github.com/collective-bucket/mindset" rel="noopener noreferrer">' +
+      '<a href="/">' +
+      escapeHtml(t("footer.home")) +
+      '</a><a href="https://github.com/collective-bucket/mindset" rel="noopener noreferrer">' +
       escapeHtml(t("footer.github")) +
       '</a><a href="/contribute">' +
       escapeHtml(t("footer.contribute")) +
@@ -230,8 +227,10 @@
       escapeHtml(t("footer.terms")) +
       "</a></nav></div>" +
       '<a class="site-footer-collective" href="https://collectivebucket.com" rel="noopener noreferrer">' +
+      '<img src="https://collectivebucket.com/assets/logo.svg" width="18" height="18" alt="" />' +
+      "<span>" +
       escapeHtml(t("footer.collective")) +
-      "</a>";
+      "</span></a>";
     body.appendChild(siteFooter);
 
     var lastScrollY = window.scrollY || 0;
