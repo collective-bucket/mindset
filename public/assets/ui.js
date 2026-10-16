@@ -233,21 +233,27 @@
 
     var lastScrollY = window.scrollY || 0;
     var scrollThreshold = 8;
+
+    function chromeForScroll() {
+      if (body.classList.contains("has-gamebar") && !nav.hidden) return nav;
+      if (!siteFooter.hidden) return siteFooter;
+      return null;
+    }
+
     window.addEventListener(
       "scroll",
       function () {
-        if (siteFooter.hidden || body.classList.contains("has-gamebar")) {
-          return;
-        }
+        var chrome = chromeForScroll();
+        if (!chrome) return;
         var y = window.scrollY || 0;
         var delta = y - lastScrollY;
         if (Math.abs(delta) < scrollThreshold) {
           return;
         }
         if (delta > 0 && y > scrollThreshold) {
-          siteFooter.classList.add("is-away");
+          chrome.classList.add("is-away");
         } else {
-          siteFooter.classList.remove("is-away");
+          chrome.classList.remove("is-away");
         }
         lastScrollY = y;
       },
@@ -260,6 +266,7 @@
         body.classList.add("has-gamebar");
         siteFooter.hidden = true;
         siteFooter.classList.remove("is-away");
+        nav.classList.remove("is-away");
       }
     });
   }

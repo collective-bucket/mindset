@@ -1571,6 +1571,14 @@ input[type="checkbox"] {
   border-top: 0;
   box-shadow: 0 -6px 18px rgba(27, 99, 80, 0.14), 0 4px 12px rgba(27, 99, 80, 0.08);
   pointer-events: none;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  will-change: transform, opacity;
+}
+
+.gamebar.dock.is-away {
+  transform: translateX(-50%) translateY(110%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .gamebar .dock-item,
