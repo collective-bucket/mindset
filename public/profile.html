@@ -50,25 +50,13 @@
           <p id="timeline-empty" class="empty" hidden data-i18n="history.noneYet">No versions yet.</p>
         </div>
 
-        <div class="tabs depth-tabs" role="tablist" aria-label="Depth">
-          <button type="button" id="tab-surface" role="tab" aria-selected="true" aria-controls="pane-surface" data-depth="surface" data-i18n="profile.surfaceTitle">On the surface</button>
-          <button type="button" id="tab-deep" role="tab" aria-selected="false" aria-controls="pane-deep" data-depth="deep" data-i18n="profile.deepTitle">Beneath the surface</button>
+        <div class="tabs depth-tabs" role="tablist" aria-label="Profile">
+          <button type="button" id="tab-surface" role="tab" aria-selected="true" aria-controls="pane-surface" data-tab="surface" data-i18n="profile.surfaceTitle">On the surface</button>
+          <button type="button" id="tab-deep" role="tab" aria-selected="false" aria-controls="pane-deep" data-tab="deep" data-i18n="profile.deepTitle">Beneath the surface</button>
+          <button type="button" id="tab-nearby" role="tab" aria-selected="false" aria-controls="pane-nearby" data-tab="nearby" data-i18n="profile.similar">Nearby</button>
+          <button type="button" id="tab-school" role="tab" aria-selected="false" aria-controls="pane-school" data-tab="school" data-i18n="profile.schoolTab">School</button>
         </div>
       </div>
-
-      <section id="similar-section" class="section" hidden>
-        <div class="tabs" role="tablist" aria-label="Nearby and school">
-          <button type="button" id="tab-nearby" role="tab" aria-selected="true" aria-controls="pane-nearby" data-i18n="profile.similar">Nearby</button>
-          <button type="button" id="tab-school" role="tab" aria-selected="false" aria-controls="pane-school" data-i18n="profile.schoolTab">School</button>
-        </div>
-        <div id="pane-nearby" role="tabpanel" aria-labelledby="tab-nearby">
-          <div id="similar" class="feed"></div>
-        </div>
-        <div id="pane-school" role="tabpanel" aria-labelledby="tab-school" hidden>
-          <div id="school-list" class="feed"></div>
-          <p id="school-empty" class="empty" hidden data-i18n="profile.schoolTabEmpty">Be in their school to see this.</p>
-        </div>
-      </section>
 
       <div class="actions actions-primary">
         <button type="button" id="shine" class="btn" hidden data-i18n="profile.shine">Shine a scale</button>
@@ -134,6 +122,15 @@
             <p id="deep-note" class="hint" hidden data-i18n="profile.deepMissing">No full reading yet.</p>
             <div id="exchanged" class="posts"></div>
           </div>
+        </div>
+
+        <div id="pane-nearby" role="tabpanel" aria-labelledby="tab-nearby" hidden>
+          <div id="similar" class="feed"></div>
+        </div>
+
+        <div id="pane-school" role="tabpanel" aria-labelledby="tab-school" hidden>
+          <div id="school-list" class="feed"></div>
+          <p id="school-empty" class="empty" hidden data-i18n="profile.schoolTabEmpty">Be in their school to see this.</p>
         </div>
       </section>
     </section>

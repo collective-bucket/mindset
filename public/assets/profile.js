@@ -182,14 +182,18 @@
       openHowTo(false);
     });
 
-    function selectDepth(name) {
+    function selectProfileTab(name) {
       var panes = {
         surface: document.querySelector("#pane-surface"),
-        deep: document.querySelector("#pane-deep")
+        deep: document.querySelector("#pane-deep"),
+        nearby: document.querySelector("#pane-nearby"),
+        school: document.querySelector("#pane-school")
       };
       var tabs = {
         surface: document.querySelector("#tab-surface"),
-        deep: document.querySelector("#tab-deep")
+        deep: document.querySelector("#tab-deep"),
+        nearby: document.querySelector("#tab-nearby"),
+        school: document.querySelector("#tab-school")
       };
       Object.keys(panes).forEach(function (key) {
         var on = key === name;
@@ -199,9 +203,9 @@
     }
 
     document.querySelector(".depth-tabs").addEventListener("click", function (event) {
-      var tab = event.target.closest("[data-depth]");
+      var tab = event.target.closest("[data-tab]");
       if (!tab) return;
-      selectDepth(tab.getAttribute("data-depth"));
+      selectProfileTab(tab.getAttribute("data-tab"));
     });
 
     function renderAlias() {
@@ -565,21 +569,6 @@
       else settle(social.withdrawGlint(session, doc.ownerUid));
     });
 
-    function selectTab(name) {
-      var nearby = name === "nearby";
-      document.querySelector("#tab-nearby").setAttribute("aria-selected", String(nearby));
-      document.querySelector("#tab-school").setAttribute("aria-selected", String(!nearby));
-      document.querySelector("#pane-nearby").hidden = !nearby;
-      document.querySelector("#pane-school").hidden = nearby;
-    }
-
-    document.querySelector("#tab-nearby").addEventListener("click", function () {
-      selectTab("nearby");
-    });
-    document.querySelector("#tab-school").addEventListener("click", function () {
-      selectTab("school");
-    });
-
     async function loadAlias() {
       if (alias || !session || !(state.self || state.member)) return;
       var entry = await social.aliasOf(doc.id, session.idToken);
@@ -654,7 +643,6 @@
 
     async function loadSimilar() {
       var rows = await store.similar(doc, { limit: 6 });
-      document.querySelector("#similar-section").hidden = false;
       if (rows.length) {
         ui.renderCards(document.querySelector("#similar"), rows);
       } else {
