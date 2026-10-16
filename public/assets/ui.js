@@ -200,13 +200,14 @@
     var siteFooter = document.createElement("footer");
     siteFooter.className = "site-footer";
     siteFooter.innerHTML =
+      '<div class="site-footer-col site-footer-start">' +
       '<a class="site-footer-brand" href="https://collectivebucket.com" rel="noopener noreferrer">' +
       '<img src="/assets/logo.svg" width="22" height="22" alt="" />' +
       "<span>" +
       escapeHtml(t("footer.collective")) +
       "</span></a>" +
-      '<nav class="site-footer-links" aria-label="' +
-      escapeHtml(t("footer.links")) +
+      '<nav class="site-footer-stack" aria-label="' +
+      escapeHtml(t("footer.projectLinks")) +
       '">' +
       '<a href="https://github.com/collective-bucket/mindset" rel="noopener noreferrer">' +
       escapeHtml(t("footer.github")) +
@@ -214,9 +215,20 @@
       escapeHtml(t("footer.contribute")) +
       '</a><a href="/license">' +
       escapeHtml(t("footer.license")) +
-      '</a><a href="/about">' +
+      "</a></nav></div>" +
+      '<div class="site-footer-col site-footer-end">' +
+      '<nav class="site-footer-stack" aria-label="' +
+      escapeHtml(t("footer.legalLinks")) +
+      '">' +
+      '<a href="/about">' +
       escapeHtml(t("landing.whatIsThis")) +
-      "</a></nav>";
+      '</a><a href="/privacy">' +
+      escapeHtml(t("footer.privacy")) +
+      '</a><a href="/cookies">' +
+      escapeHtml(t("footer.cookies")) +
+      '</a><a href="/terms">' +
+      escapeHtml(t("footer.terms")) +
+      "</a></nav></div>";
     body.appendChild(siteFooter);
 
     window.MindsetStore.getOptionalSession().then(function (session) {

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eafbf5" />
+  <title>cookies · Mindset Bucket</title>
+  <meta name="description" content="Cookie and local storage notice for Mindset Bucket." />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body data-tab="" data-title="cookiesPage.pageTitle">
+  <main class="page">
+    <div class="head">
+      <h1 data-i18n="cookiesPage.pageTitle">Cookies</h1>
+      <a class="head-side" href="/" data-i18n="cookiesPage.back">Home</a>
+    </div>
+
+    <section class="static-page">
+      <p class="lead" data-i18n="cookiesPage.lead">How this static site uses cookies and local storage.</p>
+      <p data-i18n="cookiesPage.body1">Firebase Auth may set cookies or similar storage so you stay signed in. That is required for the lake features behind sign-in.</p>
+      <p data-i18n="cookiesPage.body2">The language switch and a few UI preferences use localStorage or sessionStorage in your browser. Scoring models may cache in the browser; text is not sent to a paid AI API.</p>
+      <p data-i18n="cookiesPage.body3">We do not use third-party advertising cookies. Clearing site data signs you out and resets local preferences.</p>
+    </section>
+  </main>
+
+  <script src="/assets/config.js" defer></script>
+  <script src="/assets/i18n.js" defer></script>
+  <script src="/assets/firestore.js" defer></script>
+  <script type="module" src="/assets/auth.js"></script>
+  <script src="/assets/store.js" defer></script>
+  <script src="/assets/ui.js" defer></script>
+</body>
+</html>
