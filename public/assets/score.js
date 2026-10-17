@@ -82,17 +82,34 @@
   async function startModel(onProgress) {
     var transformers = await import(CDN);
     if (transformers.env) transformers.env.allowLocalModels = false;
+    var downloading = true;
     extractor = await transformers.pipeline("feature-extraction", MODEL, {
       dtype: "q8",
       progress_callback: function (update) {
         if (!onProgress || !update) return;
+        if (!downloading) {
+          onProgress(t("model.reading"));
+          return;
+        }
         if (update.status === "progress" && update.progress != null) {
-          onProgress(t("model.downloading", { p: Math.round(update.progress) }));
+          var raw = Number(update.progress);
+          var percent = raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
+          if (percent >= 100) {
+            onProgress(t("model.reading"));
+            return;
+          }
+          if (percent > 0) onProgress(t("model.downloading", { p: percent }));
+          else onProgress(t("model.preparing"));
+          return;
+        }
+        if (update.status === "done" || update.status === "ready") {
+          onProgress(t("model.reading"));
           return;
         }
         if (update.status === "initiate") onProgress(t("model.preparing"));
       }
     });
+    downloading = false;
     if (onProgress) onProgress(t("model.reading"));
   }
 
