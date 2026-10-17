@@ -562,6 +562,10 @@ textarea[aria-invalid="true"] {
   gap: 0 12px;
 }
 
+.demo-grid .field {
+  align-content: start;
+}
+
 .demo-grid .field:last-child:nth-child(odd) {
   grid-column: 1 / -1;
 }
@@ -1615,18 +1619,25 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px 10px;
   margin: 16px 0 12px;
+  overflow-x: auto;
   color: var(--muted);
-  font-size: 13px;
+  font-size: inherit;
   font-weight: 600;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.wizard-steps::-webkit-scrollbar {
+  display: none;
 }
 
 .wizard-steps::before,
 .wizard-steps::after {
   content: "";
-  flex: 1 1 24px;
+  flex: 1 0 24px;
   height: 1px;
   background: var(--hair);
   min-width: 16px;
@@ -1640,13 +1651,14 @@ input[type="checkbox"] {
   border-radius: 0;
   padding: 4px 0;
   font: inherit;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: inherit;
+  font-weight: 650;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .wizard-step + .wizard-step::before {
@@ -1664,14 +1676,17 @@ input[type="checkbox"] {
 }
 
 .wizard-step span {
-  width: auto;
-  height: auto;
-  border-radius: 0;
-  background: none;
-  display: inline;
-  font-size: inherit;
-  font-weight: inherit;
-  place-items: unset;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  display: inline-grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  flex: 0 0 auto;
 }
 
 .wizard-step.is-active,
@@ -1683,8 +1698,8 @@ input[type="checkbox"] {
 }
 
 .wizard-step.is-active span {
-  background: none;
-  color: inherit;
+  background: var(--accent);
+  color: #ffffff;
 }
 
 .wizard-step em {
@@ -1704,8 +1719,8 @@ input[type="checkbox"] {
   font-weight: 500;
 }
 
-.section > .hint {
-  margin-bottom: 12px;
+#open-fields {
+  margin-top: 1.75em;
 }
 
 .preview-toolbar {
@@ -1719,6 +1734,31 @@ input[type="checkbox"] {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
+}
+
+.btn-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.btn-round:hover {
+  background: var(--accent-strong);
+  color: #ffffff;
 }
 
 .how-to-read {

@@ -44,7 +44,6 @@
     var howDialog = document.querySelector("#how-to-read-dialog");
     if (howDialog) ui.closeOnBackdrop(howDialog);
     var howButton = document.querySelector("#preview-how-to");
-    if (howButton) howButton.innerHTML = ui.icon("guide");
     document.querySelector("#login-link").href = ui.loginHref();
 
     function selectPreviewTab(name) {

@@ -74,7 +74,7 @@
               <button type="button" id="tab-preview-open" role="tab" aria-selected="false" aria-controls="pane-preview-open" data-preview-tab="open" data-i18n="create.openTitle">On your profile</button>
               <button type="button" id="tab-preview-closed" role="tab" aria-selected="false" aria-controls="pane-preview-closed" data-preview-tab="closed" data-i18n="create.privateTitle">Only for you</button>
             </div>
-            <button type="button" id="preview-how-to" class="btn-icon" data-i18n-aria="guide.howTo" aria-label="How should I read this?"></button>
+            <button type="button" id="preview-how-to" class="btn-round" data-i18n-aria="guide.howTo" aria-label="How should I read this?">?</button>
           </div>
 
           <div id="pane-preview-radar" role="tabpanel" aria-labelledby="tab-preview-radar">
@@ -89,13 +89,13 @@
         </section>
       </section>
 
+      <p id="form-status" class="status" role="status" hidden></p>
       <div class="actions">
         <button type="button" id="back" class="btn" hidden data-i18n="create.back">Back</button>
         <button type="button" id="next" class="btn btn-primary" data-i18n="create.next">Next</button>
         <button type="button" id="read" class="btn" hidden data-i18n="create.read">Read</button>
         <button type="button" id="publish" class="btn btn-primary" hidden data-i18n="create.publish">Publish</button>
       </div>
-      <p id="form-status" class="status" role="status" hidden></p>
       <p id="login-hint" hidden><a id="login-link" class="btn" href="/login" data-i18n="create.signInToPublish">Sign in to publish</a></p>
     </form>
     </div>
