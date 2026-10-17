@@ -29,8 +29,10 @@
     var existingNumber = null;
     var needsAlias = true;
     var findings = {};
-    var step = 1;
+    var step = 0;
     var pendingSuggest = null;
+    var startButton = document.querySelector("#start");
+    var stepsNav = document.querySelector(".wizard-steps");
 
     ui.requireAuth().then(function (session) {
       if (!session) return;
@@ -238,14 +240,16 @@
       form.querySelectorAll(".wizard-pane").forEach(function (pane) {
         pane.hidden = Number(pane.getAttribute("data-step")) !== step;
       });
+      if (stepsNav) stepsNav.hidden = step === 0;
       document.querySelectorAll(".wizard-step").forEach(function (button) {
         var n = Number(button.getAttribute("data-go"));
         button.classList.toggle("is-active", n === step);
         if (n === step) button.setAttribute("aria-current", "step");
         else button.removeAttribute("aria-current");
       });
-      backButton.hidden = step === 1;
-      nextButton.hidden = step === 3;
+      if (startButton) startButton.hidden = step !== 0;
+      backButton.hidden = step < 1;
+      nextButton.hidden = step === 0 || step === 3;
       readButton.hidden = step !== 3;
       publishButton.hidden = step !== 3;
       if (step === 2) refreshSuggest();
@@ -255,12 +259,19 @@
 
     document.querySelectorAll("[data-go]").forEach(function (button) {
       button.addEventListener("click", function () {
-        go(Number(button.getAttribute("data-go")));
+        var n = Number(button.getAttribute("data-go"));
+        if (n >= 1 && n <= 3) go(n);
       });
     });
 
+    if (startButton) {
+      startButton.addEventListener("click", function () {
+        go(1);
+      });
+    }
+
     backButton.addEventListener("click", function () {
-      go(Math.max(1, step - 1));
+      go(Math.max(0, step - 1));
     });
 
     nextButton.addEventListener("click", function () {
@@ -394,7 +405,7 @@
       });
 
     setNeedsAlias(true);
-    go(1);
+    go(0);
     window.MindsetLens.fields.forEach(function (field) {
       ui.updateCount(form, field.key);
     });

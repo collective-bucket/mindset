@@ -18,20 +18,25 @@
       <h1 id="heading" data-i18n="create.title">Dive in</h1>
       <a class="head-side" href="/" data-i18n="footer.home">Home</a>
     </div>
-    <p class="lead"><span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span> <span data-i18n="create.lead">The model downloads to your browser on first read. Your text isn't sent anywhere.</span></p>
 
-    <nav class="wizard-steps" aria-label="Steps">
-      <button type="button" class="wizard-step is-active" data-go="1" aria-current="step"><span>1</span> <em data-i18n="create.stepTexts">Texts</em></button>
+    <nav class="wizard-steps" aria-label="Steps" hidden>
+      <button type="button" class="wizard-step" data-go="1"><span>1</span> <em data-i18n="create.stepTexts">Texts</em></button>
       <button type="button" class="wizard-step" data-go="2"><span>2</span> <em data-i18n="create.stepDemo">About you</em></button>
       <button type="button" class="wizard-step" data-go="3"><span>3</span> <em data-i18n="create.stepPreview">Preview</em></button>
     </nav>
 
     <form id="mindset-form" novalidate>
-      <section class="wizard-pane" data-step="1">
+      <section class="wizard-pane" data-step="0">
+        <section class="section wizard-welcome">
+          <p class="lead"><span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span> <span data-i18n="create.lead">The model downloads to your browser on first read. Your text isn't sent anywhere.</span></p>
+          <p class="hint" data-i18n="privacy.hint">Leave out names, places and contact details. Anything that points to a person is flagged.</p>
+        </section>
+      </section>
+
+      <section class="wizard-pane" data-step="1" hidden>
         <section class="section">
           <h2 data-i18n="create.openTitle">On your profile</h2>
           <p class="hint" data-i18n="create.openHint">These three show on your profile. One line you hold true is enough to publish.</p>
-          <p class="hint" data-i18n="privacy.hint">Leave out names, places and contact details. Anything that points to a person is flagged.</p>
           <div id="open-fields"></div>
         </section>
 
@@ -90,8 +95,9 @@
 
       <p id="form-status" class="status" role="status" hidden></p>
       <div class="actions">
+        <button type="button" id="start" class="btn btn-primary" data-i18n="create.start">Start</button>
         <button type="button" id="back" class="btn" hidden data-i18n="create.back">Back</button>
-        <button type="button" id="next" class="btn btn-primary" data-i18n="create.next">Next</button>
+        <button type="button" id="next" class="btn btn-primary" hidden data-i18n="create.next">Next</button>
         <button type="button" id="read" class="btn" hidden data-i18n="create.read">Read</button>
         <button type="button" id="publish" class="btn btn-primary" hidden data-i18n="create.publish">Publish</button>
       </div>

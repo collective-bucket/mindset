@@ -1786,6 +1786,18 @@ div.entry {
   font-style: normal;
 }
 
+.wizard-welcome .lead {
+  margin: 0 0 16px;
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.wizard-welcome .hint {
+  margin: 0;
+}
+
 #mindset-form > .actions {
   justify-content: flex-end;
 }
