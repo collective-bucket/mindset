@@ -705,7 +705,7 @@
     return "entry-fish is-real";
   }
 
-  // One fish per line: number + mini radar on the left, status fish on the right.
+  // Number + mini radar on the left; status fish pinned top-right (no aside column).
   function card(doc, options) {
     options = options || {};
     var id = String(doc.id || "");
@@ -715,7 +715,7 @@
     var chip = options.chip || "";
     var side = options.tag || (doc.updatedAt ? relativeWhen(doc.updatedAt) : "");
     var summary = plainSummary(doc);
-    var numberLabel = /^\d+$/.test(id) ? "#" + id : "#";
+    var numberLabel = /^\d+$/.test(id) ? id : "";
     var tag = preview ? "div" : "a";
     var open =
       "<" +
@@ -726,11 +726,16 @@
       ">";
     return (
       open +
+      '<span class="entry-status" aria-hidden="true">' +
+      fishGlyph(entryFishClass(doc)) +
+      "</span>" +
       '<span class="entry-id">' +
-      '<strong class="entry-number">' +
-      escapeHtml(numberLabel) +
-      '</strong><span class="entry-radar" aria-hidden="true"></span></span>' +
+      (numberLabel
+        ? '<strong class="entry-number mindset-id">' + escapeHtml(numberLabel) + "</strong>"
+        : "") +
+      '<span class="entry-radar" aria-hidden="true"></span></span>' +
       '<span class="entry-body">' +
+      (side ? '<span class="entry-side">' + escapeHtml(side) + "</span>" : "") +
       (chip ? '<span class="entry-chip">' + escapeHtml(chip) + "</span>" : "") +
       (doc.headline
         ? '<span class="entry-headline">' +
@@ -740,10 +745,6 @@
       (alias ? '<span class="alias">@' + escapeHtml(alias) + "</span>" : "") +
       (summary ? '<span class="entry-summary">' + escapeHtml(summary) + "</span>" : "") +
       (badgeText(doc) ? '<span class="entry-meta">' + escapeHtml(badgeText(doc)) + "</span>" : "") +
-      "</span>" +
-      '<span class="entry-aside">' +
-      (side ? '<span class="entry-side">' + escapeHtml(side) + "</span>" : "") +
-      fishGlyph(entryFishClass(doc)) +
       "</span>" +
       "</" +
       tag +
@@ -1162,7 +1163,8 @@
     var number = doc.id;
     var title = document.querySelector("#title");
     if (title) title.innerHTML = mindsetIdTitle(number, opts.header || "");
-    if (opts.setCrumb !== false) setCrumb(String(number));
+    // Keep breadcrumb / document title as the page name (Ben, Göl, …), not the mindset id.
+    if (opts.setCrumb !== false && opts.header) setCrumb(opts.header);
 
     var aliasLine = document.querySelector("#alias-line");
     if (aliasLine && opts.alias !== undefined) {

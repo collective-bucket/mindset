@@ -250,7 +250,7 @@ p {
 
 /* Title subtitle under h1 — new / me / profile */
 .head-meta {
-  margin: 4px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
   font-size: 14px;
   line-height: 1.3;
@@ -576,15 +576,18 @@ body:not(.is-page-loading) .page-loading {
 
 .me-account-actions {
   display: flex;
+  flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
+  gap: 2px;
 }
 
 .me-account-actions .actions-note {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  width: 100%;
   min-width: 0;
+  text-align: center;
 }
 
 .me-account-actions .actions-note-line {
@@ -592,23 +595,25 @@ body:not(.is-page-loading) .page-loading {
   font-size: 13px;
   line-height: 1.35;
   color: var(--muted);
+  text-align: center;
 }
 
 .me-account-actions .actions-buttons {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  flex: 0 1 auto;
-  margin-left: 4px;
+  justify-content: center;
+  gap: 4px 10px;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .me-account-link {
   appearance: none;
   border: 0;
   background: none;
-  padding: 18px 9px;
+  padding: 10px 8px;
   margin: 0;
   font: inherit;
   font-size: 15px;
@@ -828,8 +833,9 @@ input[type="checkbox"] {
 }
 
 .entry {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: auto auto auto;
   column-gap: 14px;
   row-gap: 4px;
@@ -869,15 +875,20 @@ div.entry {
   min-width: 0;
 }
 
-.entry-aside {
-  grid-column: 3;
-  grid-row: 1 / span 3;
+.entry-status {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+  z-index: 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 100%;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.entry-status .entry-fish,
+.entry-status .glyph {
+  margin: 0;
 }
 
 .entry .entry-headline {
@@ -908,7 +919,6 @@ div.entry {
   width: 28px;
   height: 18px;
   flex-shrink: 0;
-  margin-top: auto;
 }
 
 .entry-fish path,
@@ -949,10 +959,21 @@ div.entry {
   line-height: 1;
 }
 
+.entry .mindset-id {
+  margin-top: -18px;
+  padding-top: calc(4px + 0.12em);
+  padding-bottom: 12px;
+  margin-right: 0;
+  min-width: 40px;
+  text-align: center;
+  font-weight: 700;
+  border-radius: 4px 4px 0 0;
+}
+
 .entry-side {
   color: var(--muted);
   font-size: 13px;
-  text-align: right;
+  text-align: left;
   flex-shrink: 0;
   line-height: 1.2;
 }
@@ -1995,9 +2016,10 @@ div.entry {
 
 /* ---- Wizard / guide ---- */
 
-/* Wizard visible: page title scrolls away; steps stick when they hit the top. */
+/* Wizard visible: page title scrolls away; steps stick when they hit the top.
+   Keep position:relative so absolute .head-back stays inside the header. */
 #gated:has(> .wizard-steps:not([hidden])) > .head {
-  position: static;
+  position: relative;
   z-index: auto;
   border-bottom: 0;
   box-shadow: none;
@@ -2813,6 +2835,9 @@ body.has-gamebar #mindset-form > .actions {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
   padding: 0.12em 0.28em 0.42em;
   margin-right: 0.2em;
+  min-width: 50px;
+  text-align: center;
+  border-radius: 6px 6px 0 0;
   line-height: 1.1;
   font-size: inherit;
   font-weight: inherit;
@@ -2932,12 +2957,6 @@ body[data-tab="school"] .page-header {
 
 .profile-top-main {
   min-width: 0;
-  /* Room for back alone; widen when icon tools share the cluster */
-  padding-right: 48px;
-}
-
-.profile-top:has(.profile-tools .btn-icon) .profile-top-main {
-  padding-right: 172px;
 }
 
 .profile-top-main .profile-number {
