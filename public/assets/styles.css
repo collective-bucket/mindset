@@ -243,6 +243,11 @@ p {
   box-shadow: 0 10px 18px -14px rgba(20, 20, 20, 0.28);
 }
 
+.head:has(+ .static-page),
+.head:has(+ .auth-form) {
+  margin-bottom: 1.5em;
+}
+
 .head-back {
   order: 3;
   flex-shrink: 0;
@@ -499,15 +504,16 @@ a.head-side:hover {
 
 #mindset-form [data-step="1"] .field {
   margin: 14px 0 -8px;
-  scroll-margin-top: 64px;
+  scroll-margin-top: var(--wizard-field-scroll-margin, 72px);
 }
 
 #mindset-form [data-step="1"] textarea {
-  transition: min-height 0.18s ease;
+  transition: min-height 0.12s ease;
 }
 
 #mindset-form [data-step="1"] textarea.is-focus-tall {
   resize: none;
+  transition: none;
 }
 
 #mindset-form [data-step="1"] .field:focus-within > span:first-child,
@@ -2561,7 +2567,7 @@ body.has-gamebar #mindset-form > .actions {
 }
 
 .static-page > h2:first-of-type {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .static-page > p {

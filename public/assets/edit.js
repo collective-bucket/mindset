@@ -150,13 +150,11 @@
       scanField(id);
     });
 
-    var focusScrollY = 0;
-    var expandScrollY = 0;
     var tallTa = null;
-    var ignoreScroll = false;
-    var ignoreScrollTimer = 0;
     var focusViewportHandler = null;
+    var expandSettleTimer = 0;
     var pointerDismiss = false;
+    var advancingField = false;
 
     function isMobileWizard() {
       return window.matchMedia("(max-width: 720px), (pointer: coarse)").matches;
@@ -183,27 +181,28 @@
       var list = orderedFocusFields();
       var index = list.indexOf(from);
       if (index < 0 || index >= list.length - 1) return false;
+      advancingField = true;
       list[index + 1].focus();
+      window.setTimeout(function () {
+        advancingField = false;
+      }, 0);
       return true;
     }
 
-    function actionsTop() {
-      var actions = form.querySelector(".actions");
-      if (!actions) return window.innerHeight;
-      return actions.getBoundingClientRect().top;
+    function visibleBottom() {
+      var vv = window.visualViewport;
+      if (vv) return vv.offsetTop + vv.height;
+      return window.innerHeight;
     }
 
-    function hushScroll(ms) {
-      ignoreScroll = true;
-      if (ignoreScrollTimer) window.clearTimeout(ignoreScrollTimer);
-      ignoreScrollTimer = window.setTimeout(function () {
-        ignoreScroll = false;
-        ignoreScrollTimer = 0;
-      }, ms || 120);
+    function viewportHeight() {
+      var vv = window.visualViewport;
+      return vv ? vv.height : window.innerHeight;
     }
 
     function expandTextarea(ta) {
       if (!isMobileWizard() || !ta || ta.tagName !== "TEXTAREA") return;
+      if (document.activeElement !== ta) return;
       var field = ta.closest(".field");
       var count = field && field.querySelector("small[data-count-for]");
       var countSpace = 0;
@@ -216,17 +215,19 @@
           6;
       }
       var rect = ta.getBoundingClientRect();
-      var gap = 8;
-      var available = Math.floor(actionsTop() - rect.top - gap - countSpace);
-      if (available < 120) return;
+      var gap = 12;
+      var vvH = viewportHeight();
+      var floor = Math.max(160, Math.round(vvH * 0.4));
+      var available = Math.floor(visibleBottom() - rect.top - gap - countSpace);
+      if (available < 100) return;
+      var height = Math.min(available, Math.max(floor, Math.round(vvH * 0.55)), Math.round(vvH * 0.72));
+      if (height < 100) height = available;
       if (!ta.dataset.baseMinHeight) {
         ta.dataset.baseMinHeight = ta.style.minHeight || "";
-        ta.dataset.baseHeight = String(ta.offsetHeight);
       }
-      ta.style.minHeight = available + "px";
+      ta.style.minHeight = height + "px";
       ta.classList.add("is-focus-tall");
       tallTa = ta;
-      expandScrollY = window.scrollY || 0;
     }
 
     function collapseTextarea(ta) {
@@ -234,53 +235,70 @@
       ta.style.minHeight = ta.dataset.baseMinHeight || "";
       ta.classList.remove("is-focus-tall");
       delete ta.dataset.baseMinHeight;
-      delete ta.dataset.baseHeight;
       if (tallTa === ta) tallTa = null;
     }
 
+    function clearExpandSettle() {
+      if (expandSettleTimer) {
+        window.clearTimeout(expandSettleTimer);
+        expandSettleTimer = 0;
+      }
+    }
+
     function detachViewport() {
+      clearExpandSettle();
       if (window.visualViewport && focusViewportHandler) {
         window.visualViewport.removeEventListener("resize", focusViewportHandler);
+        window.visualViewport.removeEventListener("scroll", focusViewportHandler);
         focusViewportHandler = null;
       }
     }
 
+    function scheduleExpand(ta) {
+      clearExpandSettle();
+      expandSettleTimer = window.setTimeout(function () {
+        expandSettleTimer = 0;
+        expandTextarea(ta);
+      }, 120);
+    }
+
     function releaseTall(options) {
       options = options || {};
-      if (!tallTa) return;
+      if (!tallTa) {
+        detachViewport();
+        return;
+      }
       var ta = tallTa;
       detachViewport();
       collapseTextarea(ta);
       if (options.blur && document.activeElement === ta) ta.blur();
-      if (options.restoreScroll) {
-        hushScroll(160);
-        window.scrollTo(0, focusScrollY);
-      }
+    }
+
+    function syncFieldScrollMargin() {
+      var steps = document.querySelector(".wizard-steps");
+      var offset = 16;
+      if (steps && !steps.hidden) offset = Math.ceil(steps.getBoundingClientRect().height) + 8;
+      form.style.setProperty("--wizard-field-scroll-margin", offset + "px");
     }
 
     form.addEventListener("focusin", function (event) {
       var ta = event.target;
       if (!ta || ta.tagName !== "TEXTAREA" || !isTextField(ta.id)) return;
-      if (!isMobileWizard()) return;
-      var fromField = event.relatedTarget && event.relatedTarget.tagName === "TEXTAREA";
-      if (!fromField) focusScrollY = window.scrollY || 0;
+      if (!isMobileWizard() || step !== 1) return;
+      pointerDismiss = false;
       if (tallTa && tallTa !== ta) collapseTextarea(tallTa);
-      hushScroll(200);
-      var field = ta.closest(".field");
-      if (field) field.scrollIntoView({ block: "start", behavior: "auto" });
-      else ta.scrollIntoView({ block: "start", behavior: "auto" });
-      requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          expandTextarea(ta);
-        });
-      });
       detachViewport();
+      syncFieldScrollMargin();
+      var field = ta.closest(".field");
+      if (field) field.scrollIntoView({ block: "nearest", behavior: "auto" });
       if (window.visualViewport) {
         focusViewportHandler = function () {
-          if (document.activeElement === ta) expandTextarea(ta);
+          if (document.activeElement === ta) scheduleExpand(ta);
         };
         window.visualViewport.addEventListener("resize", focusViewportHandler);
+        window.visualViewport.addEventListener("scroll", focusViewportHandler);
       }
+      scheduleExpand(ta);
     });
 
     form.addEventListener("focusout", function (event) {
@@ -289,12 +307,18 @@
       var next = event.relatedTarget;
       if (next && form.contains(next) && (next.tagName === "TEXTAREA" || next === aliasInput)) {
         collapseTextarea(ta);
-        pointerDismiss = false;
+        return;
+      }
+      if (advancingField) {
+        collapseTextarea(ta);
         return;
       }
       var advance =
-        isMobileWizard() && step === 1 && !next && !pointerDismiss && ta.getAttribute("enterkeyhint") === "next";
-      pointerDismiss = false;
+        isMobileWizard() &&
+        step === 1 &&
+        !next &&
+        !pointerDismiss &&
+        ta.getAttribute("enterkeyhint") === "next";
       if (advance) {
         detachViewport();
         collapseTextarea(ta);
@@ -303,7 +327,8 @@
         });
         return;
       }
-      releaseTall({ restoreScroll: true });
+      pointerDismiss = false;
+      releaseTall();
     });
 
     form.addEventListener("keydown", function (event) {
@@ -322,32 +347,27 @@
       }
     });
 
-    window.addEventListener(
-      "scroll",
-      function () {
-        if (!tallTa || ignoreScroll) return;
-        if (Math.abs((window.scrollY || 0) - expandScrollY) < 10) return;
-        pointerDismiss = true;
-        releaseTall({ blur: true });
-      },
-      { passive: true }
-    );
-
     document.addEventListener(
       "pointerdown",
       function (event) {
-        if (!tallTa) return;
-        if (event.target === tallTa) return;
-        if (event.target.tagName === "TEXTAREA" && isTextField(event.target.id)) {
-          collapseTextarea(tallTa);
+        if (!tallTa && !(document.activeElement && isTextField(document.activeElement.id))) return;
+        var target = event.target;
+        if (target === tallTa) return;
+        if (target.tagName === "TEXTAREA" && isTextField(target.id)) {
+          if (tallTa && tallTa !== target) collapseTextarea(tallTa);
           return;
         }
-        if (event.target === aliasInput) {
-          collapseTextarea(tallTa);
+        if (target === aliasInput) {
+          if (tallTa) collapseTextarea(tallTa);
+          return;
+        }
+        if (form.contains(target) && target.closest && target.closest(".actions")) {
+          pointerDismiss = true;
+          releaseTall({ blur: true });
           return;
         }
         pointerDismiss = true;
-        releaseTall({ blur: true, restoreScroll: true });
+        releaseTall({ blur: true });
       },
       true
     );
