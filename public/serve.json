@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/i/**", "destination": "/profile.html" },
+    { "source": "/a/**", "destination": "/profile.html" }
+  ]
+}

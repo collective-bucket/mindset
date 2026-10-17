@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#eafbf5" />
   <title>Mindset Bucket</title>
   <meta name="description" content="What's your mindset number? A collective lake where minds go nameless and appear as an eight-axis radar." />
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcmq5bf" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvcmq5bf" />
 </head>
-<body data-tab="current">
+<body data-tab="current" data-title="current.title" class="is-page-loading">
   <main class="page">
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
@@ -44,62 +44,79 @@
     </section>
 
     <div id="gated" hidden>
-      <section id="hero" class="hero" hidden>
-        <div class="hero-art" aria-hidden="true" id="hero-art"></div>
-        <h1 data-i18n="home.title">Build a bucket of minds together.</h1>
-        <p class="lead" data-i18n="home.lead">Write what you hold true and how you tell your story. You become a number, a fish in the lake. Explore the lake for minds like yours, or unlike.</p>
-        <p class="hint" data-i18n="home.private">What you swallowed, the pull from below and the wound in your belly stay with you.</p>
-        <div class="actions">
-          <a class="btn btn-primary" href="/new" data-i18n="home.write">Dive in</a>
-          <a class="btn" href="/lake" data-i18n="home.hunt">Explore the lake</a>
+      <div class="page-header profile-top">
+        <div class="profile-top-main">
+          <h1 id="title" class="profile-number">Current</h1>
+          <p class="head-meta">
+            <span id="alias-line" class="alias"></span>
+            <span id="meta" class="card-when"></span>
+          </p>
         </div>
-        <p class="fineprint"><span data-i18n="home.purpose">For fun or for research.</span> <span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span></p>
-      </section>
-
-      <div class="head" id="mine-head" hidden>
-        <h1 class="visually-hidden" data-i18n="current.title">Current</h1>
-        <a class="head-side" id="mine" href="/me"></a>
+        <div class="profile-tools" role="group">
+          <button type="button" id="share" class="btn-icon" hidden data-i18n-aria="profile.share" aria-label="Share"></button>
+          <a id="edit" class="btn-icon" href="/new" hidden data-i18n-aria="me.edit" aria-label="Edit"></a>
+          <a id="profile-link" class="btn-icon" href="/" hidden data-i18n-aria="me.view" aria-label="View profile"></a>
+          <a class="head-back" href="/lake" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
       </div>
-      <p id="feed-status" class="status" role="status" hidden></p>
 
-      <nav class="links" id="requests-nav" aria-label="School requests" hidden>
-        <a class="link-row" href="/school"><span data-i18n="current.openRequests">Review requests</span><span class="link-side" id="requests-count"></span></a>
-      </nav>
+      <div class="page-body">
+        <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
+          <img class="page-loading-logo" src="/assets/logo.svg?v=mvcmq5bf" width="280" height="280" alt="" />
+        </div>
+        <p id="feed-status" class="status" role="status" hidden></p>
 
-      <section class="section" id="ontail-section" hidden>
-        <h2 data-i18n="current.onTail">On my tail</h2>
-        <p class="hint" data-i18n="current.onTailLead">Fish that swim after you. Shine a scale to one you are curious about.</p>
-        <div id="ontail" class="list"></div>
-      </section>
+        <section id="hero" class="hero" hidden>
+          <div class="hero-art" aria-hidden="true" id="hero-art"></div>
+          <h2 data-i18n="home.title">Build a bucket of minds together.</h2>
+          <p class="lead" data-i18n="home.lead">Write what you hold true and how you tell your story. You become a number, a fish in the lake. Explore the lake for minds like yours, or unlike.</p>
+          <p class="hint" data-i18n="home.private">What you swallowed, the pull from below and the wound in your belly stay with you.</p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/new" data-i18n="home.write">Dive in</a>
+            <a class="btn" href="/lake" data-i18n="home.hunt">Explore the lake</a>
+          </div>
+          <p class="fineprint"><span data-i18n="home.purpose">For fun or for research.</span> <span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span></p>
+        </section>
 
-      <section class="section" id="trail-section" hidden>
-        <h2 data-i18n="current.trail">My trail</h2>
-        <p class="hint" data-i18n="current.trailLead">Fish you swim after. They can see you on their tail.</p>
-        <div id="trail" class="list"></div>
-      </section>
+        <nav class="links" id="requests-nav" aria-label="School requests" hidden>
+          <a class="link-row" href="/school"><span data-i18n="current.openRequests">Review requests</span><span class="link-side" id="requests-count"></span></a>
+        </nav>
 
-      <section class="section" id="school-section" hidden>
-        <h2 data-i18n="current.school">Your school</h2>
-        <div id="school-feed" class="feed"></div>
-      </section>
+        <section class="section" id="ontail-section" hidden>
+          <h2 data-i18n="current.onTail">On my tail</h2>
+          <p class="hint" data-i18n="current.onTailLead">Fish that swim after you. Shine a scale to one you are curious about.</p>
+          <div id="ontail" class="list"></div>
+        </section>
 
-      <section class="section">
-        <h2 data-i18n="current.everyone">Across the lake</h2>
-        <div id="everyone-feed" class="feed"></div>
-      </section>
+        <section class="section" id="trail-section" hidden>
+          <h2 data-i18n="current.trail">My trail</h2>
+          <p class="hint" data-i18n="current.trailLead">Fish you swim after. They can see you on their tail.</p>
+          <div id="trail" class="list"></div>
+        </section>
+
+        <section class="section" id="school-section" hidden>
+          <h2 data-i18n="current.school">Your school</h2>
+          <div id="school-feed" class="feed"></div>
+        </section>
+
+        <section class="section">
+          <h2 data-i18n="current.everyone">Across the lake</h2>
+          <div id="everyone-feed" class="feed"></div>
+        </section>
+      </div>
     </div>
   </main>
 
-  <script src="/assets/config.js" defer></script>
-  <script src="/assets/i18n.js" defer></script>
-  <script src="/assets/demographics.js" defer></script>
-  <script src="/assets/lens-v2.js" defer></script>
-  <script src="/assets/reading.js" defer></script>
-  <script src="/assets/firestore.js" defer></script>
-  <script type="module" src="/assets/auth.js"></script>
-  <script src="/assets/store.js" defer></script>
-  <script src="/assets/social.js" defer></script>
-  <script src="/assets/ui.js" defer></script>
-  <script src="/assets/home.js" defer></script>
+  <script src="/assets/config.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/i18n.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/demographics.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/lens-v2.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/reading.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/firestore.js?v=mvcmq5bf" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvcmq5bf"></script>
+  <script src="/assets/store.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/social.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/ui.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/home.js?v=mvcmq5bf" defer></script>
 </body>
 </html>

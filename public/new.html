@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eafbf5" />
   <title>cast · Mindset Bucket</title>
   <meta name="description" content="Write your mindset. The reading stays in your browser." />
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcmq5bf" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvcmq5bf" />
 </head>
 <body data-tab="me" data-title="create.title" data-no-gamebar>
   <main class="page">
@@ -24,7 +24,7 @@
 
     <nav class="wizard-steps" aria-label="Steps" hidden>
       <button type="button" class="wizard-step" data-go="1"><span>1</span> <em data-i18n="create.stepTexts">Texts</em></button>
-      <button type="button" class="wizard-step" data-go="2"><span>2</span> <em data-i18n="create.stepDemo">About you</em></button>
+      <button type="button" class="wizard-step" data-go="2"><span>2</span> <em data-i18n="create.stepPreferences">Preferences</em></button>
       <button type="button" class="wizard-step" data-go="3"><span>3</span> <em data-i18n="create.stepPreview">Preview</em></button>
     </nav>
 
@@ -67,7 +67,9 @@
           </header>
           <div id="closed-fields"></div>
         </section>
+      </section>
 
+      <section class="wizard-pane" data-step="2" hidden>
         <section class="section" id="alias-section">
           <header class="pane-head">
             <h2 data-i18n="alias.title">Your alias</h2>
@@ -78,9 +80,7 @@
             <small id="alias-rule" data-i18n="alias.rule">3-20 lowercase letters, digits or _.</small>
           </label>
         </section>
-      </section>
 
-      <section class="wizard-pane" data-step="2" hidden>
         <section class="section">
           <header class="pane-head">
             <h2 data-i18n="create.aboutTitle">About you</h2>
@@ -95,7 +95,7 @@
       </section>
 
       <section class="wizard-pane" data-step="3" hidden>
-        <section class="section">
+        <section class="section" id="preview-content" hidden>
           <div id="preview-entry" class="entry" hidden></div>
 
           <div class="preview-toolbar">
@@ -184,18 +184,18 @@
     </form>
   </dialog>
 
-  <script src="/assets/config.js" defer></script>
-  <script src="/assets/i18n.js" defer></script>
-  <script src="/assets/demographics.js" defer></script>
-  <script src="/assets/lens-v2.js" defer></script>
-  <script src="/assets/reading.js" defer></script>
-  <script src="/assets/privacy.js" defer></script>
-  <script src="/assets/firestore.js" defer></script>
-  <script type="module" src="/assets/auth.js"></script>
-  <script src="/assets/store.js" defer></script>
-  <script src="/assets/social.js" defer></script>
-  <script src="/assets/ui.js" defer></script>
-  <script src="/assets/score.js" defer></script>
-  <script src="/assets/edit.js" defer></script>
+  <script src="/assets/config.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/i18n.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/demographics.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/lens-v2.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/reading.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/privacy.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/firestore.js?v=mvcmq5bf" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvcmq5bf"></script>
+  <script src="/assets/store.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/social.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/ui.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/score.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/edit.js?v=mvcmq5bf" defer></script>
 </body>
 </html>

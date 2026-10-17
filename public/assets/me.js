@@ -16,12 +16,22 @@
     var aliasInput = document.querySelector("#alias");
     var aliasLine = document.querySelector("#alias-line");
     var dialog = document.querySelector("#delete-dialog");
+    var howDialog = document.querySelector("#how-to-read-dialog");
     var session = null;
     var current = null;
     var currentAlias = "";
     var pendingDelete = "";
 
     ui.closeOnBackdrop(dialog);
+    ui.closeOnBackdrop(howDialog);
+
+    document.querySelector("#share").innerHTML = ui.icon("share");
+    document.querySelector("#edit").innerHTML = ui.icon("edit");
+    document.querySelector("#profile-link").innerHTML = ui.icon("preview");
+    document.querySelector("#share").addEventListener("click", function () {
+      if (!current) return;
+      ui.shareMindset(current.publicDoc, status);
+    });
 
     function renderClosedTexts(privateDoc) {
       document.querySelector("#closed-texts").innerHTML = window.MindsetLens.fields
@@ -41,41 +51,108 @@
         .join("");
     }
 
+    function paintEntry(doc, scores) {
+      var host = document.querySelector("#me-entry");
+      host.innerHTML = ui.card(doc, { preview: true });
+      var built = host.querySelector(".entry");
+      if (built) {
+        host.className = built.className;
+        host.innerHTML = built.innerHTML;
+        host.setAttribute("data-id", String(doc.id));
+      }
+      host.hidden = false;
+      var radarHost = host.querySelector(".entry-radar");
+      if (radarHost) ui.renderRadar(radarHost, scores, null, { compact: true });
+    }
+
+    function radarKeys() {
+      return math.OPEN_KEYS.concat(math.CLOSED_KEYS);
+    }
+
+    // Match renderRadar: the chart only draws when every axis score is known.
+    function hasRadarData(scores) {
+      return radarKeys().every(function (key) {
+        return typeof scores[key] === "number" && scores[key] >= 0;
+      });
+    }
+
+    function syncRadarTab(scores) {
+      var tab = document.querySelector("#tab-me-radar");
+      var pane = document.querySelector("#pane-me-radar");
+      var show = hasRadarData(scores);
+      tab.hidden = !show;
+      if (!show) {
+        pane.hidden = true;
+        if (tab.getAttribute("aria-selected") === "true") selectMeTab("open");
+      } else {
+        tab.hidden = false;
+      }
+    }
+
+    function selectMeSection(name) {
+      var panes = {
+        preview: document.querySelector("#pane-me-preview"),
+        school: document.querySelector("#pane-me-school"),
+        current: document.querySelector("#pane-me-current"),
+        prefs: document.querySelector("#pane-me-prefs")
+      };
+      var tabs = {
+        preview: document.querySelector("#tab-me-preview"),
+        school: document.querySelector("#tab-me-school"),
+        current: document.querySelector("#tab-me-current"),
+        prefs: document.querySelector("#tab-me-prefs")
+      };
+      Object.keys(panes).forEach(function (key) {
+        var on = key === name;
+        panes[key].hidden = !on;
+        tabs[key].setAttribute("aria-selected", String(on));
+      });
+    }
+
+    function selectMeTab(name) {
+      var panes = {
+        radar: document.querySelector("#pane-me-radar"),
+        open: document.querySelector("#pane-me-open"),
+        closed: document.querySelector("#pane-me-closed")
+      };
+      var tabs = {
+        radar: document.querySelector("#tab-me-radar"),
+        open: document.querySelector("#tab-me-open"),
+        closed: document.querySelector("#tab-me-closed")
+      };
+      Object.keys(panes).forEach(function (key) {
+        var on = key === name;
+        panes[key].hidden = !on;
+        tabs[key].setAttribute("aria-selected", String(on));
+      });
+    }
+
     function render(own) {
       current = own;
       document.querySelector("#empty").hidden = Boolean(own);
       document.querySelector("#owner").hidden = !own;
+      document.querySelector("#page-header").hidden = !own;
       document.querySelector("#delete").hidden = !own;
       if (!own) return;
       var doc = own.publicDoc;
-      var number = doc.id;
-      document.querySelector("#title").textContent = number;
-      ui.setCrumb(String(number));
-      var when = ui.formatWhen(doc.updatedAt);
-      document.querySelector("#meta").textContent =
-        t(doc.published ? "me.published" : "me.unpublished") + (when ? " · " + when : "");
+      ui.paintOwnerHeader({ doc: doc, header: t("me.title") });
       var scores = math.scoresOf(doc);
       var closed = math.scoresOf(own.privateDoc);
       math.CLOSED_KEYS.forEach(function (key) {
         scores[key] = closed[key];
       });
-      document.querySelector("#summary").textContent = doc.blurb || math.summary(number, scores, i18n.lang);
-      var openGuide = document.querySelector("#reading-guide");
-      if (openGuide && !openGuide.dataset.ready) {
-        openGuide.innerHTML = ui.howToReadHtml(true);
-        openGuide.dataset.ready = "1";
+      paintEntry(doc, scores);
+      syncRadarTab(scores);
+      if (hasRadarData(scores)) {
+        ui.renderRadar(document.querySelector("#me-radar"), scores, null, {
+          keys: radarKeys()
+        });
+      } else {
+        document.querySelector("#me-radar").innerHTML = "";
       }
-      var closedGuide = document.querySelector("#closed-guide");
-      if (closedGuide && !closedGuide.dataset.ready) {
-        closedGuide.innerHTML = ui.howToReadHtml("closed");
-        closedGuide.dataset.ready = "1";
-      }
-      ui.renderRadar(document.querySelector("#radar"), scores);
-      ui.renderBars(document.querySelector("#open-bars"), scores, math.OPEN_KEYS);
-      ui.renderBars(document.querySelector("#closed-bars"), scores, math.CLOSED_KEYS);
+      ui.renderBars(document.querySelector("#me-open"), scores, math.OPEN_KEYS);
+      ui.renderBars(document.querySelector("#me-closed"), scores, math.CLOSED_KEYS);
       renderClosedTexts(own.privateDoc);
-      document.querySelector("#toggle-publish").textContent = t(doc.published ? "me.unpublish" : "me.publish");
-      document.querySelector("#profile-link").href = "/i/" + number;
       var level = math.historyLevel(doc.history);
       document.querySelector('input[name="history"][value="' + level + '"]').checked = true;
     }
@@ -105,40 +182,51 @@
     }
 
     async function load(notice) {
-      ui.setStatus(status, t("common.loading"));
-      session = await ui.requireAuth();
-      if (!session) {
-        ui.setStatus(status, "");
-        return;
+      ui.beginPageLoad();
+      ui.setStatus(status, "");
+      try {
+        session = await ui.requireAuth();
+        if (!session) {
+          document.querySelector("#account").hidden = true;
+          document.querySelector("#page-header").hidden = true;
+          return;
+        }
+        document.querySelector("#account").hidden = false;
+        document.querySelector("#email").textContent = t("me.signedInAs", { email: session.email });
+        var own = await store.findOwn(session.uid, session.idToken);
+        render(own);
+        if (own) {
+          var entry = await social.aliasOf(own.publicDoc.id, session.idToken);
+          renderAlias(entry && entry.alias);
+          await renderCounts();
+          document.querySelector("#root-link").hidden = own.publicDoc.number !== 1;
+          store.ensureFirstVersion(own.publicDoc, session.idToken).catch(function () {});
+        }
+        ui.setStatus(status, notice ? t(notice) : "", notice ? "error" : "");
+      } finally {
+        await ui.endPageLoad();
       }
-      document.querySelector("#account").hidden = false;
-      document.querySelector("#email").textContent = t("me.signedInAs", { email: session.email });
-      var own = await store.findOwn(session.uid, session.idToken);
-      render(own);
-      if (own) {
-        var entry = await social.aliasOf(own.publicDoc.id, session.idToken);
-        renderAlias(entry && entry.alias);
-        renderCounts();
-        document.querySelector("#root-link").hidden = own.publicDoc.number !== 1;
-        store.ensureFirstVersion(own.publicDoc, session.idToken).catch(function () {});
-      }
-      ui.setStatus(status, notice ? t(notice) : "", notice ? "error" : "");
-      if (window.location.hash === "#about") document.querySelector("#about").scrollIntoView();
     }
 
     function fail(error) {
       ui.setStatus(status, ui.errorText(error), "error");
     }
 
-    document.querySelector("#toggle-publish").addEventListener("click", function () {
-      if (!current) return;
-      ui.setStatus(status, t("common.saving"));
-      store
-        .setPublished(session, current.publicDoc.published !== true)
-        .then(function (result) {
-          return load(result.warning ? "create.publishWarning" : "");
-        })
-        .catch(fail);
+    document.querySelector(".me-stick .depth-tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest("[data-me-section]");
+      if (!tab) return;
+      selectMeSection(tab.getAttribute("data-me-section"));
+    });
+
+    document.querySelector(".preview-toolbar .depth-tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest("[data-me-tab]");
+      if (!tab) return;
+      selectMeTab(tab.getAttribute("data-me-tab"));
+    });
+
+    document.querySelector("#how-to-read").addEventListener("click", function () {
+      document.querySelector("#how-to-read-body").innerHTML = ui.howToReadHtml(false, { plain: true });
+      howDialog.showModal();
     });
 
     aliasForm.addEventListener("submit", function (event) {

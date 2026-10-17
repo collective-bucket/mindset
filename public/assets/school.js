@@ -51,6 +51,11 @@
   document.addEventListener("DOMContentLoaded", function () {
     var status = document.querySelector("#page-status");
     var session = null;
+    var ownDoc = null;
+
+    document.querySelector("#share").addEventListener("click", function () {
+      ui.shareMindset(ownDoc, status);
+    });
 
     function fill(container, rows, actions) {
       if (!rows.length) {
@@ -64,41 +69,63 @@
         .join("");
     }
 
-    async function load() {
-      ui.setStatus(status, t("common.loading"));
-      var results = await Promise.all([
-        social.incoming(session),
-        social.outgoing(session),
-        social.members(session)
-      ]);
-      var incoming = results[0].map(function (row) {
-        return { uid: row.from, number: row.fromNumber };
-      });
-      var outgoing = results[1].map(function (row) {
-        return { uid: row.to, number: row.toNumber };
-      });
-      var members = results[2].map(function (row) {
-        return { uid: row.uid || row.id, number: row.number };
-      });
-      var aliases = await aliasMap(
-        incoming.concat(outgoing, members).map(function (row) {
-          return row.number;
-        }),
-        session.idToken
-      );
-      [incoming, outgoing, members].forEach(function (list) {
-        list.forEach(function (row) {
-          row.alias = aliases[row.number] || "";
+    async function load(options) {
+      var gate = !(options && options.soft);
+      if (gate) ui.beginPageLoad();
+      try {
+        ui.setStatus(status, t("common.loading"));
+        var own = await store.findOwn(session.uid, session.idToken).catch(function () {
+          return null;
         });
-      });
-      fill(document.querySelector("#incoming"), incoming, [
-        { id: "accept", label: "school.accept", primary: true },
-        { id: "decline", label: "school.decline" }
-      ]);
-      fill(document.querySelector("#members"), members, [{ id: "remove", label: "school.remove" }]);
-      fill(document.querySelector("#outgoing"), outgoing, [{ id: "cancel", label: "school.cancel" }]);
-      document.querySelector("#school-body").hidden = false;
-      ui.setStatus(status, "");
+        ownDoc = own && own.publicDoc;
+        if (ownDoc) {
+          var aliasEntry = await social.aliasOf(ownDoc.id, session.idToken).catch(function () {
+            return null;
+          });
+          ui.paintOwnerHeader({
+            doc: ownDoc,
+            header: t("school.title"),
+            alias: aliasEntry && aliasEntry.alias
+          });
+        } else {
+          ui.clearOwnerHeader(t("school.title"));
+        }
+        var results = await Promise.all([
+          social.incoming(session),
+          social.outgoing(session),
+          social.members(session)
+        ]);
+        var incoming = results[0].map(function (row) {
+          return { uid: row.from, number: row.fromNumber };
+        });
+        var outgoing = results[1].map(function (row) {
+          return { uid: row.to, number: row.toNumber };
+        });
+        var members = results[2].map(function (row) {
+          return { uid: row.uid || row.id, number: row.number };
+        });
+        var aliases = await aliasMap(
+          incoming.concat(outgoing, members).map(function (row) {
+            return row.number;
+          }),
+          session.idToken
+        );
+        [incoming, outgoing, members].forEach(function (list) {
+          list.forEach(function (row) {
+            row.alias = aliases[row.number] || "";
+          });
+        });
+        fill(document.querySelector("#incoming"), incoming, [
+          { id: "accept", label: "school.accept", primary: true },
+          { id: "decline", label: "school.decline" }
+        ]);
+        fill(document.querySelector("#members"), members, [{ id: "remove", label: "school.remove" }]);
+        fill(document.querySelector("#outgoing"), outgoing, [{ id: "cancel", label: "school.cancel" }]);
+        document.querySelector("#school-body").hidden = false;
+        ui.setStatus(status, "");
+      } finally {
+        if (gate) await ui.endPageLoad();
+      }
     }
 
     document.querySelector("#school-body").addEventListener("click", function (event) {
@@ -114,7 +141,9 @@
       }[action];
       button.disabled = true;
       run(session, uid)
-        .then(load)
+        .then(function () {
+          return load({ soft: true });
+        })
         .catch(function (error) {
           button.disabled = false;
           ui.setStatus(status, ui.errorText(error), "error");
@@ -123,7 +152,10 @@
 
     ui.requireAuth().then(function (next) {
       session = next;
-      if (!session) return;
+      if (!session) {
+        ui.endPageLoad();
+        return;
+      }
       load().catch(function (error) {
         ui.setStatus(status, ui.errorText(error), "error");
       });

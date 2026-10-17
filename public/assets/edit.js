@@ -92,6 +92,28 @@
       });
     }
 
+    function radarKeys() {
+      return math.OPEN_KEYS.concat(math.CLOSED_KEYS);
+    }
+
+    // Match renderRadar: the chart only draws when every axis score is known.
+    function hasRadarData(scores) {
+      return radarKeys().every(function (key) {
+        return typeof scores[key] === "number" && scores[key] >= 0;
+      });
+    }
+
+    function syncPreviewRadarTab(scores) {
+      var tab = document.querySelector("#tab-preview-radar");
+      var pane = document.querySelector("#pane-preview-radar");
+      var show = hasRadarData(scores);
+      if (tab) tab.hidden = !show;
+      if (!show) {
+        if (pane) pane.hidden = true;
+        if (tab && tab.getAttribute("aria-selected") === "true") selectPreviewTab("open");
+      }
+    }
+
     function selectPreviewTab(name) {
       var panes = {
         radar: document.querySelector("#pane-preview-radar"),
@@ -141,11 +163,12 @@
       paintStatus();
     }
 
-    form.addEventListener("input", function (event) {
+      form.addEventListener("input", function (event) {
       var id = event.target && event.target.id;
       if (!isTextField(id)) return;
       dirty = true;
       reading = null;
+      hidePreviewContent();
       ui.updateCount(form, id);
       scanField(id);
     });
@@ -157,13 +180,11 @@
     }
 
     function orderedFocusFields() {
-      var list = window.MindsetLens.fields
+      return window.MindsetLens.fields
         .map(function (field) {
           return form.querySelector("#" + field.key);
         })
         .filter(Boolean);
-      if (aliasInput && !aliasSection.hidden) list.push(aliasInput);
-      return list;
     }
 
     function wireEnterHints() {
@@ -192,11 +213,7 @@
       if (advancingField) return;
       if (event.relatedTarget) return;
       if (el.getAttribute("enterkeyhint") !== "next") return;
-      if (el.tagName === "TEXTAREA" && isTextField(el.id)) {
-        focusNextField(el);
-        return;
-      }
-      if (el === aliasInput) focusNextField(el);
+      if (el.tagName === "TEXTAREA" && isTextField(el.id)) focusNextField(el);
     });
 
     form.addEventListener("keydown", function (event) {
@@ -204,11 +221,6 @@
       var el = event.target;
       if (!el || !isMobileWizard() || step !== 1) return;
       if (el.tagName === "TEXTAREA" && isTextField(el.id) && el.getAttribute("enterkeyhint") === "next") {
-        event.preventDefault();
-        focusNextField(el);
-        return;
-      }
-      if (el === aliasInput && el.getAttribute("enterkeyhint") === "next") {
         event.preventDefault();
         focusNextField(el);
       }
@@ -259,25 +271,29 @@
       return value;
     }
 
-    function showPreviewPending() {
+    function hidePreviewContent() {
+      var root = document.querySelector("#preview-content");
+      if (root) root.hidden = true;
       var host = document.querySelector("#preview-entry");
-      host.hidden = false;
-      host.className = "entry entry-pending";
-      host.removeAttribute("data-id");
-      host.innerHTML =
-        '<p class="preview-pending" role="status">' + ui.escapeHtml(t("create.reading")) + "</p>";
-      var radar = document.querySelector("#preview-radar");
-      var open = document.querySelector("#preview-open");
-      var closed = document.querySelector("#preview-closed");
-      if (radar) {
-        radar.innerHTML =
-          '<p class="hint preview-pending" role="status">' + ui.escapeHtml(t("create.reading")) + "</p>";
+      if (host) {
+        host.hidden = true;
+        host.innerHTML = "";
+        host.className = "entry";
+        host.removeAttribute("data-id");
       }
-      if (open) open.innerHTML = "";
-      if (closed) closed.innerHTML = "";
+      ["#preview-radar", "#preview-open", "#preview-closed"].forEach(function (sel) {
+        var node = document.querySelector(sel);
+        if (node) node.innerHTML = "";
+      });
+    }
+
+    function showPreviewPending() {
+      hidePreviewContent();
     }
 
     function showPreview(scores) {
+      var root = document.querySelector("#preview-content");
+      if (root) root.hidden = false;
       var texts = ui.collectTexts(form);
       var demo = ui.collectDemo(form);
       var label = existingNumber || t("common.preview");
@@ -314,11 +330,17 @@
         else host.removeAttribute("data-id");
       }
       host.hidden = false;
+      syncPreviewRadarTab(scores);
       var radarHost = host.querySelector(".entry-radar");
       if (radarHost) ui.renderRadar(radarHost, scores, null, { compact: true });
-      ui.renderRadar(document.querySelector("#preview-radar"), scores, null, {
-        keys: math.OPEN_KEYS.concat(math.CLOSED_KEYS)
-      });
+      if (hasRadarData(scores)) {
+        ui.renderRadar(document.querySelector("#preview-radar"), scores, null, {
+          keys: radarKeys()
+        });
+      } else {
+        var previewRadar = document.querySelector("#preview-radar");
+        if (previewRadar) previewRadar.innerHTML = "";
+      }
       ui.renderBars(document.querySelector("#preview-open"), scores, math.OPEN_KEYS);
       ui.renderBars(document.querySelector("#preview-closed"), scores, math.CLOSED_KEYS);
     }
@@ -374,8 +396,18 @@
       pendingSuggest = null;
     });
 
+    function aliasReady() {
+      if (!needsAlias) return true;
+      return social.ALIAS_PATTERN.test(social.cleanAlias(aliasInput.value));
+    }
+
     function go(next) {
-      if (next === 3 && !guardPrivacy()) next = 1;
+      if (next >= 2 && !guardPrivacy()) next = 1;
+      else if (next === 3 && !aliasReady()) {
+        next = 2;
+        setFormStatus(t("alias.required"), "error");
+        if (aliasInput) aliasInput.focus();
+      }
       step = next;
       form.querySelectorAll(".wizard-pane").forEach(function (pane) {
         pane.hidden = Number(pane.getAttribute("data-step")) !== step;
@@ -433,10 +465,15 @@
           setFormStatus(ui.errorText(error), "error");
           return;
         }
+        setFormStatus("");
+        go(2);
+        return;
+      }
+      if (step === 2) {
         checkAlias()
           .then(function () {
             setFormStatus("");
-            go(2);
+            go(3);
           })
           .catch(function (error) {
             setFormStatus(ui.errorText(error), "error");

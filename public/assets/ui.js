@@ -4,12 +4,16 @@
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
-  // Line drawings: the lake from above, a current, a school of three fish, and a jumping fish.
-  function leafFish(x, y, scale) {
+  // Entry / lake fish outline around (0,0), facing right — shared by cards and nav icons.
+  var FISH_PATH = "M-5 0c2.6-3.4 6.6-4 10-1.2C1.6 2.6-2.4 3.4-5 0zM5-1.2l3-2.2-.8 3.6.8 3-3-2";
+
+  function entryFishIcon(x, y, scale) {
     return (
       '<g transform="translate(' + x + " " + y + ") scale(" + scale + ')">' +
-      '<path d="M0 0c2.4-3 6.4-3.6 9.2-1.6-2 3.2-6.4 4-9.2 1.6z"/>' +
-      '<circle cx="6.6" cy="-1.2" r=".45"/></g>'
+      '<path d="' +
+      FISH_PATH +
+      '"/>' +
+      '<circle cx="-2.6" cy="-.6" r=".5"/></g>'
     );
   }
 
@@ -17,10 +21,10 @@
     lake: {
       box: "0 0 40 40",
       body:
-        '<ellipse cx="20" cy="21" rx="16" ry="9"/>' +
-        '<ellipse cx="20" cy="21" rx="9.6" ry="4.9"/>' +
-        '<ellipse cx="20" cy="21" rx="3.4" ry="1.8"/>' +
-        '<path d="M14 7.4c1.6-1.2 3.2-1.2 4.8 0M21.2 5.4c1.6-1.2 3.2-1.2 4.8 0"/>'
+        '<rect x="5" y="5" width="30" height="30" rx="7"/>' +
+        '<path d="M11 15c2.4-2 4.5-2 6 0s4 2 6 0 3.5-1.5 6-.5"/>' +
+        '<path d="M11 21c2.4-2 4.5-2 6 0s4 2 6 0 3.5-1.5 6-.5"/>' +
+        '<path d="M11 27c2.4-2 4.5-2 6 0s4 2 6 0 3.5-1.5 6-.5"/>'
     },
     current: {
       box: "0 0 40 40",
@@ -31,14 +35,11 @@
     },
     school: {
       box: "0 0 40 40",
-      body: leafFish(4, 14, 1.9) + leafFish(18, 22, 1.9) + leafFish(7, 31, 1.9)
+      body: entryFishIcon(14, 15, 1.75) + entryFishIcon(26, 26, 1.75)
     },
     fish: {
       box: "0 0 40 40",
-      body:
-        '<path d="M8.4 22.6c3.6-7.4 11.6-10.4 18-6.8-3.4 6.8-11.6 9.6-18 6.8z"/>' +
-        '<path d="M26.4 15.8l6.2-4.6-1.4 7.4"/><path d="M17 15.6l3-3.4 2.4 3"/>' +
-        '<circle cx="13.2" cy="20" r=".7"/><path d="M15.6 18.2c.8 1.4.8 3 .2 4.4"/>'
+      body: entryFishIcon(20, 20, 2.2)
     },
     share: {
       box: "0 0 24 24",
@@ -50,11 +51,24 @@
       box: "0 0 24 24",
       body: '<path d="M4 20l4.2-1.1L19 8.1 15.9 5 5.1 15.8 4 20z"/><path d="M13.8 7.1l3.1 3.1"/>'
     },
+    preview: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/>' +
+        '<circle cx="12" cy="12" r="3"/>'
+    },
     manage: {
       box: "0 0 24 24",
       body:
         '<circle cx="12" cy="12" r="3"/>' +
-        '<path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6"/>'
+        '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>'
+    },
+    // Head-and-shoulders silhouette for "go to me / profile owner".
+    profile: {
+      box: "0 0 24 24",
+      body:
+        '<circle cx="12" cy="8" r="3.5"/>' +
+        '<path d="M5.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/>'
     },
     guide: {
       box: "0 0 24 24",
@@ -68,9 +82,6 @@
       body: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
     }
   };
-
-  // A single fish for lists and the lake, drawn around (0,0) facing right.
-  var FISH_PATH = "M-5 0c2.6-3.4 6.6-4 10-1.2C1.6 2.6-2.4 3.4-5 0zM5-1.2l3-2.2-.8 3.6.8 3-3-2";
 
   var BAR = [
     { id: "lake", href: "/lake", icon: "lake" },
@@ -1105,11 +1116,133 @@
     });
   }
 
+  function pageLoadingEl() {
+    return document.querySelector("#page-loading");
+  }
+
+  function beginPageLoad() {
+    document.body.classList.add("is-page-loading");
+    // Reveal shell so the logo gate can fill page content under site chrome.
+    ["#gated", "#profile"].forEach(function (sel) {
+      var shell = document.querySelector(sel);
+      if (shell) shell.hidden = false;
+    });
+    var el = pageLoadingEl();
+    if (el) {
+      el.hidden = false;
+      el.setAttribute("aria-busy", "true");
+    }
+  }
+
+  async function endPageLoad() {
+    await new Promise(function (resolve) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(resolve);
+      });
+    });
+    var el = pageLoadingEl();
+    if (el) {
+      el.hidden = true;
+      el.setAttribute("aria-busy", "false");
+    }
+    document.body.classList.remove("is-page-loading");
+  }
+
+  // Page h1: <span class="mindset-id">n</span> [header] — no dash between.
+  function mindsetIdTitle(number, header) {
+    var id = '<span class="mindset-id">' + escapeHtml(String(number)) + "</span>";
+    return header ? id + " " + escapeHtml(String(header)) : id;
+  }
+
+  // Owner chrome shared by me / lake / school / current: title, meta, tool icons.
+  function paintOwnerHeader(opts) {
+    opts = opts || {};
+    var doc = opts.doc;
+    if (!doc) return;
+    var number = doc.id;
+    var title = document.querySelector("#title");
+    if (title) title.innerHTML = mindsetIdTitle(number, opts.header || "");
+    if (opts.setCrumb !== false) setCrumb(String(number));
+
+    var aliasLine = document.querySelector("#alias-line");
+    if (aliasLine && opts.alias !== undefined) {
+      var alias = opts.alias || "";
+      aliasLine.textContent = alias ? "@" + alias : t("alias.missing");
+      aliasLine.classList.toggle("is-missing", !alias);
+    }
+
+    var meta = document.querySelector("#meta");
+    if (meta) {
+      var when = formatWhen(doc.updatedAt);
+      meta.textContent =
+        t(doc.published ? "me.published" : "me.unpublished") + (when ? " · " + when : "");
+    }
+
+    var share = document.querySelector("#share");
+    var edit = document.querySelector("#edit");
+    var profileLink = document.querySelector("#profile-link");
+    if (share) {
+      share.innerHTML = icon("share");
+      share.hidden = false;
+    }
+    if (edit) {
+      edit.innerHTML = icon("edit");
+      edit.href = "/new";
+      edit.hidden = false;
+    }
+    if (profileLink) {
+      profileLink.innerHTML = icon("preview");
+      profileLink.href = "/i/" + number;
+      profileLink.hidden = false;
+    }
+  }
+
+  function clearOwnerHeader(pageTitle) {
+    var title = document.querySelector("#title");
+    if (title) title.textContent = pageTitle || "";
+    var aliasLine = document.querySelector("#alias-line");
+    if (aliasLine) {
+      aliasLine.textContent = "";
+      aliasLine.classList.remove("is-missing");
+    }
+    var meta = document.querySelector("#meta");
+    if (meta) meta.textContent = "";
+    ["#share", "#edit", "#profile-link"].forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (el) el.hidden = true;
+    });
+  }
+
+  function shareMindset(doc, statusEl) {
+    if (!doc) return;
+    var url = window.location.origin + "/i/" + doc.id;
+    var title = (doc.headline || t("common.mindset", { n: doc.id })) + titleSuffix();
+    if (navigator.share) {
+      navigator.share({ title: title, text: title, url: url }).catch(function (error) {
+        if (error && error.name === "AbortError") return;
+        setStatus(statusEl, t("profile.shareFailed"), "error");
+      });
+      return;
+    }
+    navigator.clipboard.writeText(url).then(
+      function () {
+        setStatus(statusEl, t("profile.copied"));
+      },
+      function () {
+        setStatus(statusEl, url);
+      }
+    );
+  }
+
   window.MindsetUi = {
     escapeHtml: escapeHtml,
     fieldLabel: fieldLabel,
     fieldByKey: fieldByKey,
     icon: icon,
+    mindsetIdTitle: mindsetIdTitle,
+    paintOwnerHeader: paintOwnerHeader,
+    clearOwnerHeader: clearOwnerHeader,
+    shareMindset: shareMindset,
     fishGlyph: fishGlyph,
     FISH_PATH: FISH_PATH,
     formatWhen: formatWhen,
@@ -1144,6 +1277,8 @@
     updateCount: updateCount,
     loginHref: loginHref,
     closeOnBackdrop: closeOnBackdrop,
+    beginPageLoad: beginPageLoad,
+    endPageLoad: endPageLoad,
     pickClosedField: pickClosedField,
     setCrumb: setCrumb,
     requireAuth: requireAuth,

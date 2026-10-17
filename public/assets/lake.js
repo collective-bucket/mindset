@@ -206,6 +206,10 @@
     var onTrail = {};
     var inSchool = {};
     var stats = null;
+
+    document.querySelector("#share").addEventListener("click", function () {
+      ui.shareMindset(ownDoc, status);
+    });
     var axes = { x: "agency", y: "redemption" };
     var view = Object.assign({}, FULL);
     var filters = blankFilters();
@@ -771,41 +775,58 @@
     // ---- Load ----
 
     async function load() {
-      session = await ui.requireAuth();
-      if (!session) return;
-      ui.setStatus(status, t("common.loading"));
-      var loaded = await Promise.all([
-        store.recent(POOL_SIZE, session.idToken),
-        store.getStats().catch(function () {
-          return null;
-        })
-      ]);
-      pool = loaded[0];
-      stats = loaded[1];
-      var social3 = await Promise.all([
-        store.findOwn(session.uid, session.idToken).catch(function () { return null; }),
-        social.trailNumbers(session).catch(function () { return []; }),
-        social.members(session).catch(function () { return []; })
-      ]);
-      ownDoc = social3[0] && social3[0].publicDoc;
-      social3[1].forEach(function (number) {
-        onTrail[number] = true;
-      });
-      social3[2].forEach(function (row) {
-        if (row.number) inSchool[row.number] = true;
-      });
-      if (ownDoc && !pool.some(function (doc) { return doc.id === ownDoc.id; })) pool.push(ownDoc);
-      fillAxisSelect(document.querySelector("#axis-x"), axes.x);
-      fillAxisSelect(document.querySelector("#axis-y"), axes.y);
-      axisLabels();
-      renderRanges();
-      fillDemoFilters();
-      renderDemoCharts(stats);
-      buildFish();
-      applyView();
-      refresh(false);
-      var hidden = pool.length - Object.keys(nodes).length;
-      ui.setStatus(status, hidden > 0 ? t("lake.unplaced", { n: hidden }) : "");
+      ui.beginPageLoad();
+      try {
+        session = await ui.requireAuth();
+        if (!session) return;
+        ui.setStatus(status, t("common.loading"));
+        var loaded = await Promise.all([
+          store.recent(POOL_SIZE, session.idToken),
+          store.getStats().catch(function () {
+            return null;
+          })
+        ]);
+        pool = loaded[0];
+        stats = loaded[1];
+        var social3 = await Promise.all([
+          store.findOwn(session.uid, session.idToken).catch(function () { return null; }),
+          social.trailNumbers(session).catch(function () { return []; }),
+          social.members(session).catch(function () { return []; })
+        ]);
+        ownDoc = social3[0] && social3[0].publicDoc;
+        social3[1].forEach(function (number) {
+          onTrail[number] = true;
+        });
+        social3[2].forEach(function (row) {
+          if (row.number) inSchool[row.number] = true;
+        });
+        if (ownDoc && !pool.some(function (doc) { return doc.id === ownDoc.id; })) pool.push(ownDoc);
+        if (ownDoc) {
+          var aliasEntry = await social.aliasOf(ownDoc.id, session.idToken).catch(function () {
+            return null;
+          });
+          ui.paintOwnerHeader({
+            doc: ownDoc,
+            header: t("lake.title"),
+            alias: aliasEntry && aliasEntry.alias
+          });
+        } else {
+          ui.clearOwnerHeader(t("lake.title"));
+        }
+        fillAxisSelect(document.querySelector("#axis-x"), axes.x);
+        fillAxisSelect(document.querySelector("#axis-y"), axes.y);
+        axisLabels();
+        renderRanges();
+        fillDemoFilters();
+        renderDemoCharts(stats);
+        buildFish();
+        applyView();
+        refresh(false);
+        var hidden = pool.length - Object.keys(nodes).length;
+        ui.setStatus(status, hidden > 0 ? t("lake.unplaced", { n: hidden }) : "");
+      } finally {
+        await ui.endPageLoad();
+      }
     }
 
     load().catch(function (error) {

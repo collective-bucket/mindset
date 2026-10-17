@@ -6,77 +6,94 @@
   <meta name="theme-color" content="#eafbf5" />
   <title>lake · Mindset Bucket</title>
   <meta name="description" content="Minds swim in a lake. Narrow the scale, find yours, swim after them." />
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcmq5bf" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvcmq5bf" />
 </head>
-<body data-tab="lake" data-title="lake.title">
+<body data-tab="lake" data-title="lake.title" class="is-page-loading">
   <main class="page page-lake">
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <div id="gated" hidden>
-    <div class="head">
-      <div>
-        <h1 class="visually-hidden" data-i18n="lake.title">Lake</h1>
-        <p class="hint" data-i18n="lake.lead">Every fish is a mind. Narrow the scale and swim after the ones you want to follow.</p>
+    <div class="page-header profile-top">
+      <div class="profile-top-main">
+        <h1 id="title" class="profile-number">Lake</h1>
+        <p class="head-meta">
+          <span id="alias-line" class="alias"></span>
+          <span id="meta" class="card-when"></span>
+        </p>
       </div>
-      <span id="lake-count" class="head-side" aria-live="polite"></span>
-    </div>
-    <p id="page-status" class="status" role="status" hidden></p>
-
-    <div class="lake-wrap">
-      <span class="lake-label lake-label-top" id="y-high"></span>
-      <div class="lake" id="lake"></div>
-      <span class="lake-label lake-label-bottom" id="y-low"></span>
-      <div class="lake-x"><span id="x-low"></span><span id="x-high"></span></div>
-      <div class="lake-tools">
-        <button type="button" id="zoom-reset" class="btn btn-small" data-i18n="lake.wholeLake">Whole lake</button>
-        <button type="button" id="view-toggle" class="btn btn-small" aria-pressed="false" data-i18n="lake.asList">Show as list</button>
+      <div class="profile-tools" role="group">
+        <button type="button" id="share" class="btn-icon" hidden data-i18n-aria="profile.share" aria-label="Share"></button>
+        <a id="edit" class="btn-icon" href="/new" hidden data-i18n-aria="me.edit" aria-label="Edit"></a>
+        <a id="profile-link" class="btn-icon" href="/" hidden data-i18n-aria="me.view" aria-label="View profile"></a>
+        <a class="head-back" href="/" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
       </div>
     </div>
-    <div id="fish-list" class="feed" hidden></div>
 
-    <section class="panel" id="panel">
-      <button type="button" id="panel-toggle" class="panel-handle" aria-expanded="false" aria-controls="panel-body">
-        <span data-i18n="lake.narrow">Narrow the scale</span>
-        <span id="panel-summary" class="hint"></span>
-      </button>
-      <div id="panel-body" hidden>
-        <div class="tabs" role="tablist">
-          <button type="button" role="tab" id="tab-filter" aria-selected="true" aria-controls="filter-pane" data-i18n="lake.filter">Filter</button>
-          <button type="button" role="tab" id="tab-bucket" aria-selected="false" aria-controls="bucket-pane" data-i18n="lake.bucket">Bucket</button>
-        </div>
+    <div class="page-body">
+      <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
+        <img class="page-loading-logo" src="/assets/logo.svg?v=mvcmq5bf" width="280" height="280" alt="" />
+      </div>
+      <p id="page-status" class="status" role="status" hidden></p>
 
-        <div id="filter-pane" role="tabpanel" aria-labelledby="tab-filter">
-          <div class="demo-grid">
-            <label class="field"><span data-i18n="lake.across">Across</span><select id="axis-x"></select></label>
-            <label class="field"><span data-i18n="lake.up">Up</span><select id="axis-y"></select></label>
-          </div>
-          <div id="ranges"></div>
-          <div class="demo-grid">
-            <label class="field"><span data-i18n="demo.age">Age range</span><select id="f-ageBand"></select></label>
-            <label class="field"><span data-i18n="demo.gender">Gender</span><select id="f-gender"></select></label>
-            <label class="field"><span data-i18n="demo.country">Country</span><select id="f-country"></select></label>
-          </div>
-          <label class="check"><input type="checkbox" id="f-uncaught" /> <span data-i18n="lake.untrailed">Only fish not on my trail</span></label>
-                    <div class="actions"><button type="button" id="f-clear" class="btn btn-small" data-i18n="lake.clear">Clear</button></div>
-        </div>
+      <p class="lead" data-i18n="lake.lead">Every fish is a mind. Narrow the scale and swim after the ones you want to follow.</p>
 
-        <div id="bucket-pane" role="tabpanel" aria-labelledby="tab-bucket" hidden>
-          <p class="hint" data-i18n="lake.bucketLead">The whole bucket, counted. Nobody is identifiable here.</p>
-          <p id="total" class="meta"></p>
-          <div id="axis-chart" class="hist-grid"></div>
-          <h3 data-i18n="explore.byAge">By age</h3>
-          <div id="age-chart"></div>
-          <h3 data-i18n="explore.byGender">By gender</h3>
-          <div id="gender-chart"></div>
-          <h3 data-i18n="explore.byCountry">Top countries</h3>
-          <div id="country-chart"></div>
-          <h3 data-i18n="explore.byCity">Top cities</h3>
-          <div id="city-chart"></div>
-          <p class="hint" data-i18n="explore.cityNote">Places with fewer than 5 people are hidden.</p>
+      <div class="lake-wrap">
+        <span class="lake-label lake-label-top" id="y-high"></span>
+        <div class="lake" id="lake"></div>
+        <span class="lake-label lake-label-bottom" id="y-low"></span>
+        <div class="lake-x"><span id="x-low"></span><span id="x-high"></span></div>
+        <div class="lake-tools">
+          <span id="lake-count" class="meta" aria-live="polite"></span>
+          <button type="button" id="zoom-reset" class="btn btn-small" data-i18n="lake.wholeLake">Whole lake</button>
+          <button type="button" id="view-toggle" class="btn btn-small" aria-pressed="false" data-i18n="lake.asList">Show as list</button>
         </div>
       </div>
-    </section>
+      <div id="fish-list" class="feed" hidden></div>
+
+      <section class="panel" id="panel">
+        <button type="button" id="panel-toggle" class="panel-handle" aria-expanded="false" aria-controls="panel-body">
+          <span data-i18n="lake.narrow">Narrow the scale</span>
+          <span id="panel-summary" class="hint"></span>
+        </button>
+        <div id="panel-body" hidden>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" id="tab-filter" aria-selected="true" aria-controls="filter-pane" data-i18n="lake.filter">Filter</button>
+            <button type="button" role="tab" id="tab-bucket" aria-selected="false" aria-controls="bucket-pane" data-i18n="lake.bucket">Bucket</button>
+          </div>
+
+          <div id="filter-pane" role="tabpanel" aria-labelledby="tab-filter">
+            <div class="demo-grid">
+              <label class="field"><span data-i18n="lake.across">Across</span><select id="axis-x"></select></label>
+              <label class="field"><span data-i18n="lake.up">Up</span><select id="axis-y"></select></label>
+            </div>
+            <div id="ranges"></div>
+            <div class="demo-grid">
+              <label class="field"><span data-i18n="demo.age">Age range</span><select id="f-ageBand"></select></label>
+              <label class="field"><span data-i18n="demo.gender">Gender</span><select id="f-gender"></select></label>
+              <label class="field"><span data-i18n="demo.country">Country</span><select id="f-country"></select></label>
+            </div>
+            <label class="check"><input type="checkbox" id="f-uncaught" /> <span data-i18n="lake.untrailed">Only fish not on my trail</span></label>
+                      <div class="actions"><button type="button" id="f-clear" class="btn btn-small" data-i18n="lake.clear">Clear</button></div>
+          </div>
+
+          <div id="bucket-pane" role="tabpanel" aria-labelledby="tab-bucket" hidden>
+            <p class="hint" data-i18n="lake.bucketLead">The whole bucket, counted. Nobody is identifiable here.</p>
+            <p id="total" class="meta"></p>
+            <div id="axis-chart" class="hist-grid"></div>
+            <h3 data-i18n="explore.byAge">By age</h3>
+            <div id="age-chart"></div>
+            <h3 data-i18n="explore.byGender">By gender</h3>
+            <div id="gender-chart"></div>
+            <h3 data-i18n="explore.byCountry">Top countries</h3>
+            <div id="country-chart"></div>
+            <h3 data-i18n="explore.byCity">Top cities</h3>
+            <div id="city-chart"></div>
+            <p class="hint" data-i18n="explore.cityNote">Places with fewer than 5 people are hidden.</p>
+          </div>
+        </div>
+      </section>
+    </div>
     </div>
   </main>
 
@@ -100,16 +117,16 @@
     <p id="card-status" class="status" role="status" hidden></p>
   </dialog>
 
-  <script src="/assets/config.js" defer></script>
-  <script src="/assets/i18n.js" defer></script>
-  <script src="/assets/demographics.js" defer></script>
-  <script src="/assets/lens-v2.js" defer></script>
-  <script src="/assets/reading.js" defer></script>
-  <script src="/assets/firestore.js" defer></script>
-  <script type="module" src="/assets/auth.js"></script>
-  <script src="/assets/store.js" defer></script>
-  <script src="/assets/social.js" defer></script>
-  <script src="/assets/ui.js" defer></script>
-  <script src="/assets/lake.js" defer></script>
+  <script src="/assets/config.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/i18n.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/demographics.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/lens-v2.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/reading.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/firestore.js?v=mvcmq5bf" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvcmq5bf"></script>
+  <script src="/assets/store.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/social.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/ui.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/lake.js?v=mvcmq5bf" defer></script>
 </body>
 </html>

@@ -248,21 +248,38 @@ p {
   margin-bottom: 1.5em;
 }
 
+/* Title subtitle under h1 — new / me / profile */
+.head-meta {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+/* Header actions: pinned top-right, same 40px slot on every page */
 .head-back {
-  order: 3;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-sizing: content-box;
-  width: 12px;
-  height: calc(30px * 1.2);
-  margin: 0 -2px 0 0;
-  padding: 0 0 0 8px;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
   color: var(--muted);
   text-decoration: none;
   background: none;
-  border: 0;
+  cursor: pointer;
+}
+
+.head > .head-back {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  z-index: 1;
 }
 
 .head-back svg {
@@ -273,23 +290,19 @@ p {
 
 .head-back:hover {
   color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 .head-main {
-  order: 1;
   min-width: 0;
   flex: 1 1 auto;
+  padding-right: 44px;
 }
 
 .head h1 {
-  margin-bottom: 0;
-}
-
-.head-meta {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.3;
+  margin: 0;
+  min-height: 40px;
+  line-height: 40px;
 }
 
 .head-side {
@@ -314,6 +327,73 @@ a.head-side:hover {
 
 .section {
   padding: 20px 0;
+}
+
+/* Page content (header + body + footer) gated; site chrome stays. */
+body.is-page-loading .page,
+body.is-page-loading #gated:not([hidden]),
+body.is-page-loading #profile:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: calc(100dvh - 56px - var(--bar-space));
+}
+
+body.is-page-loading .page-header,
+body.is-page-loading .page-footer {
+  display: none !important;
+}
+
+body.is-page-loading .page-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+
+body.is-page-loading .page-body > :not(.page-loading) {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.page-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 24px;
+  background: var(--paper);
+  pointer-events: none;
+}
+
+body.is-page-loading .page-loading {
+  display: flex;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  visibility: visible;
+  min-height: 240px;
+}
+
+.page-loading[hidden],
+body:not(.is-page-loading) .page-loading {
+  display: none !important;
+}
+
+.page-loading-logo {
+  display: block;
+  width: min(52vw, 280px);
+  height: auto;
+  /* Very light green brand mark on white paper */
+  opacity: 0.28;
+}
+
+#alias-section {
+  padding-bottom: 8px;
+}
+
+#alias-section + .section {
+  padding-top: 8px;
 }
 
 .section-private {
@@ -492,6 +572,70 @@ a.head-side:hover {
   margin: 0;
   border-top: 1px solid var(--hair);
   box-shadow: 0 -10px 18px -14px rgba(20, 20, 20, 0.28);
+}
+
+.me-account-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.me-account-actions .actions-note {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.me-account-actions .actions-note-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.me-account-actions .actions-buttons {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 0 1 auto;
+  margin-left: 4px;
+}
+
+.me-account-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 18px 9px;
+  margin: 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--danger);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.me-account-link:hover {
+  color: var(--danger);
+  opacity: 0.85;
+}
+
+#pane-me-preview > .section {
+  padding-top: 32px;
+}
+
+#me-entry {
+  margin: 0 0 16px;
+}
+
+#me-entry.entry {
+  margin-bottom: 16px;
 }
 
 /* ---- Forms ---- */
@@ -918,6 +1062,31 @@ div.entry {
   font-weight: 500;
 }
 
+.tab-side {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.profile-stick .tabs,
+.profile-stick .depth-tabs {
+  margin: 0;
+  margin-bottom: 0;
+  border-bottom: 0;
+  gap: 0;
+}
+
+.profile-stick .depth-tabs button {
+  min-height: 40px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.profile-stick .depth-tabs button + button {
+  border-left: 1px solid var(--hair);
+}
+
 .link-side::after {
   content: "  →";
   color: var(--accent);
@@ -994,7 +1163,8 @@ div.entry {
   margin: 0 0 4px -10px;
 }
 
-.hero h1 {
+.hero h1,
+.hero h2 {
   font-size: 34px;
   line-height: 1.1;
 }
@@ -1079,15 +1249,11 @@ div.entry {
   font-size: 14px;
 }
 
-.profile-subline.card-meta {
-  margin: 0 0 6px;
-}
-
-.profile-subline > span:not(:empty):not([hidden]) {
+.head-meta > span:not(:empty):not([hidden]) {
   display: inline;
 }
 
-.profile-subline > span:not(:empty):not([hidden]) ~ span:not(:empty):not([hidden])::before {
+.head-meta > span:not(:empty):not([hidden]) ~ span:not(:empty):not([hidden])::before {
   content: "·";
   margin: 0 8px;
   color: var(--muted);
@@ -1274,9 +1440,20 @@ div.entry {
 
 .lake-tools {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-top: 10px;
+}
+
+.lake-tools #lake-count {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lake-tools .btn {
+  flex: 0 0 auto;
 }
 
 .lake-wrap.is-collapsed .lake,
@@ -2619,12 +2796,27 @@ body.has-gamebar #mindset-form > .actions {
 }
 
 .profile-number {
-  font-size: clamp(40px, 10vw, 64px);
-  line-height: 1;
-  font-weight: 750;
-  letter-spacing: -0.04em;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   margin: 0 0 6px;
+}
+
+/* Filled bookmark ribbon around #n; V cutout at bottom (not a tip). */
+.mindset-id {
+  display: inline-block;
+  vertical-align: baseline;
+  color: #fff;
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+  padding: 0.12em 0.28em 0.42em;
+  margin-right: 0.2em;
+  line-height: 1.1;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
 }
 
 .profile-current {
@@ -2717,23 +2909,54 @@ body.has-gamebar #mindset-form > .actions {
 /* ---- Profile toolbar + reading slides ---- */
 
 .profile-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 4px;
+  position: relative;
+  display: block;
+  margin: 6px 0 8px;
+  padding: 4px 0 0;
+}
+
+/* Lake / current / school: sticky page header with hairline + soft shadow */
+body[data-tab="lake"] .page-header,
+body[data-tab="current"] .page-header,
+body[data-tab="school"] .page-header {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  margin: 6px 0 8px;
+  padding: 4px 0 12px;
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 var(--hair),
+    0 10px 18px -14px rgba(20, 20, 20, 0.28);
 }
 
 .profile-top-main {
   min-width: 0;
+  /* Room for back alone; widen when icon tools share the cluster */
+  padding-right: 48px;
+}
+
+.profile-top:has(.profile-tools .btn-icon) .profile-top-main {
+  padding-right: 172px;
+}
+
+.profile-top-main .profile-number {
+  margin: 0;
+  min-height: 40px;
+  line-height: 40px;
 }
 
 .profile-tools {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
   flex-shrink: 0;
-  margin-top: 6px;
+  margin: 0;
 }
 
 .btn-icon {
@@ -2807,23 +3030,58 @@ body.has-gamebar #mindset-form > .actions {
   margin: 0;
 }
 
-.profile-sticky {
+.profile-stick {
   position: sticky;
   top: 0;
-  z-index: 12;
+  z-index: 8;
   margin: 0 -4px;
-  padding: 0 4px 6px;
+  padding: 0 4px 8px;
   background: var(--paper);
-  box-shadow: 0 8px 16px -12px rgba(27, 99, 80, 0.35);
+  border-bottom: 0;
+  box-shadow:
+    0 1px 0 var(--hair),
+    0 10px 18px -14px rgba(20, 20, 20, 0.28);
 }
 
-.profile-sticky .depth-tabs {
+.profile-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
   margin: 4px 0 0;
+}
+
+.profile-tabs-bar .depth-tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
   border-bottom: 0;
 }
 
-.profile-sticky .depth-tabs button {
+.profile-tabs-bar .depth-tabs button {
   min-height: 40px;
+}
+
+.profile-tabs-bar .btn-round {
+  position: relative;
+  z-index: 1;
+}
+
+.profile-tabs-bar::after {
+  content: "";
+  position: absolute;
+  right: 28px;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--paper));
+  z-index: 0;
+}
+
+#pane-nearby,
+#pane-school {
+  padding-top: 1.5em;
 }
 
 .site-footer {
@@ -2992,6 +3250,7 @@ body.has-gamebar .site-footer {
 .slides-viewport {
   overflow: hidden;
   width: 100%;
+  touch-action: pan-y;
 }
 
 .slides-track {

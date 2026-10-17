@@ -62,7 +62,7 @@
     function paintIcons() {
       shareButton.innerHTML = ui.icon("share");
       document.querySelector("#edit").innerHTML = ui.icon("edit");
-      document.querySelector("#manage").innerHTML = ui.icon("manage");
+      document.querySelector("#manage").innerHTML = ui.icon("profile");
     }
     paintIcons();
 
@@ -99,17 +99,37 @@
         if (dot) setIndex(Number(dot.getAttribute("data-slide-to")));
       });
       var startX = 0;
+      var startY = 0;
+      var axis = null;
       host.addEventListener(
         "touchstart",
         function (event) {
-          if (event.changedTouches && event.changedTouches[0]) startX = event.changedTouches[0].clientX;
+          if (!event.changedTouches || !event.changedTouches[0]) return;
+          startX = event.changedTouches[0].clientX;
+          startY = event.changedTouches[0].clientY;
+          axis = null;
         },
         { passive: true }
+      );
+      host.addEventListener(
+        "touchmove",
+        function (event) {
+          if (!event.touches || !event.touches[0]) return;
+          var dx = event.touches[0].clientX - startX;
+          var dy = event.touches[0].clientY - startY;
+          if (axis == null) {
+            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+            axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+          }
+          if (axis === "x") event.preventDefault();
+        },
+        { passive: false }
       );
       host.addEventListener(
         "touchend",
         function (event) {
           if (!event.changedTouches || !event.changedTouches[0]) return;
+          if (axis !== "x") return;
           var dx = event.changedTouches[0].clientX - startX;
           if (Math.abs(dx) < 40) return;
           setIndex(getIndex() + (dx < 0 ? 1 : -1));
@@ -118,12 +138,51 @@
       );
     }
 
+    function hasRadarData(scores, keys) {
+      return keys.every(function (key) {
+        return typeof scores[key] === "number" && scores[key] >= 0;
+      });
+    }
+
+    function reindexSlides(hostSel, trackSel) {
+      var slides = Array.prototype.slice.call(
+        document.querySelectorAll(trackSel + " .slide:not([hidden])")
+      );
+      var dots = Array.prototype.slice.call(
+        document.querySelectorAll(hostSel + " .slide-dot:not([hidden])")
+      );
+      slides.forEach(function (slide, index) {
+        slide.setAttribute("data-slide", String(index));
+      });
+      dots.forEach(function (dot, index) {
+        dot.setAttribute("data-slide-to", String(index));
+        if (slides[index]) dot.setAttribute("aria-controls", slides[index].id);
+      });
+      return Math.max(0, slides.length - 1);
+    }
+
+    function syncSurfaceRadarSlide(scores) {
+      var show = hasRadarData(scores, math.OPEN_KEYS);
+      document.querySelector("#slide-radar").hidden = !show;
+      document.querySelector("#surface-slides .slide-dot[data-radar-dot]").hidden = !show;
+      reindexSlides("#surface-slides", "#surface-track");
+      showSurfaceSlide(surfaceSlide);
+    }
+
+    function syncDeepRadarSlide(scores) {
+      var show = hasRadarData(scores, math.OPEN_KEYS.concat(math.CLOSED_KEYS));
+      document.querySelector("#slide-deep-radar").hidden = !show;
+      document.querySelector("#deep-slides .slide-dot[data-radar-dot]").hidden = !show;
+      reindexSlides("#deep-slides", "#deep-track");
+      showDeepSlide(deepSlide);
+    }
+
     function showSlide(opts) {
       var max = opts.max != null ? opts.max : 1;
       var index = Math.max(0, Math.min(max, Number(opts.index) || 0));
       opts.setIndex(index);
       document.querySelector(opts.track).style.transform = "translateX(-" + index * 100 + "%)";
-      document.querySelectorAll(opts.host + " .slide-dot").forEach(function (dot) {
+      document.querySelectorAll(opts.host + " .slide-dot:not([hidden])").forEach(function (dot) {
         var on = Number(dot.getAttribute("data-slide-to")) === index;
         dot.classList.toggle("is-active", on);
         dot.setAttribute("aria-selected", String(on));
@@ -131,9 +190,13 @@
     }
 
     function showSurfaceSlide(index) {
+      var max = Math.max(
+        0,
+        document.querySelectorAll("#surface-track .slide:not([hidden])").length - 1
+      );
       showSlide({
         index: index,
-        max: 2,
+        max: max,
         setIndex: function (value) {
           surfaceSlide = value;
         },
@@ -143,9 +206,13 @@
     }
 
     function showDeepSlide(index) {
+      var max = Math.max(
+        0,
+        document.querySelectorAll("#deep-track .slide:not([hidden])").length - 1
+      );
       showSlide({
         index: index,
-        max: 1,
+        max: max,
         setIndex: function (value) {
           deepSlide = value;
         },
@@ -169,18 +236,13 @@
       showDeepSlide
     );
 
-    function openHowTo(mode) {
+    function openHowTo() {
       var body = document.querySelector("#how-to-read-body");
-      body.innerHTML = ui.howToReadHtml(mode, { plain: true });
+      body.innerHTML = ui.howToReadHtml(false, { plain: true });
       howDialog.showModal();
     }
 
-    document.querySelector("#how-to-read-open").addEventListener("click", function () {
-      openHowTo(true);
-    });
-    document.querySelector("#how-to-read-closed").addEventListener("click", function () {
-      openHowTo(false);
-    });
+    document.querySelector("#how-to-read").addEventListener("click", openHowTo);
 
     function selectProfileTab(name) {
       var panes = {
@@ -220,12 +282,17 @@
     }
 
     function drawReading(scores, ghost) {
-      ui.renderRadar(document.querySelector("#radar-face"), scores, ghost);
+      if (hasRadarData(scores, math.OPEN_KEYS)) {
+        ui.renderRadar(document.querySelector("#radar-face"), scores, ghost);
+      } else {
+        document.querySelector("#radar-face").innerHTML = "";
+      }
       ui.renderBars(document.querySelector("#face-bars"), scores, math.OPEN_KEYS);
     }
 
     function showReading(source, ghost) {
       var next = math.scoresOf(source);
+      syncSurfaceRadarSlide(next);
       ui.tweenScores(shownScores, next, function (scores) {
         drawReading(scores, ghost);
       });
@@ -293,7 +360,7 @@
 
     function showProfile() {
       document.querySelector("#profile").hidden = false;
-      document.querySelector("#title").textContent = "#" + doc.id;
+      document.querySelector("#title").innerHTML = ui.mindsetIdTitle(doc.id);
       ui.setCrumb(String(doc.id));
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);
@@ -337,28 +404,23 @@
     }
 
     async function loadHistory() {
-      var empty = document.querySelector("#timeline-empty");
-      empty.hidden = true;
+      var timeline = document.querySelector("#face-timeline");
       try {
         versions = await store.versions(doc.id, session && session.idToken);
       } catch (error) {
         versions = [];
       }
-      if (!versions.length) {
-        empty.hidden = false;
-        empty.textContent = t("history.noneYet");
-        document.querySelector("#trend").innerHTML = "";
+      if (versions.length < 2) {
+        timeline.hidden = true;
         range.disabled = true;
+        if (!versions.length) document.querySelector("#trend").innerHTML = "";
+        else ui.renderTrend(document.querySelector("#trend"), versions, 0);
         return;
       }
+      timeline.hidden = false;
       range.max = String(versions.length - 1);
       range.value = range.max;
-      range.disabled = versions.length < 2;
-      if (versions.length < 2) {
-        ui.renderTrend(document.querySelector("#trend"), versions, 0);
-        document.querySelector("#timeline-when").textContent = t("history.now");
-        return;
-      }
+      range.disabled = false;
       showVersion(versions.length - 1);
     }
 
@@ -594,11 +656,15 @@
         });
       }
       note.hidden = Boolean(deep);
-      ui.renderRadar(document.querySelector("#deep-radar"), scores, null, {
-        keys: math.OPEN_KEYS.concat(math.CLOSED_KEYS)
-      });
+      syncDeepRadarSlide(scores);
+      if (hasRadarData(scores, math.OPEN_KEYS.concat(math.CLOSED_KEYS))) {
+        ui.renderRadar(document.querySelector("#deep-radar"), scores, null, {
+          keys: math.OPEN_KEYS.concat(math.CLOSED_KEYS)
+        });
+      } else {
+        document.querySelector("#deep-radar").innerHTML = "";
+      }
       ui.renderBars(document.querySelector("#deep-bars"), scores, math.CLOSED_KEYS);
-      showDeepSlide(deepSlide);
       if (state.self) {
         document.querySelector("#exchanged").innerHTML =
           '<p class="empty">' + ui.escapeHtml(t("profile.deepOwnHint")) + "</p>";
@@ -699,45 +765,54 @@
     }
 
     async function load() {
-      var number = "";
-      if (route.kind === "i" && /^\d+$/.test(route.key)) {
-        number = route.key;
-      } else if (route.kind === "a" && social.ALIAS_PATTERN.test(route.key)) {
-        session = await ui.requireAuth();
-        if (!session) return;
-        var entry = await social.resolveAlias(route.key, session.idToken);
-        if (entry) {
-          number = String(entry.number);
-          alias = route.key;
+      ui.beginPageLoad();
+      try {
+        var number = "";
+        if (route.kind === "i" && /^\d+$/.test(route.key)) {
+          number = route.key;
+        } else if (route.kind === "a" && social.ALIAS_PATTERN.test(route.key)) {
+          session = await ui.requireAuth();
+          if (!session) return;
+          var entry = await social.resolveAlias(route.key, session.idToken);
+          if (entry) {
+            number = String(entry.number);
+            alias = route.key;
+          }
         }
-      }
-      if (!number) {
-        ui.setStatus(status, t("common.notFound"), "error");
-        return;
-      }
+        if (!number) {
+          document.querySelector("#profile").hidden = true;
+          ui.setStatus(status, t("common.notFound"), "error");
+          return;
+        }
 
-      var found = await fetchMindset(number, session);
-      if (found && found.hidden && !session) {
-        session = await store.getOptionalSession();
-        if (session) found = await fetchMindset(number, session);
+        var found = await fetchMindset(number, session);
+        if (found && found.hidden && !session) {
+          session = await store.getOptionalSession();
+          if (session) found = await fetchMindset(number, session);
+        }
+        if (!found) {
+          document.querySelector("#profile").hidden = true;
+          ui.setStatus(status, t("common.notFound"), "error");
+          return;
+        }
+        if (found.hidden) {
+          document.querySelector("#profile").hidden = true;
+          ui.setStatus(status, t("profile.notPublished"));
+          return;
+        }
+        doc = found;
+        showProfile();
+        if (!session) session = await store.getOptionalSession();
+        await Promise.all([loadSocial(), loadSimilar(), loadHistory()]);
+        await loadSchoolTab();
+      } finally {
+        await ui.endPageLoad();
       }
-      if (!found) {
-        ui.setStatus(status, t("common.notFound"), "error");
-        return;
-      }
-      if (found.hidden) {
-        ui.setStatus(status, t("profile.notPublished"));
-        return;
-      }
-      doc = found;
-      showProfile();
-      if (!session) session = await store.getOptionalSession();
-      await Promise.all([loadSocial(), loadSimilar(), loadHistory()]);
-      await loadSchoolTab();
     }
 
     load().catch(function (error) {
       if (doc) return;
+      document.querySelector("#profile").hidden = true;
       ui.setStatus(status, ui.errorText(error), "error");
     });
   });

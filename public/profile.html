@@ -6,133 +6,137 @@
   <meta name="theme-color" content="#eafbf5" />
   <title>Mindset Bucket</title>
   <meta name="description" content="A mind in the bucket. Only its number is public." />
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg" />
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcmq5bf" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvcmq5bf" />
 </head>
-<body data-tab="">
+<body data-tab="" class="is-page-loading">
   <main class="page">
     <p id="page-status" class="status" role="status" hidden></p>
 
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <section id="profile" class="profile-face" hidden>
-      <div class="profile-sticky">
-        <div class="profile-top">
-          <div class="profile-top-main">
-            <h1 id="title" class="profile-number">#</h1>
-          </div>
-          <div class="profile-tools" role="group">
-            <span id="in-school" class="school-chip" hidden data-i18n="profile.inSchool">In your school</span>
-            <span class="tail-wrap">
-              <button type="button" id="tail" class="btn btn-compact btn-primary" hidden aria-pressed="false" data-i18n="profile.tail" aria-describedby="tail-popover">Swim after</button>
-              <span id="tail-popover" class="tail-popover" role="tooltip" hidden data-i18n="profile.tailHint">If this frequency draws you, enter its current and send a signal.</span>
-            </span>
-            <button type="button" id="share" class="btn-icon" data-i18n-aria="profile.share" aria-label="Share"></button>
-            <a id="edit" class="btn-icon" href="/new" hidden data-i18n-aria="profile.edit" aria-label="Edit"></a>
-            <a id="manage" class="btn-icon" href="/me" hidden data-i18n-aria="profile.manage" aria-label="Manage"></a>
-          </div>
+      <div class="page-header profile-top">
+        <div class="profile-top-main">
+          <h1 id="title" class="profile-number">#</h1>
+          <p class="head-meta">
+            <span id="alias" class="alias" hidden></span>
+            <span id="badges"></span>
+            <span id="meta" class="card-when"></span>
+          </p>
         </div>
+        <div class="profile-tools" role="group">
+          <span id="in-school" class="school-chip" hidden data-i18n="profile.inSchool">In your school</span>
+          <span class="tail-wrap">
+            <button type="button" id="tail" class="btn btn-compact btn-primary" hidden aria-pressed="false" data-i18n="profile.tail" aria-describedby="tail-popover">Swim after</button>
+            <span id="tail-popover" class="tail-popover" role="tooltip" hidden data-i18n="profile.tailHint">If this frequency draws you, enter its current and send a signal.</span>
+          </span>
+          <button type="button" id="share" class="btn-icon" data-i18n-aria="profile.share" aria-label="Share"></button>
+          <a id="edit" class="btn-icon" href="/new" hidden data-i18n-aria="profile.edit" aria-label="Edit"></a>
+          <a id="manage" class="btn-icon" href="/me" hidden data-i18n-aria="profile.manage" aria-label="Manage"></a>
+          <a class="head-back" href="/lake" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+      <div class="page-body">
+        <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
+          <img class="page-loading-logo" src="/assets/logo.svg?v=mvcmq5bf" width="280" height="280" alt="" />
+        </div>
+
         <p id="same-current" class="profile-current" hidden data-i18n="profile.sameCurrent">Swimming the same current as you right now.</p>
-        <p class="profile-subline card-meta meta">
-          <span id="alias" class="alias" hidden></span>
-          <span id="badges"></span>
-          <span id="meta" class="card-when"></span>
-        </p>
 
-        <div id="face-timeline" class="face-timeline global-timeline">
-          <label class="field timeline-field" for="timeline-range">
-            <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
-            <span class="timeline-when">
-              <span id="timeline-when"></span>
-              <span id="timeline-count"></span>
-            </span>
-          </label>
-          <p id="timeline-empty" class="empty" hidden data-i18n="history.noneYet">No versions yet.</p>
-        </div>
-
-        <div class="tabs depth-tabs" role="tablist" aria-label="Profile">
-          <button type="button" id="tab-surface" role="tab" aria-selected="true" aria-controls="pane-surface" data-tab="surface" data-i18n="profile.surfaceTitle">On the surface</button>
-          <button type="button" id="tab-deep" role="tab" aria-selected="false" aria-controls="pane-deep" data-tab="deep" data-i18n="profile.deepTitle">Beneath the surface</button>
-          <button type="button" id="tab-nearby" role="tab" aria-selected="false" aria-controls="pane-nearby" data-tab="nearby" data-i18n="profile.similar">Nearby</button>
-          <button type="button" id="tab-school" role="tab" aria-selected="false" aria-controls="pane-school" data-tab="school" data-i18n="profile.schoolTab">School</button>
-        </div>
-      </div>
-
-      <div class="actions actions-primary">
-        <button type="button" id="shine" class="btn" hidden data-i18n="profile.shine">Shine a scale</button>
-        <button type="button" id="join" class="btn btn-primary" hidden data-i18n="profile.joinSchool">Join the school</button>
-        <button type="button" id="accept" class="btn btn-primary" hidden data-i18n="profile.acceptSchool">Accept into the school</button>
-        <button type="button" id="decline" class="btn" hidden data-i18n="profile.decline">Decline</button>
-        <button type="button" id="withdraw" class="btn" hidden data-i18n="profile.withdraw">Withdraw</button>
-      </div>
-
-      <div id="ritual" class="ritual" hidden></div>
-      <p id="action-status" class="status" role="status" hidden></p>
-
-      <section class="section depth-section">
-        <div id="pane-surface" role="tabpanel" aria-labelledby="tab-surface">
-          <div id="surface-slides" class="reading-slides compass" aria-roledescription="carousel">
-            <div class="slides-toolbar slides-toolbar-end">
-              <button type="button" id="how-to-read-open" class="how-to-read-link" data-i18n="guide.howTo">How should I read this?</button>
-            </div>
-            <div class="slides-viewport">
-              <div class="slides-track" id="surface-track">
-                <div class="slide" data-slide="0" id="slide-radar">
-                  <div id="radar-face" class="radar-face"></div>
-                </div>
-                <div class="slide" data-slide="1" id="slide-bars">
-                  <div id="face-bars" class="face-bars"></div>
-                </div>
-                <div class="slide" data-slide="2" id="slide-trend">
-                  <div id="trend" class="compass-trend"></div>
-                </div>
-              </div>
-            </div>
-            <div class="slide-nav" role="tablist" aria-label="Surface reading">
-              <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-radar" data-slide-to="0"></button>
-              <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-bars" data-slide-to="1"></button>
-              <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-trend" data-slide-to="2"></button>
-            </div>
+        <div class="profile-stick">
+          <div id="face-timeline" class="face-timeline global-timeline" hidden>
+            <label class="field timeline-field" for="timeline-range">
+              <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
+              <span class="timeline-when">
+                <span id="timeline-when"></span>
+                <span id="timeline-count"></span>
+              </span>
+            </label>
           </div>
-          <div id="surface" class="posts"></div>
+
+          <div class="profile-tabs-bar">
+            <div class="tabs depth-tabs" role="tablist" aria-label="Profile">
+              <button type="button" id="tab-surface" role="tab" aria-selected="true" aria-controls="pane-surface" data-tab="surface" data-i18n="profile.surfaceTitle">On the surface</button>
+              <button type="button" id="tab-deep" role="tab" aria-selected="false" aria-controls="pane-deep" data-tab="deep" data-i18n="profile.deepTitle">Beneath the surface</button>
+              <button type="button" id="tab-nearby" role="tab" aria-selected="false" aria-controls="pane-nearby" data-tab="nearby" data-i18n="profile.similar">Nearby</button>
+              <button type="button" id="tab-school" role="tab" aria-selected="false" aria-controls="pane-school" data-tab="school" data-i18n="profile.schoolTab">School</button>
+            </div>
+            <button type="button" id="how-to-read" class="btn-round" data-i18n-aria="guide.howTo" aria-label="How should I read this?">?</button>
+          </div>
         </div>
 
-        <div id="pane-deep" role="tabpanel" aria-labelledby="tab-deep" hidden>
-          <p id="deep-locked" class="empty" hidden data-i18n="profile.lockedUntilSchool">Hidden until you join their school.</p>
-          <div id="deep-content" hidden>
-            <div id="deep-slides" class="reading-slides compass" aria-roledescription="carousel">
-              <div class="slides-toolbar slides-toolbar-end">
-                <button type="button" id="how-to-read-closed" class="how-to-read-link" data-i18n="guide.howTo">How should I read this?</button>
-              </div>
+        <div class="actions actions-primary">
+          <button type="button" id="shine" class="btn" hidden data-i18n="profile.shine">Shine a scale</button>
+          <button type="button" id="join" class="btn btn-primary" hidden data-i18n="profile.joinSchool">Join the school</button>
+          <button type="button" id="accept" class="btn btn-primary" hidden data-i18n="profile.acceptSchool">Accept into the school</button>
+          <button type="button" id="decline" class="btn" hidden data-i18n="profile.decline">Decline</button>
+          <button type="button" id="withdraw" class="btn" hidden data-i18n="profile.withdraw">Withdraw</button>
+        </div>
+
+        <div id="ritual" class="ritual" hidden></div>
+        <p id="action-status" class="status" role="status" hidden></p>
+
+        <section class="section depth-section">
+          <div id="pane-surface" role="tabpanel" aria-labelledby="tab-surface">
+            <div id="surface-slides" class="reading-slides compass" aria-roledescription="carousel">
               <div class="slides-viewport">
-                <div class="slides-track" id="deep-track">
-                  <div class="slide" data-slide="0" id="slide-deep-radar">
-                    <div id="deep-radar" class="radar-face"></div>
+                <div class="slides-track" id="surface-track">
+                  <div class="slide" data-slide="0" id="slide-radar">
+                    <div id="radar-face" class="radar-face"></div>
                   </div>
-                  <div class="slide" data-slide="1" id="slide-deep-bars">
-                    <div id="deep-bars" class="face-bars"></div>
+                  <div class="slide" data-slide="1" id="slide-bars">
+                    <div id="face-bars" class="face-bars"></div>
+                  </div>
+                  <div class="slide" data-slide="2" id="slide-trend">
+                    <div id="trend" class="compass-trend"></div>
                   </div>
                 </div>
               </div>
-              <div class="slide-nav" role="tablist" aria-label="Deep reading">
-                <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-deep-radar" data-slide-to="0"></button>
-                <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-deep-bars" data-slide-to="1"></button>
+              <div class="slide-nav" role="tablist" aria-label="Surface reading">
+                <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-radar" data-slide-to="0" data-radar-dot="1"></button>
+                <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-bars" data-slide-to="1"></button>
+                <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-trend" data-slide-to="2"></button>
               </div>
             </div>
-            <p id="deep-note" class="hint" hidden data-i18n="profile.deepMissing">No full reading yet.</p>
-            <div id="exchanged" class="posts"></div>
+            <div id="surface" class="posts"></div>
           </div>
-        </div>
 
-        <div id="pane-nearby" role="tabpanel" aria-labelledby="tab-nearby" hidden>
-          <div id="similar" class="feed"></div>
-        </div>
+          <div id="pane-deep" role="tabpanel" aria-labelledby="tab-deep" hidden>
+            <p id="deep-locked" class="empty" hidden data-i18n="profile.lockedUntilSchool">Hidden until you join their school.</p>
+            <div id="deep-content" hidden>
+              <div id="deep-slides" class="reading-slides compass" aria-roledescription="carousel">
+                <div class="slides-viewport">
+                  <div class="slides-track" id="deep-track">
+                    <div class="slide" data-slide="0" id="slide-deep-radar">
+                      <div id="deep-radar" class="radar-face"></div>
+                    </div>
+                    <div class="slide" data-slide="1" id="slide-deep-bars">
+                      <div id="deep-bars" class="face-bars"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="slide-nav" role="tablist" aria-label="Deep reading">
+                  <button type="button" class="slide-dot is-active" role="tab" aria-selected="true" aria-controls="slide-deep-radar" data-slide-to="0" data-radar-dot="1"></button>
+                  <button type="button" class="slide-dot" role="tab" aria-selected="false" aria-controls="slide-deep-bars" data-slide-to="1"></button>
+                </div>
+              </div>
+              <p id="deep-note" class="hint" hidden data-i18n="profile.deepMissing">No full reading yet.</p>
+              <div id="exchanged" class="posts"></div>
+            </div>
+          </div>
 
-        <div id="pane-school" role="tabpanel" aria-labelledby="tab-school" hidden>
-          <div id="school-list" class="feed"></div>
-          <p id="school-empty" class="empty" hidden data-i18n="profile.schoolTabEmpty">Be in their school to see this.</p>
-        </div>
-      </section>
+          <div id="pane-nearby" role="tabpanel" aria-labelledby="tab-nearby" hidden>
+            <div id="similar" class="feed"></div>
+          </div>
+
+          <div id="pane-school" role="tabpanel" aria-labelledby="tab-school" hidden>
+            <div id="school-list" class="feed"></div>
+            <p id="school-empty" class="empty" hidden data-i18n="profile.schoolTabEmpty">Be in their school to see this.</p>
+          </div>
+        </section>
+      </div>
     </section>
   </main>
 
@@ -146,16 +150,16 @@
     </form>
   </dialog>
 
-  <script src="/assets/config.js" defer></script>
-  <script src="/assets/i18n.js" defer></script>
-  <script src="/assets/demographics.js" defer></script>
-  <script src="/assets/lens-v2.js" defer></script>
-  <script src="/assets/reading.js" defer></script>
-  <script src="/assets/firestore.js" defer></script>
-  <script type="module" src="/assets/auth.js"></script>
-  <script src="/assets/store.js" defer></script>
-  <script src="/assets/social.js" defer></script>
-  <script src="/assets/ui.js" defer></script>
-  <script src="/assets/profile.js" defer></script>
+  <script src="/assets/config.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/i18n.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/demographics.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/lens-v2.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/reading.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/firestore.js?v=mvcmq5bf" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvcmq5bf"></script>
+  <script src="/assets/store.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/social.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/ui.js?v=mvcmq5bf" defer></script>
+  <script src="/assets/profile.js?v=mvcmq5bf" defer></script>
 </body>
 </html>
