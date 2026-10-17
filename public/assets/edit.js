@@ -162,9 +162,20 @@
 
     function expandTextarea(ta) {
       if (!isMobileWizard() || !ta || ta.tagName !== "TEXTAREA") return;
+      var field = ta.closest(".field");
+      var count = field && field.querySelector("small[data-count-for]");
+      var countSpace = 0;
+      if (count) {
+        var countStyle = window.getComputedStyle(count);
+        countSpace =
+          Math.ceil(count.getBoundingClientRect().height) +
+          Math.ceil(parseFloat(countStyle.marginTop) || 0) +
+          Math.ceil(parseFloat(countStyle.marginBottom) || 0) +
+          6;
+      }
       var rect = ta.getBoundingClientRect();
-      var gap = 12;
-      var available = Math.floor(actionsTop() - rect.top - gap);
+      var gap = 8;
+      var available = Math.floor(actionsTop() - rect.top - gap - countSpace);
       if (available < 120) return;
       if (!ta.dataset.baseMinHeight) {
         ta.dataset.baseMinHeight = ta.style.minHeight || "";
@@ -188,7 +199,9 @@
       if (!isMobileWizard()) return;
       var fromField = event.relatedTarget && event.relatedTarget.tagName === "TEXTAREA";
       if (!fromField) focusScrollY = window.scrollY || 0;
-      ta.scrollIntoView({ block: "start", behavior: "auto" });
+      var field = ta.closest(".field");
+      if (field) field.scrollIntoView({ block: "start", behavior: "auto" });
+      else ta.scrollIntoView({ block: "start", behavior: "auto" });
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
           expandTextarea(ta);
