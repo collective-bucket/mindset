@@ -504,22 +504,6 @@ a.head-side:hover {
 
 #mindset-form [data-step="1"] .field {
   margin: 14px 0 -8px;
-  scroll-margin-top: var(--wizard-field-scroll-margin, 72px);
-}
-
-#mindset-form [data-step="1"] textarea {
-  transition: min-height 0.12s ease;
-}
-
-#mindset-form [data-step="1"] textarea.is-focus-tall {
-  resize: none;
-  transition: none;
-}
-
-#mindset-form [data-step="1"] .field:focus-within > span:first-child,
-#mindset-form [data-step="1"] .field:focus-within > small[data-count-for] {
-  position: relative;
-  z-index: 1;
 }
 
 .field > span:first-child {

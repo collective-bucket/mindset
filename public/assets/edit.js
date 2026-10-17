@@ -150,10 +150,6 @@
       scanField(id);
     });
 
-    var tallTa = null;
-    var focusViewportHandler = null;
-    var expandSettleTimer = 0;
-    var pointerDismiss = false;
     var advancingField = false;
 
     function isMobileWizard() {
@@ -189,152 +185,24 @@
       return true;
     }
 
-    function visibleBottom() {
-      var vv = window.visualViewport;
-      if (vv) return vv.offsetTop + vv.height;
-      return window.innerHeight;
-    }
-
-    function viewportHeight() {
-      var vv = window.visualViewport;
-      return vv ? vv.height : window.innerHeight;
-    }
-
-    function expandTextarea(ta) {
-      if (!isMobileWizard() || !ta || ta.tagName !== "TEXTAREA") return;
-      if (document.activeElement !== ta) return;
-      var field = ta.closest(".field");
-      var count = field && field.querySelector("small[data-count-for]");
-      var countSpace = 0;
-      if (count) {
-        var countStyle = window.getComputedStyle(count);
-        countSpace =
-          Math.ceil(count.getBoundingClientRect().height) +
-          Math.ceil(parseFloat(countStyle.marginTop) || 0) +
-          Math.ceil(parseFloat(countStyle.marginBottom) || 0) +
-          6;
-      }
-      var rect = ta.getBoundingClientRect();
-      var gap = 12;
-      var vvH = viewportHeight();
-      var floor = Math.max(160, Math.round(vvH * 0.4));
-      var available = Math.floor(visibleBottom() - rect.top - gap - countSpace);
-      if (available < 100) return;
-      var height = Math.min(available, Math.max(floor, Math.round(vvH * 0.55)), Math.round(vvH * 0.72));
-      if (height < 100) height = available;
-      if (!ta.dataset.baseMinHeight) {
-        ta.dataset.baseMinHeight = ta.style.minHeight || "";
-      }
-      ta.style.minHeight = height + "px";
-      ta.classList.add("is-focus-tall");
-      tallTa = ta;
-    }
-
-    function collapseTextarea(ta) {
-      if (!ta || !ta.classList.contains("is-focus-tall")) return;
-      ta.style.minHeight = ta.dataset.baseMinHeight || "";
-      ta.classList.remove("is-focus-tall");
-      delete ta.dataset.baseMinHeight;
-      if (tallTa === ta) tallTa = null;
-    }
-
-    function clearExpandSettle() {
-      if (expandSettleTimer) {
-        window.clearTimeout(expandSettleTimer);
-        expandSettleTimer = 0;
-      }
-    }
-
-    function detachViewport() {
-      clearExpandSettle();
-      if (window.visualViewport && focusViewportHandler) {
-        window.visualViewport.removeEventListener("resize", focusViewportHandler);
-        window.visualViewport.removeEventListener("scroll", focusViewportHandler);
-        focusViewportHandler = null;
-      }
-    }
-
-    function scheduleExpand(ta) {
-      clearExpandSettle();
-      expandSettleTimer = window.setTimeout(function () {
-        expandSettleTimer = 0;
-        expandTextarea(ta);
-      }, 120);
-    }
-
-    function releaseTall(options) {
-      options = options || {};
-      if (!tallTa) {
-        detachViewport();
-        return;
-      }
-      var ta = tallTa;
-      detachViewport();
-      collapseTextarea(ta);
-      if (options.blur && document.activeElement === ta) ta.blur();
-    }
-
-    function syncFieldScrollMargin() {
-      var steps = document.querySelector(".wizard-steps");
-      var offset = 16;
-      if (steps && !steps.hidden) offset = Math.ceil(steps.getBoundingClientRect().height) + 8;
-      form.style.setProperty("--wizard-field-scroll-margin", offset + "px");
-    }
-
-    form.addEventListener("focusin", function (event) {
-      var ta = event.target;
-      if (!ta || ta.tagName !== "TEXTAREA" || !isTextField(ta.id)) return;
-      if (!isMobileWizard() || step !== 1) return;
-      pointerDismiss = false;
-      if (tallTa && tallTa !== ta) collapseTextarea(tallTa);
-      detachViewport();
-      syncFieldScrollMargin();
-      var field = ta.closest(".field");
-      if (field) field.scrollIntoView({ block: "nearest", behavior: "auto" });
-      if (window.visualViewport) {
-        focusViewportHandler = function () {
-          if (document.activeElement === ta) scheduleExpand(ta);
-        };
-        window.visualViewport.addEventListener("resize", focusViewportHandler);
-        window.visualViewport.addEventListener("scroll", focusViewportHandler);
-      }
-      scheduleExpand(ta);
-    });
-
+    // Native field height on mobile. Only advance when the user finishes a field (Next / Return).
     form.addEventListener("focusout", function (event) {
-      var ta = event.target;
-      if (!ta || ta.tagName !== "TEXTAREA" || !isTextField(ta.id)) return;
-      var next = event.relatedTarget;
-      if (next && form.contains(next) && (next.tagName === "TEXTAREA" || next === aliasInput)) {
-        collapseTextarea(ta);
+      var el = event.target;
+      if (!el || !isMobileWizard() || step !== 1) return;
+      if (advancingField) return;
+      if (event.relatedTarget) return;
+      if (el.getAttribute("enterkeyhint") !== "next") return;
+      if (el.tagName === "TEXTAREA" && isTextField(el.id)) {
+        focusNextField(el);
         return;
       }
-      if (advancingField) {
-        collapseTextarea(ta);
-        return;
-      }
-      var advance =
-        isMobileWizard() &&
-        step === 1 &&
-        !next &&
-        !pointerDismiss &&
-        ta.getAttribute("enterkeyhint") === "next";
-      if (advance) {
-        detachViewport();
-        collapseTextarea(ta);
-        // iOS drops async focus() after keyboard Done; stay in this event turn.
-        focusNextField(ta);
-        return;
-      }
-      pointerDismiss = false;
-      releaseTall();
+      if (el === aliasInput) focusNextField(el);
     });
 
     form.addEventListener("keydown", function (event) {
       if (event.key !== "Enter" || event.shiftKey) return;
       var el = event.target;
-      if (!el) return;
-      if (!isMobileWizard() || step !== 1) return;
+      if (!el || !isMobileWizard() || step !== 1) return;
       if (el.tagName === "TEXTAREA" && isTextField(el.id) && el.getAttribute("enterkeyhint") === "next") {
         event.preventDefault();
         focusNextField(el);
@@ -356,31 +224,6 @@
       event.preventDefault();
       focusNextField(el);
     });
-
-    document.addEventListener(
-      "pointerdown",
-      function (event) {
-        if (!tallTa && !(document.activeElement && isTextField(document.activeElement.id))) return;
-        var target = event.target;
-        if (target === tallTa) return;
-        if (target.tagName === "TEXTAREA" && isTextField(target.id)) {
-          if (tallTa && tallTa !== target) collapseTextarea(tallTa);
-          return;
-        }
-        if (target === aliasInput) {
-          if (tallTa) collapseTextarea(tallTa);
-          return;
-        }
-        if (form.contains(target) && target.closest && target.closest(".actions")) {
-          pointerDismiss = true;
-          releaseTall({ blur: true });
-          return;
-        }
-        pointerDismiss = true;
-        releaseTall({ blur: true });
-      },
-      true
-    );
 
     function firstBlockingField() {
       return window.MindsetLens.fields.find(function (field) {
@@ -532,7 +375,6 @@
     });
 
     function go(next) {
-      releaseTall();
       if (next === 3 && !guardPrivacy()) next = 1;
       step = next;
       form.querySelectorAll(".wizard-pane").forEach(function (pane) {
