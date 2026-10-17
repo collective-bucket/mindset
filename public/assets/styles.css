@@ -1695,10 +1695,15 @@ div.entry {
   flex-wrap: nowrap;
   gap: 8px 10px;
   margin: 16px 0 12px;
+  padding: 8px 0;
   overflow-x: auto;
   color: var(--muted);
   font-size: inherit;
   font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background: var(--paper);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
@@ -1735,11 +1740,13 @@ div.entry {
 }
 
 .wizard-step + .wizard-step::before {
-  content: "---";
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 1px;
   margin-right: 10px;
-  color: var(--muted);
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  background: var(--hair);
+  flex: 0 0 auto;
 }
 
 .wizard-step:hover {
@@ -1752,8 +1759,8 @@ div.entry {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--accent-mid);
+  color: var(--paper);
   display: inline-grid;
   place-items: center;
   font-size: 12px;
@@ -1792,10 +1799,6 @@ div.entry {
   font-weight: 500;
 }
 
-#open-fields {
-  margin-top: 1.75em;
-}
-
 .preview-toolbar {
   display: flex;
   align-items: center;
@@ -1813,15 +1816,15 @@ div.entry {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: var(--accent);
   color: #ffffff;
   font: inherit;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
