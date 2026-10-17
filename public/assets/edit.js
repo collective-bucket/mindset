@@ -322,9 +322,8 @@
       if (advance) {
         detachViewport();
         collapseTextarea(ta);
-        requestAnimationFrame(function () {
-          focusNextField(ta);
-        });
+        // iOS drops async focus() after keyboard Done; stay in this event turn.
+        focusNextField(ta);
         return;
       }
       pointerDismiss = false;
@@ -345,6 +344,17 @@
         event.preventDefault();
         focusNextField(el);
       }
+    });
+
+    form.addEventListener("beforeinput", function (event) {
+      if (!isMobileWizard() || step !== 1) return;
+      if (event.inputType !== "insertLineBreak" && event.inputType !== "insertParagraph") return;
+      if (event.shiftKey) return;
+      var el = event.target;
+      if (!el || el.tagName !== "TEXTAREA" || !isTextField(el.id)) return;
+      if (el.getAttribute("enterkeyhint") !== "next") return;
+      event.preventDefault();
+      focusNextField(el);
     });
 
     document.addEventListener(
