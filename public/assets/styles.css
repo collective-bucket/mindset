@@ -232,11 +232,46 @@ p {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin: 10px 0 12px;
+  gap: 4px 8px;
+  margin: 6px 0 8px;
+  padding: 4px 0 18px;
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  background: var(--paper);
+  border-bottom: 1px solid var(--hair);
+  box-shadow: 0 10px 18px -14px rgba(20, 20, 20, 0.28);
+}
+
+.head-back {
+  order: 3;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  width: 12px;
+  height: calc(30px * 1.2);
+  margin: 0 -2px 0 0;
+  padding: 0 0 0 8px;
+  color: var(--muted);
+  text-decoration: none;
+  background: none;
+  border: 0;
+}
+
+.head-back svg {
+  display: block;
+  width: 10px;
+  height: 16px;
+}
+
+.head-back:hover {
+  color: var(--accent-strong);
 }
 
 .head-main {
+  order: 1;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -253,6 +288,7 @@ p {
 }
 
 .head-side {
+  order: 2;
   color: var(--muted);
   font-size: 14px;
   text-align: right;
@@ -462,7 +498,7 @@ a.head-side:hover {
 }
 
 #mindset-form [data-step="1"] .field {
-  margin: 24px 0 -12px;
+  margin: 14px 0 -8px;
   scroll-margin-top: 64px;
 }
 
@@ -1792,14 +1828,23 @@ div.entry {
 
 /* ---- Wizard / guide ---- */
 
+/* Wizard visible: page title scrolls away; steps stick when they hit the top. */
+#gated:has(> .wizard-steps:not([hidden])) > .head {
+  position: static;
+  z-index: auto;
+  border-bottom: 0;
+  box-shadow: none;
+  padding-bottom: 8px;
+}
+
 .wizard-steps {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: nowrap;
   gap: 8px 10px;
-  margin: 16px 0 12px;
-  padding: 8px 0;
+  margin: 8px 0 12px;
+  padding: 8px 0 12px;
   overflow-x: auto;
   color: var(--muted);
   font-size: inherit;
@@ -1808,9 +1853,22 @@ div.entry {
   top: 0;
   z-index: 8;
   background: var(--paper);
+  border-bottom: 1px solid var(--hair);
   box-shadow: 0 10px 18px -14px rgba(20, 20, 20, 0.28);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+}
+
+.pane-head {
+  margin: 0 0 8px;
+}
+
+.pane-head h2 {
+  margin-bottom: 4px;
+}
+
+.pane-head .hint {
+  margin: 0;
 }
 
 .wizard-steps::-webkit-scrollbar {
@@ -2014,10 +2072,22 @@ body.has-gamebar #mindset-form > .actions {
   color: var(--accent-strong);
 }
 
+#mindset-form > .actions .btn:not(.btn-primary) {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent-deep);
+}
+
+#mindset-form > .actions .btn:not(.btn-primary):hover {
+  background: var(--hair);
+  border-color: transparent;
+  color: var(--accent-deep);
+}
+
 #mindset-form > .actions .actions-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   flex: 0 0 auto;
   margin-left: auto;
   justify-content: flex-end;

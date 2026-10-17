@@ -19,7 +19,7 @@
         <h1 id="heading" data-i18n="create.title">Dive in</h1>
         <p class="head-meta" id="edit-meta" data-i18n="create.tagline">Become a fish</p>
       </div>
-      <a class="head-side" id="head-home" href="/" data-i18n="footer.home">Home</a>
+      <a class="head-back" href="/" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     </div>
 
     <nav class="wizard-steps" aria-label="Steps" hidden>
@@ -53,20 +53,26 @@
 
       <section class="wizard-pane" data-step="1" hidden>
         <section class="section">
-          <h2 data-i18n="create.openTitle">On your profile</h2>
-          <p class="hint" data-i18n="create.openHint">These three show on your profile. One line you hold true is enough to publish.</p>
+          <header class="pane-head">
+            <h2 data-i18n="create.openTitle">On your profile</h2>
+            <p class="hint" data-i18n="create.openHint">These three show on your profile. One line you hold true is enough to publish.</p>
+          </header>
           <div id="open-fields"></div>
         </section>
 
         <section class="section">
-          <h2 data-i18n="create.closedTitle">Stays with you</h2>
-          <p class="hint" data-i18n="create.closedHint">What you don't say out loud, your desire and the side you're ashamed of go to no one. Their readings stay with you too.</p>
+          <header class="pane-head">
+            <h2 data-i18n="create.closedTitle">Stays with you</h2>
+            <p class="hint" data-i18n="create.closedHint">What you don't say out loud, your desire and the side you're ashamed of go to no one. Their readings stay with you too.</p>
+          </header>
           <div id="closed-fields"></div>
         </section>
 
         <section class="section" id="alias-section">
-          <h2 data-i18n="alias.title">Your alias</h2>
-          <p class="hint" data-i18n="alias.hint">Your school sees it; nobody else. It's the only name you show.</p>
+          <header class="pane-head">
+            <h2 data-i18n="alias.title">Your alias</h2>
+            <p class="hint" data-i18n="alias.hint">Your school sees it; nobody else. It's the only name you show.</p>
+          </header>
           <label class="field" for="alias"><span data-i18n="alias.label">Alias</span>
             <span class="prefix-input"><span aria-hidden="true">@</span><input id="alias" type="text" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="20" pattern="[a-z0-9_]{3,20}" aria-describedby="alias-rule" /></span>
             <small id="alias-rule" data-i18n="alias.rule">3-20 lowercase letters, digits or _.</small>
@@ -76,8 +82,10 @@
 
       <section class="wizard-pane" data-step="2" hidden>
         <section class="section">
-          <h2 data-i18n="create.aboutTitle">About you</h2>
-          <p class="hint" data-i18n="create.aboutHint">Optional. Age range, gender and country show on your profile and shape lists and suggestions. City is never shown individually; it is only counted.</p>
+          <header class="pane-head">
+            <h2 data-i18n="create.aboutTitle">About you</h2>
+            <p class="hint" data-i18n="create.aboutHint">Optional. Age range, gender and country show on your profile and shape lists and suggestions. City is never shown individually; it is only counted.</p>
+          </header>
           <div id="demo-suggest" class="suggest" hidden>
             <p id="demo-suggest-text" class="hint"></p>
             <button type="button" id="demo-suggest-apply" class="btn btn-small" data-i18n="create.applySuggest">Apply</button>

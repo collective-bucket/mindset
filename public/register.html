@@ -11,10 +11,12 @@
 <body data-tab="" data-page="register" data-title="auth.registerTitle">
   <main class="page page-narrow">
     <div class="head">
-      <h1 data-i18n="auth.registerTitle">Create account</h1>
-      <a class="head-side" href="/" data-i18n="footer.home">Home</a>
+      <a class="head-back" href="/" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div class="head-main">
+        <h1 data-i18n="auth.registerTitle">Create account</h1>
+        <p class="head-meta" data-i18n="auth.registerLead">Take a number in the lake. An account lets you write a mindset and form a school.</p>
+      </div>
     </div>
-    <p class="lead" data-i18n="auth.registerLead">Take a number in the lake. An account lets you write a mindset and form a school.</p>
     <form id="auth-form" class="auth-form" novalidate>
       <p class="hint" data-i18n="auth.adultWhy">Schools and closed readings can get personal. Mindset Bucket is for people 18 and older.</p>
       <label class="check"><input id="adult" type="checkbox" required /> <span data-i18n="auth.adult">I am 18 or older.</span></label>

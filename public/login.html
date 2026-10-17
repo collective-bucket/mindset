@@ -11,10 +11,12 @@
 <body data-tab="" data-page="login" data-title="auth.loginTitle">
   <main class="page page-narrow">
     <div class="head">
-      <h1 data-i18n="auth.loginTitle">Sign in</h1>
-      <a class="head-side" href="/" data-i18n="footer.home">Home</a>
+      <a class="head-back" href="/" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div class="head-main">
+        <h1 data-i18n="auth.loginTitle">Sign in</h1>
+        <p class="head-meta" data-i18n="auth.loginLead">Welcome back to the lake.</p>
+      </div>
     </div>
-    <p class="lead" data-i18n="auth.loginLead">Welcome back to the lake.</p>
     <form id="auth-form" class="auth-form" novalidate>
       <button type="button" id="google" class="btn btn-ghost btn-block btn-google"><span class="g" aria-hidden="true">G</span><span data-i18n="auth.google">Continue with Google</span></button>
       <p class="landing-or" data-i18n="auth.or">or</p>

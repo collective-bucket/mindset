@@ -12,12 +12,14 @@
 <body data-tab="" data-title="privacyPage.pageTitle">
   <main class="page">
     <div class="head">
-      <h1 data-i18n="privacyPage.pageTitle">Privacy notice</h1>
-      <a class="head-side" href="/" data-i18n="privacyPage.back">Home</a>
+      <a class="head-back" href="/" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div class="head-main">
+        <h1 data-i18n="privacyPage.pageTitle">Privacy notice</h1>
+        <p class="head-meta" data-i18n="privacyPage.lead">What Mindset Bucket stores, and what stays on your device.</p>
+      </div>
     </div>
 
     <section class="static-page">
-      <p class="lead" data-i18n="privacyPage.lead">What Mindset Bucket stores, and what stays on your device.</p>
       <p data-i18n="privacyPage.body1">Accounts use Firebase Authentication (email or Google). Mindset texts, scores, tails, glints and school links live in Firestore under the Collective Bucket project.</p>
       <p data-i18n="privacyPage.body2">Closed texts and closed readings are never written into public lists or stranger-facing pages. Open texts and the four open readings appear on a profile when you publish.</p>
       <p data-i18n="privacyPage.body3">We do not sell personal data. There are no third-party ad trackers on this static site. Access control is enforced by Firestore security rules.</p>

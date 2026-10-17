@@ -15,15 +15,16 @@
 
     <div id="gated" hidden>
       <div class="head">
-        <h1 class="visually-hidden" data-i18n="root.title">Root</h1>
-        <a class="head-side" href="/me" data-i18n="root.back">Me</a>
+        <a class="head-back" href="/me" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="head-main">
+          <h1 class="visually-hidden" data-i18n="root.title">Root</h1>
+          <p class="head-meta" data-i18n="root.lead">Numbers for the whole lake, and the simulation that moves test fish one stage at a time.</p>
+        </div>
       </div>
       <p id="page-status" class="status" role="status" hidden></p>
       <p id="denied" class="empty" hidden data-i18n="root.denied">This screen is only for the root fish.</p>
 
       <div id="root-body" hidden>
-        <p class="lead" data-i18n="root.lead">Numbers for the whole lake, and the simulation that moves test fish one stage at a time.</p>
-
         <section class="section">
           <h2 data-i18n="root.statsTitle">The lake in numbers</h2>
           <dl id="stats" class="stat-grid"></dl>
