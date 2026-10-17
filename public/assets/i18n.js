@@ -237,6 +237,8 @@
 
 
       "history.title": "Your history",
+      "history.pullLead": "Your history",
+      "history.change": "Change",
       "history.hint": "Every publish is kept as a version. Choose who can watch how your mind changes.",
       "history.none": "Only me",
       "history.school": "My school",
@@ -244,6 +246,9 @@
       "history.saved.none": "Your history is private.",
       "history.saved.school": "Your school can watch your history.",
       "history.saved.public": "Everyone can watch your history.",
+      "history.state.none": "only you can see",
+      "history.state.school": "your school can see",
+      "history.state.public": "everyone can see",
       "history.timeline": "Change over time",
       "history.trend": "How the four readings moved across versions",
       "history.now": "Now",
@@ -715,6 +720,8 @@
 
 
       "history.title": "Geçmişin",
+      "history.pullLead": "Geçmişini",
+      "history.change": "değiştir",
       "history.hint": "Her yayın bir versiyon olarak saklanır. Zihninin nasıl değiştiğini kimin izleyebileceğini seç.",
       "history.none": "Yalnız ben",
       "history.school": "Sürüm",
@@ -722,6 +729,9 @@
       "history.saved.none": "Geçmişin gizli.",
       "history.saved.school": "Sürün geçmişini izleyebilir.",
       "history.saved.public": "Herkes geçmişini izleyebilir.",
+      "history.state.none": "yalnız sen görebilir",
+      "history.state.school": "sürün görebilir",
+      "history.state.public": "herkes görebilir",
       "history.timeline": "Zaman içindeki değişim",
       "history.trend": "Dört okumanın versiyonlar boyunca değişimi",
       "history.now": "Şimdi",

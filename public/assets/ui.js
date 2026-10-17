@@ -238,7 +238,6 @@
 
     function chromeForScroll() {
       if (body.classList.contains("has-gamebar") && !nav.hidden) return nav;
-      if (!siteFooter.hidden) return siteFooter;
       return null;
     }
 

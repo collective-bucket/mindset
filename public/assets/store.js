@@ -151,13 +151,14 @@
     await db().commit([db().writes.increment("stats/public", deltas)], token);
   }
 
-  async function allocate(uid, token, texts, scores, demo, now) {
+  async function allocate(uid, token, texts, scores, demo, now, history) {
     var lastError = null;
+    var historyLevel = reading().historyLevel(history || "none");
     for (var attempt = 0; attempt < 8; attempt += 1) {
       var counter = await db().get("counters/mindset", token);
       var number = counter ? counter.next : 1;
       var lang = (window.MindsetI18n && window.MindsetI18n.lang) || "en";
-      var docs = reading().buildDocuments(uid, number, texts, scores, true, now, now, demo, "none", false, lang);
+      var docs = reading().buildDocuments(uid, number, texts, scores, true, now, now, demo, historyLevel, false, lang);
       try {
         await db().create("mindsets", String(number), docs.publicDoc, token);
       } catch (error) {
@@ -188,13 +189,13 @@
     );
   }
 
-  async function publish(session, texts, scores, demo, alias) {
+  async function publish(session, texts, scores, demo, alias, history) {
     var token = session.idToken;
     var now = new Date().toISOString();
     var existing = await findOwn(session.uid, token);
     var saved;
     if (!existing) {
-      saved = await allocate(session.uid, token, texts, scores, demo, now);
+      saved = await allocate(session.uid, token, texts, scores, demo, now, history);
     } else {
       var number = Number(existing.publicDoc.id);
       var lang = (window.MindsetI18n && window.MindsetI18n.lang) || "en";
@@ -207,7 +208,7 @@
         existing.publicDoc.createdAt,
         now,
         demo,
-        existing.publicDoc.history,
+        history != null ? history : existing.publicDoc.history,
         existing.publicDoc.seed === true,
         lang
       );

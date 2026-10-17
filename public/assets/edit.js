@@ -15,7 +15,6 @@
     var status = document.querySelector("#form-status");
     var loginHint = document.querySelector("#login-hint");
     var dialog = document.querySelector("#publish-dialog");
-    var readButton = document.querySelector("#read");
     var publishButton = document.querySelector("#publish");
     var nextButton = document.querySelector("#next");
     var backButton = document.querySelector("#back");
@@ -31,6 +30,10 @@
     var findings = {};
     var step = 0;
     var pendingSuggest = null;
+    var pendingHistory = "none";
+    var historyPanel = document.querySelector("#publish-history");
+    var historyChoices = document.querySelector("#publish-history-choices");
+    var historyState = document.querySelector("#publish-history-state");
     var startButton = document.querySelector("#start");
     var stepsNav = document.querySelector(".wizard-steps");
     var statusBase = { message: "", kind: "", readingHelp: false };
@@ -76,6 +79,7 @@
     function boot(session) {
     ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
     ui.renderDemoForm(document.querySelector("#demo-fields"));
+    wireEnterHints();
     ui.closeOnBackdrop(dialog);
     var howDialog = document.querySelector("#how-to-read-dialog");
     if (howDialog) ui.closeOnBackdrop(howDialog);
@@ -153,9 +157,35 @@
     var ignoreScroll = false;
     var ignoreScrollTimer = 0;
     var focusViewportHandler = null;
+    var pointerDismiss = false;
 
     function isMobileWizard() {
       return window.matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+    }
+
+    function orderedFocusFields() {
+      var list = window.MindsetLens.fields
+        .map(function (field) {
+          return form.querySelector("#" + field.key);
+        })
+        .filter(Boolean);
+      if (aliasInput && !aliasSection.hidden) list.push(aliasInput);
+      return list;
+    }
+
+    function wireEnterHints() {
+      var list = orderedFocusFields();
+      list.forEach(function (el, index) {
+        el.setAttribute("enterkeyhint", index < list.length - 1 ? "next" : "done");
+      });
+    }
+
+    function focusNextField(from) {
+      var list = orderedFocusFields();
+      var index = list.indexOf(from);
+      if (index < 0 || index >= list.length - 1) return false;
+      list[index + 1].focus();
+      return true;
     }
 
     function actionsTop() {
@@ -258,11 +288,39 @@
       var ta = event.target;
       if (!ta || ta.tagName !== "TEXTAREA" || !isTextField(ta.id)) return;
       var next = event.relatedTarget;
-      if (next && next.tagName === "TEXTAREA" && form.contains(next)) {
+      if (next && form.contains(next) && (next.tagName === "TEXTAREA" || next === aliasInput)) {
         collapseTextarea(ta);
+        pointerDismiss = false;
+        return;
+      }
+      var advance =
+        isMobileWizard() && step === 1 && !next && !pointerDismiss && ta.getAttribute("enterkeyhint") === "next";
+      pointerDismiss = false;
+      if (advance) {
+        detachViewport();
+        collapseTextarea(ta);
+        requestAnimationFrame(function () {
+          focusNextField(ta);
+        });
         return;
       }
       releaseTall({ restoreScroll: true });
+    });
+
+    form.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" || event.shiftKey) return;
+      var el = event.target;
+      if (!el) return;
+      if (!isMobileWizard() || step !== 1) return;
+      if (el.tagName === "TEXTAREA" && isTextField(el.id) && el.getAttribute("enterkeyhint") === "next") {
+        event.preventDefault();
+        focusNextField(el);
+        return;
+      }
+      if (el === aliasInput && el.getAttribute("enterkeyhint") === "next") {
+        event.preventDefault();
+        focusNextField(el);
+      }
     });
 
     window.addEventListener(
@@ -270,6 +328,7 @@
       function () {
         if (!tallTa || ignoreScroll) return;
         if (Math.abs((window.scrollY || 0) - expandScrollY) < 10) return;
+        pointerDismiss = true;
         releaseTall({ blur: true });
       },
       { passive: true }
@@ -284,6 +343,11 @@
           collapseTextarea(tallTa);
           return;
         }
+        if (event.target === aliasInput) {
+          collapseTextarea(tallTa);
+          return;
+        }
+        pointerDismiss = true;
         releaseTall({ blur: true, restoreScroll: true });
       },
       true
@@ -371,7 +435,6 @@
 
     async function runRead() {
       var texts = ui.collectTexts(form);
-      readButton.disabled = true;
       publishButton.disabled = true;
       setFormStatus(t("create.reading"));
       reading = await window.MindsetScore.read(texts, function (message) {
@@ -422,6 +485,7 @@
 
     function go(next) {
       releaseTall();
+      if (next === 3 && !guardPrivacy()) next = 1;
       step = next;
       form.querySelectorAll(".wizard-pane").forEach(function (pane) {
         pane.hidden = Number(pane.getAttribute("data-step")) !== step;
@@ -436,10 +500,20 @@
       if (startButton) startButton.hidden = step !== 0;
       backButton.hidden = step < 1;
       nextButton.hidden = step === 0 || step === 3;
-      readButton.hidden = step !== 3;
       publishButton.hidden = step !== 3;
       if (step === 2) refreshSuggest();
-      if (step === 3 && reading && !dirty) showPreview(reading);
+      if (step === 3) {
+        loginHint.hidden = true;
+        if (reading && !dirty) {
+          showPreview(reading);
+        } else {
+          runRead().catch(function (error) {
+            setFormStatus(ui.errorText(error, "error.read_failed"), "error");
+          }).finally(function () {
+            publishButton.disabled = false;
+          });
+        }
+      }
       window.scrollTo(0, 0);
     }
 
@@ -482,18 +556,51 @@
       go(Math.min(3, step + 1));
     });
 
-    readButton.addEventListener("click", function () {
-      loginHint.hidden = true;
-      if (!guardPrivacy()) return;
-      runRead()
-        .catch(function (error) {
-          setFormStatus(ui.errorText(error, "error.read_failed"), "error");
-        })
-        .finally(function () {
-          readButton.disabled = false;
-          publishButton.disabled = false;
-        });
-    });
+    function paintHistoryState(level) {
+      if (historyState) historyState.textContent = t("history.state." + level);
+    }
+
+    function syncPublishHistoryUi() {
+      pendingHistory = math.historyLevel(pendingHistory);
+      if (historyPanel) historyPanel.open = false;
+      if (historyChoices) {
+        var current = historyChoices.querySelector(
+          'input[name="publish-history"][value="' + pendingHistory + '"]'
+        );
+        if (current) current.checked = true;
+        else {
+          pendingHistory = "none";
+          var fallback = historyChoices.querySelector('input[name="publish-history"][value="none"]');
+          if (fallback) fallback.checked = true;
+        }
+      }
+      paintHistoryState(pendingHistory);
+    }
+
+    if (historyChoices) {
+      historyChoices.addEventListener("change", function (event) {
+        if (event.target.name !== "publish-history") return;
+        var level = math.historyLevel(event.target.value);
+        var previous = pendingHistory;
+        pendingHistory = level;
+        paintHistoryState(level);
+        if (!existingNumber) return;
+        store
+          .setHistory(session, level)
+          .then(function (saved) {
+            pendingHistory = saved;
+            paintHistoryState(saved);
+          })
+          .catch(function () {
+            pendingHistory = previous;
+            paintHistoryState(previous);
+            var revert = historyChoices.querySelector(
+              'input[name="publish-history"][value="' + previous + '"]'
+            );
+            if (revert) revert.checked = true;
+          });
+      });
+    }
 
     publishButton.addEventListener("click", function () {
       loginHint.hidden = true;
@@ -504,13 +611,13 @@
           return !reading || dirty ? runRead() : ui.collectTexts(form);
         })
         .then(function () {
+          syncPublishHistoryUi();
           dialog.showModal();
         })
         .catch(function (error) {
           setFormStatus(ui.errorText(error, "error.read_failed"), "error");
         })
         .finally(function () {
-          readButton.disabled = false;
           publishButton.disabled = false;
         });
     });
@@ -532,7 +639,7 @@
       store
         .requireSession()
         .then(function (session) {
-          return store.publish(session, texts, reading, demoValues, alias);
+          return store.publish(session, texts, reading, demoValues, alias, pendingHistory);
         })
         .then(function (result) {
           if (result.aliasError) sessionStorage.setItem("mindset-warning", "create.aliasWarning");
@@ -550,6 +657,7 @@
       needsAlias = value;
       aliasSection.hidden = !value;
       aliasInput.required = value;
+      wireEnterHints();
     }
 
     store
@@ -557,6 +665,7 @@
       .then(async function (own) {
         if (!own) return;
         existingNumber = own.publicDoc.id;
+        pendingHistory = math.historyLevel(own.publicDoc.history);
         var entry = await social.aliasOf(existingNumber, session.idToken);
         setNeedsAlias(!(entry && entry.alias));
         document.querySelector("#heading").textContent = t("create.edit");

@@ -22,9 +22,11 @@
     "auth/unauthorized-continue-uri": "auth.err.domain"
   };
 
-  function safeNext() {
+  function safeNext(fallback) {
     var next = new URLSearchParams(window.location.search).get("next") || "";
-    if (!/^\/(?!\/)/.test(next) || /^\/(login|register|forgot)\b/.test(next)) return "/me";
+    if (!/^\/(?!\/)/.test(next) || /^\/(login|register|forgot)\b/.test(next)) {
+      return fallback || "/me";
+    }
     return next;
   }
 
@@ -43,10 +45,13 @@
     var status = document.querySelector("#auth-status");
     var google = document.querySelector("#google");
     var adult = document.querySelector("#adult");
-    var next = safeNext();
+    var fallback = page === "register" ? "/new" : "/me";
+    var next = safeNext(fallback);
 
     document.querySelectorAll("[data-keep-next]").forEach(function (link) {
-      if (next !== "/me") link.href = link.getAttribute("href") + "?next=" + encodeURIComponent(next);
+      if (next !== fallback) {
+        link.href = link.getAttribute("href") + "?next=" + encodeURIComponent(next);
+      }
     });
 
     function busy(on) {
