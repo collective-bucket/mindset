@@ -33,7 +33,6 @@
     var pendingHistory = "none";
     var historyPanel = document.querySelector("#publish-history");
     var historyChoices = document.querySelector("#publish-history-choices");
-    var historyState = document.querySelector("#publish-history-state");
     var startButton = document.querySelector("#start");
     var stepsNav = document.querySelector(".wizard-steps");
     var statusBase = { message: "", kind: "", readingHelp: false };
@@ -46,6 +45,13 @@
     });
 
     function paintStatus() {
+      if (statusBase.message) {
+        status.textContent = statusBase.message;
+        status.className = "status" + (statusBase.kind ? " " + statusBase.kind : "");
+        if (statusLine) statusLine.hidden = false;
+        if (readingWhat) readingWhat.hidden = !statusBase.readingHelp;
+        return;
+      }
       var leak = ui.leakStatus(findings);
       if (leak) {
         status.textContent = leak.message;
@@ -54,17 +60,10 @@
         if (readingWhat) readingWhat.hidden = true;
         return;
       }
-      if (!statusBase.message) {
-        status.textContent = "";
-        status.className = "status";
-        if (statusLine) statusLine.hidden = true;
-        if (readingWhat) readingWhat.hidden = true;
-        return;
-      }
-      status.textContent = statusBase.message;
-      status.className = "status" + (statusBase.kind ? " " + statusBase.kind : "");
-      if (statusLine) statusLine.hidden = false;
-      if (readingWhat) readingWhat.hidden = !statusBase.readingHelp;
+      status.textContent = "";
+      status.className = "status";
+      if (statusLine) statusLine.hidden = true;
+      if (readingWhat) readingWhat.hidden = true;
     }
 
     function setFormStatus(message, kind, options) {
@@ -387,6 +386,24 @@
       return value;
     }
 
+    function showPreviewPending() {
+      var host = document.querySelector("#preview-entry");
+      host.hidden = false;
+      host.className = "entry entry-pending";
+      host.removeAttribute("data-id");
+      host.innerHTML =
+        '<p class="preview-pending" role="status">' + ui.escapeHtml(t("create.reading")) + "</p>";
+      var radar = document.querySelector("#preview-radar");
+      var open = document.querySelector("#preview-open");
+      var closed = document.querySelector("#preview-closed");
+      if (radar) {
+        radar.innerHTML =
+          '<p class="hint preview-pending" role="status">' + ui.escapeHtml(t("create.reading")) + "</p>";
+      }
+      if (open) open.innerHTML = "";
+      if (closed) closed.innerHTML = "";
+    }
+
     function showPreview(scores) {
       var texts = ui.collectTexts(form);
       var demo = ui.collectDemo(form);
@@ -436,9 +453,10 @@
     async function runRead() {
       var texts = ui.collectTexts(form);
       publishButton.disabled = true;
+      showPreviewPending();
       setFormStatus(t("create.reading"));
       reading = await window.MindsetScore.read(texts, function (message) {
-        setFormStatus(message);
+        setFormStatus(message || t("create.reading"));
       });
       dirty = false;
       showPreview(reading);
@@ -556,25 +574,19 @@
       go(Math.min(3, step + 1));
     });
 
-    function paintHistoryState(level) {
-      if (historyState) historyState.textContent = t("history.state." + level);
-    }
-
     function syncPublishHistoryUi() {
       pendingHistory = math.historyLevel(pendingHistory);
-      if (historyPanel) historyPanel.open = false;
-      if (historyChoices) {
-        var current = historyChoices.querySelector(
-          'input[name="publish-history"][value="' + pendingHistory + '"]'
-        );
-        if (current) current.checked = true;
-        else {
-          pendingHistory = "none";
-          var fallback = historyChoices.querySelector('input[name="publish-history"][value="none"]');
-          if (fallback) fallback.checked = true;
-        }
+      if (historyPanel) historyPanel.open = true;
+      if (!historyChoices) return;
+      var current = historyChoices.querySelector(
+        'input[name="publish-history"][value="' + pendingHistory + '"]'
+      );
+      if (current) current.checked = true;
+      else {
+        pendingHistory = "none";
+        var fallback = historyChoices.querySelector('input[name="publish-history"][value="none"]');
+        if (fallback) fallback.checked = true;
       }
-      paintHistoryState(pendingHistory);
     }
 
     if (historyChoices) {
@@ -583,17 +595,14 @@
         var level = math.historyLevel(event.target.value);
         var previous = pendingHistory;
         pendingHistory = level;
-        paintHistoryState(level);
         if (!existingNumber) return;
         store
           .setHistory(session, level)
           .then(function (saved) {
             pendingHistory = saved;
-            paintHistoryState(saved);
           })
           .catch(function () {
             pendingHistory = previous;
-            paintHistoryState(previous);
             var revert = historyChoices.querySelector(
               'input[name="publish-history"][value="' + previous + '"]'
             );

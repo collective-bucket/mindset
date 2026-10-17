@@ -97,18 +97,26 @@
   }
 
   async function load(onProgress) {
-    if (extractor) return;
+    if (extractor) {
+      if (onProgress) onProgress(t("model.reading"));
+      return;
+    }
     if (!loading) {
       loading = startModel(onProgress).catch(function (error) {
         loading = null;
         throw error;
       });
+    } else if (onProgress) {
+      onProgress(t("model.reading"));
     }
     await loading;
+    if (onProgress) onProgress(t("model.reading"));
   }
 
   async function read(texts, onProgress) {
+    if (onProgress) onProgress(t("model.reading"));
     await load(onProgress);
+    if (onProgress) onProgress(t("model.reading"));
     var lens = window.MindsetLens;
     var math = window.MindsetReading;
     var scores = math.blankScores();
@@ -132,7 +140,6 @@
       scores[axis.key] = math.distanceScore(dot(left, right));
     }
 
-    if (onProgress) onProgress(t("model.ready"));
     return scores;
   }
 
