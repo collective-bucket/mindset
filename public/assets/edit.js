@@ -148,6 +148,10 @@
     });
 
     var focusScrollY = 0;
+    var expandScrollY = 0;
+    var tallTa = null;
+    var ignoreScroll = false;
+    var ignoreScrollTimer = 0;
     var focusViewportHandler = null;
 
     function isMobileWizard() {
@@ -158,6 +162,15 @@
       var actions = form.querySelector(".actions");
       if (!actions) return window.innerHeight;
       return actions.getBoundingClientRect().top;
+    }
+
+    function hushScroll(ms) {
+      ignoreScroll = true;
+      if (ignoreScrollTimer) window.clearTimeout(ignoreScrollTimer);
+      ignoreScrollTimer = window.setTimeout(function () {
+        ignoreScroll = false;
+        ignoreScrollTimer = 0;
+      }, ms || 120);
     }
 
     function expandTextarea(ta) {
@@ -183,6 +196,8 @@
       }
       ta.style.minHeight = available + "px";
       ta.classList.add("is-focus-tall");
+      tallTa = ta;
+      expandScrollY = window.scrollY || 0;
     }
 
     function collapseTextarea(ta) {
@@ -191,6 +206,27 @@
       ta.classList.remove("is-focus-tall");
       delete ta.dataset.baseMinHeight;
       delete ta.dataset.baseHeight;
+      if (tallTa === ta) tallTa = null;
+    }
+
+    function detachViewport() {
+      if (window.visualViewport && focusViewportHandler) {
+        window.visualViewport.removeEventListener("resize", focusViewportHandler);
+        focusViewportHandler = null;
+      }
+    }
+
+    function releaseTall(options) {
+      options = options || {};
+      if (!tallTa) return;
+      var ta = tallTa;
+      detachViewport();
+      collapseTextarea(ta);
+      if (options.blur && document.activeElement === ta) ta.blur();
+      if (options.restoreScroll) {
+        hushScroll(160);
+        window.scrollTo(0, focusScrollY);
+      }
     }
 
     form.addEventListener("focusin", function (event) {
@@ -199,6 +235,8 @@
       if (!isMobileWizard()) return;
       var fromField = event.relatedTarget && event.relatedTarget.tagName === "TEXTAREA";
       if (!fromField) focusScrollY = window.scrollY || 0;
+      if (tallTa && tallTa !== ta) collapseTextarea(tallTa);
+      hushScroll(200);
       var field = ta.closest(".field");
       if (field) field.scrollIntoView({ block: "start", behavior: "auto" });
       else ta.scrollIntoView({ block: "start", behavior: "auto" });
@@ -207,28 +245,49 @@
           expandTextarea(ta);
         });
       });
+      detachViewport();
       if (window.visualViewport) {
         focusViewportHandler = function () {
           if (document.activeElement === ta) expandTextarea(ta);
         };
         window.visualViewport.addEventListener("resize", focusViewportHandler);
-        window.visualViewport.addEventListener("scroll", focusViewportHandler);
       }
     });
 
     form.addEventListener("focusout", function (event) {
       var ta = event.target;
       if (!ta || ta.tagName !== "TEXTAREA" || !isTextField(ta.id)) return;
-      if (window.visualViewport && focusViewportHandler) {
-        window.visualViewport.removeEventListener("resize", focusViewportHandler);
-        window.visualViewport.removeEventListener("scroll", focusViewportHandler);
-        focusViewportHandler = null;
-      }
-      collapseTextarea(ta);
       var next = event.relatedTarget;
-      if (next && next.tagName === "TEXTAREA" && form.contains(next)) return;
-      window.scrollTo(0, focusScrollY);
+      if (next && next.tagName === "TEXTAREA" && form.contains(next)) {
+        collapseTextarea(ta);
+        return;
+      }
+      releaseTall({ restoreScroll: true });
     });
+
+    window.addEventListener(
+      "scroll",
+      function () {
+        if (!tallTa || ignoreScroll) return;
+        if (Math.abs((window.scrollY || 0) - expandScrollY) < 10) return;
+        releaseTall({ blur: true });
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      "pointerdown",
+      function (event) {
+        if (!tallTa) return;
+        if (event.target === tallTa) return;
+        if (event.target.tagName === "TEXTAREA" && isTextField(event.target.id)) {
+          collapseTextarea(tallTa);
+          return;
+        }
+        releaseTall({ blur: true, restoreScroll: true });
+      },
+      true
+    );
 
     function firstBlockingField() {
       return window.MindsetLens.fields.find(function (field) {
@@ -362,6 +421,7 @@
     });
 
     function go(next) {
+      releaseTall();
       step = next;
       form.querySelectorAll(".wizard-pane").forEach(function (pane) {
         pane.hidden = Number(pane.getAttribute("data-step")) !== step;
