@@ -692,25 +692,6 @@
     return "entry-fish is-real";
   }
 
-  function entryQuote(doc, options) {
-    options = options || {};
-    var quote = options.quote;
-    if (quote == null && window.MindsetReading.deriveQuote) {
-      quote = window.MindsetReading.deriveQuote({
-        personalCode: doc.personalCode,
-        currentPosition: doc.currentPosition
-      });
-    }
-    if (!quote && doc.personalCode) {
-      quote = String(doc.personalCode).replace(/\s+/g, " ").trim();
-      if (quote.length > 120) quote = quote.slice(0, 117).replace(/\s+\S*$/, "") + "…";
-    }
-    quote = String(quote || "").trim();
-    if (!quote) return "";
-    if (doc.headline && quote === String(doc.headline).trim()) return "";
-    return quote;
-  }
-
   // One fish per line: number + mini radar on the left, status fish on the right.
   function card(doc, options) {
     options = options || {};
@@ -721,7 +702,6 @@
     var chip = options.chip || "";
     var side = options.tag || (doc.updatedAt ? relativeWhen(doc.updatedAt) : "");
     var summary = plainSummary(doc);
-    var quote = entryQuote(doc, options);
     var numberLabel = /^\d+$/.test(id) ? "#" + id : "#";
     var tag = preview ? "div" : "a";
     var open =
@@ -733,28 +713,25 @@
       ">";
     return (
       open +
-      '<span class="entry-head">' +
       '<span class="entry-id">' +
       '<strong class="entry-number">' +
       escapeHtml(numberLabel) +
       '</strong><span class="entry-radar" aria-hidden="true"></span></span>' +
+      '<span class="entry-body">' +
       (chip ? '<span class="entry-chip">' + escapeHtml(chip) + "</span>" : "") +
       (doc.headline
-        ? '<span class="entry-headline">' + escapeHtml(doc.headline) + "</span>"
+        ? '<span class="entry-headline">' +
+          escapeHtml(String(doc.headline).replace(/\.$/, "")) +
+          "</span>"
         : "") +
       (alias ? '<span class="alias">@' + escapeHtml(alias) + "</span>" : "") +
+      (summary ? '<span class="entry-summary">' + escapeHtml(summary) + "</span>" : "") +
+      (badgeText(doc) ? '<span class="entry-meta">' + escapeHtml(badgeText(doc)) + "</span>" : "") +
+      "</span>" +
+      '<span class="entry-aside">' +
       (side ? '<span class="entry-side">' + escapeHtml(side) + "</span>" : "") +
       fishGlyph(entryFishClass(doc)) +
       "</span>" +
-      (summary || quote
-        ? '<span class="entry-summary">' +
-          escapeHtml(summary) +
-          (quote
-            ? (summary ? " " : "") + '<span class="entry-quote">' + escapeHtml(quote) + "</span>"
-            : "") +
-          "</span>"
-        : "") +
-      (badgeText(doc) ? '<span class="entry-meta">' + escapeHtml(badgeText(doc)) + "</span>" : "") +
       "</" +
       tag +
       ">"
@@ -898,7 +875,7 @@
     );
   }
 
-  // Shows what in a text could identify someone; definite matches block publishing.
+  // Marks fields that could identify someone; copy lives in the wizard status strip.
   function renderLeaks(form, findingsByField) {
     window.MindsetLens.fields.forEach(function (field) {
       var node = form.querySelector("#leak-" + field.key);
@@ -908,22 +885,35 @@
       var blocking = findings.some(function (item) {
         return item.severity === "block";
       });
-      node.hidden = !findings.length;
+      node.hidden = true;
+      node.textContent = "";
       node.className = "leak" + (blocking ? " is-block" : "");
       if (input) input.setAttribute("aria-invalid", String(blocking));
-      if (!findings.length) {
-        node.textContent = "";
-        return;
-      }
-      var kinds = findings
-        .map(function (item) {
-          return t("privacy." + item.kind);
-        })
-        .filter(function (label, index, list) {
-          return list.indexOf(label) === index;
-        });
-      node.textContent = t(blocking ? "privacy.block" : "privacy.warn", { what: kinds.join(", ") });
     });
+  }
+
+  // One line for the actions strip: blocks beat warns; kinds are de-duplicated.
+  function leakStatus(findingsByField) {
+    var all = [];
+    var blocking = false;
+    Object.keys(findingsByField || {}).forEach(function (key) {
+      (findingsByField[key] || []).forEach(function (item) {
+        all.push(item);
+        if (item.severity === "block") blocking = true;
+      });
+    });
+    if (!all.length) return null;
+    var kinds = all
+      .map(function (item) {
+        return t("privacy." + item.kind);
+      })
+      .filter(function (label, index, list) {
+        return list.indexOf(label) === index;
+      });
+    return {
+      message: t(blocking ? "privacy.block" : "privacy.warn", { what: kinds.join(", ") }),
+      kind: blocking ? "error" : "warn"
+    };
   }
 
   function renderForm(openHost, closedHost) {
@@ -1142,6 +1132,7 @@
     hydrateEntryRadars: hydrateEntryRadars,
     renderForm: renderForm,
     renderLeaks: renderLeaks,
+    leakStatus: leakStatus,
     renderDemoForm: renderDemoForm,
     demoOptions: demoOptions,
     collectDemo: collectDemo,

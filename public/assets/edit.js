@@ -33,11 +33,45 @@
     var pendingSuggest = null;
     var startButton = document.querySelector("#start");
     var stepsNav = document.querySelector(".wizard-steps");
+    var statusBase = { message: "", kind: "", readingHelp: false };
+    var statusLine = document.querySelector("#form-status-line");
+    var readingWhat = document.querySelector("#reading-what");
 
     ui.requireAuth().then(function (session) {
       if (!session) return;
       boot(session);
     });
+
+    function paintStatus() {
+      var leak = ui.leakStatus(findings);
+      if (leak) {
+        status.textContent = leak.message;
+        status.className = "status " + leak.kind;
+        if (statusLine) statusLine.hidden = false;
+        if (readingWhat) readingWhat.hidden = true;
+        return;
+      }
+      if (!statusBase.message) {
+        status.textContent = "";
+        status.className = "status";
+        if (statusLine) statusLine.hidden = true;
+        if (readingWhat) readingWhat.hidden = true;
+        return;
+      }
+      status.textContent = statusBase.message;
+      status.className = "status" + (statusBase.kind ? " " + statusBase.kind : "");
+      if (statusLine) statusLine.hidden = false;
+      if (readingWhat) readingWhat.hidden = !statusBase.readingHelp;
+    }
+
+    function setFormStatus(message, kind, options) {
+      statusBase = {
+        message: message || "",
+        kind: kind || "",
+        readingHelp: Boolean(options && options.readingHelp)
+      };
+      paintStatus();
+    }
 
     function boot(session) {
     ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
@@ -45,8 +79,15 @@
     ui.closeOnBackdrop(dialog);
     var howDialog = document.querySelector("#how-to-read-dialog");
     if (howDialog) ui.closeOnBackdrop(howDialog);
+    var whatReadingDialog = document.querySelector("#what-is-reading-dialog");
+    if (whatReadingDialog) ui.closeOnBackdrop(whatReadingDialog);
     var howButton = document.querySelector("#preview-how-to");
     document.querySelector("#login-link").href = ui.loginHref();
+    if (readingWhat && whatReadingDialog) {
+      readingWhat.addEventListener("click", function () {
+        whatReadingDialog.showModal();
+      });
+    }
 
     function selectPreviewTab(name) {
       var panes = {
@@ -94,6 +135,7 @@
       if (found.length) findings[id] = found;
       else delete findings[id];
       ui.renderLeaks(form, findings);
+      paintStatus();
     }
 
     form.addEventListener("input", function (event) {
@@ -117,7 +159,8 @@
       });
       var blocking = firstBlockingField();
       if (!blocking) return true;
-      ui.setStatus(status, t("privacy.blocked"), "error");
+      paintStatus();
+      if (statusLine && statusLine.hidden) setFormStatus(t("privacy.blocked"), "error");
       var input = form.querySelector("#" + blocking.key);
       if (input) input.focus();
       return false;
@@ -144,7 +187,6 @@
       var label = existingNumber || t("common.preview");
       var headline = math.deriveHeadline(texts);
       var blurb = math.deriveBlurb(label, texts, scores, i18n.lang);
-      var quote = math.deriveQuote(texts);
       var previewDoc = {
         id: existingNumber || "",
         ownerUid: session && session.uid,
@@ -165,7 +207,6 @@
       var host = document.querySelector("#preview-entry");
       host.innerHTML = ui.card(previewDoc, {
         preview: true,
-        quote: quote,
         tag: existingNumber ? "" : t("common.preview")
       });
       // card() returns a full .entry root; unwrap into the host.
@@ -179,7 +220,9 @@
       host.hidden = false;
       var radarHost = host.querySelector(".entry-radar");
       if (radarHost) ui.renderRadar(radarHost, scores, null, { compact: true });
-      ui.renderRadar(document.querySelector("#preview-radar"), scores);
+      ui.renderRadar(document.querySelector("#preview-radar"), scores, null, {
+        keys: math.OPEN_KEYS.concat(math.CLOSED_KEYS)
+      });
       ui.renderBars(document.querySelector("#preview-open"), scores, math.OPEN_KEYS);
       ui.renderBars(document.querySelector("#preview-closed"), scores, math.CLOSED_KEYS);
     }
@@ -188,13 +231,13 @@
       var texts = ui.collectTexts(form);
       readButton.disabled = true;
       publishButton.disabled = true;
-      ui.setStatus(status, t("create.reading"));
+      setFormStatus(t("create.reading"));
       reading = await window.MindsetScore.read(texts, function (message) {
-        ui.setStatus(status, message);
+        setFormStatus(message);
       });
       dirty = false;
       showPreview(reading);
-      ui.setStatus(status, t("create.ready"));
+      setFormStatus(t("create.ready"));
       return texts;
     }
 
@@ -280,16 +323,16 @@
         try {
           ui.collectTexts(form);
         } catch (error) {
-          ui.setStatus(status, ui.errorText(error), "error");
+          setFormStatus(ui.errorText(error), "error");
           return;
         }
         checkAlias()
           .then(function () {
-            ui.setStatus(status, "");
+            setFormStatus("");
             go(2);
           })
           .catch(function (error) {
-            ui.setStatus(status, ui.errorText(error), "error");
+            setFormStatus(ui.errorText(error), "error");
           });
         return;
       }
@@ -301,7 +344,7 @@
       if (!guardPrivacy()) return;
       runRead()
         .catch(function (error) {
-          ui.setStatus(status, ui.errorText(error, "error.read_failed"), "error");
+          setFormStatus(ui.errorText(error, "error.read_failed"), "error");
         })
         .finally(function () {
           readButton.disabled = false;
@@ -321,7 +364,7 @@
           dialog.showModal();
         })
         .catch(function (error) {
-          ui.setStatus(status, ui.errorText(error, "error.read_failed"), "error");
+          setFormStatus(ui.errorText(error, "error.read_failed"), "error");
         })
         .finally(function () {
           readButton.disabled = false;
@@ -335,14 +378,14 @@
       try {
         texts = ui.collectTexts(form);
       } catch (error) {
-        ui.setStatus(status, ui.errorText(error), "error");
+        setFormStatus(ui.errorText(error), "error");
         return;
       }
       if (!guardPrivacy()) return;
       var demoValues = ui.collectDemo(form);
       var alias = needsAlias ? social.cleanAlias(aliasInput.value) : "";
       publishButton.disabled = true;
-      ui.setStatus(status, t("common.saving"));
+      setFormStatus(t("common.saving"));
       store
         .requireSession()
         .then(function (session) {
@@ -355,7 +398,7 @@
         })
         .catch(function (error) {
           publishButton.disabled = false;
-          ui.setStatus(status, ui.errorText(error, "error.save_failed"), "error");
+          setFormStatus(ui.errorText(error, "error.save_failed"), "error");
           if (error && error.code === "login_required") loginHint.hidden = false;
         });
     });
@@ -373,8 +416,16 @@
         existingNumber = own.publicDoc.id;
         var entry = await social.aliasOf(existingNumber, session.idToken);
         setNeedsAlias(!(entry && entry.alias));
-        document.querySelector("#heading").textContent = t("create.edit", { n: existingNumber });
-        ui.setCrumb(t("create.edit", { n: existingNumber }));
+        document.querySelector("#heading").textContent = t("create.edit");
+        ui.setCrumb(t("create.edit"));
+        var editMeta = document.querySelector("#edit-meta");
+        if (editMeta) {
+          editMeta.removeAttribute("data-i18n");
+          editMeta.textContent =
+            "#" +
+            existingNumber +
+            (own.publicDoc.updatedAt ? " · " + ui.relativeWhen(own.publicDoc.updatedAt) : "");
+        }
         var privateDoc = own.privateDoc || {};
         ui.fillTexts(form, {
           currentPosition: own.publicDoc.currentPosition,
@@ -398,10 +449,10 @@
           dirty = false;
         }
         showPreview(scores);
-        ui.setStatus(status, t("create.loaded"));
+        setFormStatus(t("create.loaded"), "", { readingHelp: true });
       })
       .catch(function (error) {
-        ui.setStatus(status, ui.errorText(error), "error");
+        setFormStatus(ui.errorText(error), "error");
       });
 
     setNeedsAlias(true);

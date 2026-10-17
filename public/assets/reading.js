@@ -20,25 +20,33 @@
   var PHRASES = {
     en: {
       agencyHigh: "riding the current",
+      agencyMid: "drifting with the current",
       agencyLow: "swept by the current",
       codeHigh: "scales hard against the current",
+      codeMid: "scales in between",
       codeLow: "soft scales",
       join: " and ",
       redemptionHigh: "The story surfaces.",
+      redemptionMid: "The story holds still.",
       redemptionLow: "The story sinks.",
       communionHigh: "In a school.",
+      communionMid: "Near the school.",
       communionLow: "Alone in the lake.",
       neutral: "The surface reading sits in the middle."
     },
     tr: {
       agencyHigh: "akıntı bende",
+      agencyMid: "akıntıyla birlikteyim",
       agencyLow: "akıntı beni sürüklüyor",
       codeHigh: "akıntıya karşı pulları sert",
+      codeMid: "pulları ortada",
       codeLow: "pulları yumuşak",
       join: " ve ",
       redemptionHigh: "Hikaye yüzeye çıkıyor.",
+      redemptionMid: "Hikaye yerinde duruyor.",
       redemptionLow: "Hikaye dibe çöküyor.",
       communionHigh: "Sürüdeyim.",
+      communionMid: "Sürüye yakınım.",
       communionLow: "Gölde yalnızım.",
       neutral: "Yüzey okuması ortada."
     }
@@ -120,20 +128,37 @@
     return sentence.charAt(0).toLocaleUpperCase(locale) + sentence.slice(1);
   }
 
+  function phraseFor(score, high, mid, low) {
+    if (typeof score !== "number" || score < 0) return "";
+    if (score >= 60) return high;
+    if (score <= 40) return low;
+    return mid;
+  }
+
   function summary(number, scores, lang) {
     var words = PHRASES[lang] || PHRASES.en;
     var parts = [];
-    if (scores.agency >= 60) parts.push(words.agencyHigh);
-    else if (scores.agency >= 0 && scores.agency <= 40) parts.push(words.agencyLow);
-    if (scores.codeClarity >= 60) parts.push(words.codeHigh);
-    else if (scores.codeClarity >= 0 && scores.codeClarity <= 40) parts.push(words.codeLow);
+    var agency = phraseFor(scores.agency, words.agencyHigh, words.agencyMid, words.agencyLow);
+    var code = phraseFor(scores.codeClarity, words.codeHigh, words.codeMid, words.codeLow);
+    if (agency) parts.push(agency);
+    if (code) parts.push(code);
 
     var sentences = [];
     if (parts.length) sentences.push(capitalize(parts.join(words.join), lang) + ".");
-    if (scores.redemption >= 60) sentences.push(words.redemptionHigh);
-    else if (scores.redemption >= 0 && scores.redemption <= 40) sentences.push(words.redemptionLow);
-    if (scores.communion >= 60) sentences.push(words.communionHigh);
-    else if (scores.communion >= 0 && scores.communion <= 40) sentences.push(words.communionLow);
+    var redemption = phraseFor(
+      scores.redemption,
+      words.redemptionHigh,
+      words.redemptionMid,
+      words.redemptionLow
+    );
+    var communion = phraseFor(
+      scores.communion,
+      words.communionHigh,
+      words.communionMid,
+      words.communionLow
+    );
+    if (redemption) sentences.push(redemption);
+    if (communion) sentences.push(communion);
 
     if (!sentences.length) return String(number) + ". " + words.neutral;
     return String(number) + ". " + sentences.join(" ");
@@ -257,12 +282,12 @@
     return line;
   }
 
-  // Short title from open text; not user-editable.
+  // Short title from open text; not user-editable. No trailing period on cards.
   function deriveHeadline(texts) {
-    return firstSentence(texts.personalCode || texts.currentPosition || "", 70);
+    return firstSentence(texts.personalCode || texts.currentPosition || "", 70).replace(/\.$/, "");
   }
 
-  // Card blurb: score phrases only. Quote is rendered separately in the card.
+  // Card blurb: open-axis score phrases only (headline carries the user line).
   function deriveBlurb(number, texts, scores, lang) {
     return summary(number, scores, lang).replace(/^\d+\.\s*/, "");
   }

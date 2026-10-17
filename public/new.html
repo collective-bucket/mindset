@@ -15,8 +15,11 @@
 
     <div id="gated" hidden>
     <div class="head">
-      <h1 id="heading" data-i18n="create.title">Dive in</h1>
-      <a class="head-side" href="/" data-i18n="footer.home">Home</a>
+      <div class="head-main">
+        <h1 id="heading" data-i18n="create.title">Dive in</h1>
+        <p class="head-meta" id="edit-meta" data-i18n="create.tagline">Become a fish</p>
+      </div>
+      <a class="head-side" id="head-home" href="/" data-i18n="footer.home">Home</a>
     </div>
 
     <nav class="wizard-steps" aria-label="Steps" hidden>
@@ -28,8 +31,23 @@
     <form id="mindset-form" novalidate>
       <section class="wizard-pane" data-step="0">
         <section class="section wizard-welcome">
-          <p class="lead"><span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span> <span data-i18n="create.lead">The model downloads to your browser on first read. Your text isn't sent anywhere.</span></p>
-          <p class="hint" data-i18n="privacy.hint">Leave out names, places and contact details. Anything that points to a person is flagged.</p>
+          <h2 data-i18n="about.title">About and Ethics</h2>
+          <p class="lead" data-i18n="about.goal">We are building a bucket of minds together. Analysis runs in your browser; what you write is never sent to a server and stays on your device.</p>
+          <ul class="plain-list about-points">
+            <li><strong data-i18n="about.anonLabel">You're only a number:</strong> <span data-i18n="about.anon">Outside there is no name, photo, or status.</span></li>
+            <li><strong data-i18n="about.secretsLabel">Your secrets stay locked:</strong> <span data-i18n="about.secrets">Your alias and closed texts are shared with no one until you add someone to your school.</span></li>
+            <li><strong data-i18n="about.historyLabel">Your history is yours:</strong> <span data-i18n="about.history">No one can see past versions of your mind unless you open them.</span></li>
+            <li><strong data-i18n="about.leakLabel">Your anonymity is protected:</strong> <span data-i18n="about.leak">Details that could reveal your identity are flagged by the system before publishing.</span></li>
+            <li><strong data-i18n="about.scaleLabel">This is not a diagnosis:</strong> <span data-i18n="about.scale">Results are not a validated clinical test; they are a sociological compass.</span></li>
+          </ul>
+          <p class="hint about-more">
+            <span data-i18n="about.moreLead">For more detail, see</span>
+            <a href="/privacy" data-i18n="footer.privacy">Privacy notice</a><span data-i18n="about.moreSep">,</span>
+            <a href="/terms" data-i18n="footer.terms">Terms of use</a>
+            <span data-i18n="about.moreOr">or</span>
+            <a href="/about" data-i18n="landing.whatIsThis">What is this?</a>
+            <span data-i18n="about.moreTail">.</span>
+          </p>
         </section>
       </section>
 
@@ -93,15 +111,22 @@
         </section>
       </section>
 
-      <p id="form-status" class="status" role="status" hidden></p>
       <div class="actions">
-        <button type="button" id="start" class="btn btn-primary" data-i18n="create.start">Start</button>
-        <button type="button" id="back" class="btn" hidden data-i18n="create.back">Back</button>
-        <button type="button" id="next" class="btn btn-primary" hidden data-i18n="create.next">Next</button>
-        <button type="button" id="read" class="btn" hidden data-i18n="create.read">Read</button>
-        <button type="button" id="publish" class="btn btn-primary" hidden data-i18n="create.publish">Publish</button>
+        <div class="actions-note">
+          <p id="form-status-line" class="actions-note-line" hidden>
+            <span id="form-status" class="status" role="status"></span>
+            <button type="button" id="reading-what" class="status-inline-link" hidden data-i18n="create.whatIsReading">What is a reading?</button>
+          </p>
+          <p id="login-hint" hidden><a id="login-link" href="/login" data-i18n="create.signInToPublish">Sign in to publish</a></p>
+        </div>
+        <div class="actions-buttons">
+          <button type="button" id="start" class="btn btn-primary" data-i18n="create.start">Start</button>
+          <button type="button" id="back" class="btn" hidden data-i18n="create.back">Back</button>
+          <button type="button" id="next" class="btn btn-primary" hidden data-i18n="create.next">Next</button>
+          <button type="button" id="read" class="btn" hidden data-i18n="create.read">Read</button>
+          <button type="button" id="publish" class="btn btn-primary" hidden data-i18n="create.publish">Publish</button>
+        </div>
       </div>
-      <p id="login-hint" hidden><a id="login-link" class="btn" href="/login" data-i18n="create.signInToPublish">Sign in to publish</a></p>
     </form>
     </div>
   </main>
@@ -110,6 +135,17 @@
     <form method="dialog">
       <h2 id="how-to-read-title" data-i18n="guide.howTo">How should I read this?</h2>
       <div id="how-to-read-body"></div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" value="close" data-i18n="common.close">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="what-is-reading-dialog" class="modal" aria-labelledby="what-is-reading-title">
+    <form method="dialog">
+      <h2 id="what-is-reading-title" data-i18n="create.whatIsReadingTitle">What is a reading?</h2>
+      <p data-i18n="create.whatIsReadingLead">A reading is the process where the AI model analyzes the texts you enter and builds your mind map (your radar). The system reads what you write and places you on eight different character axes. The AI model is downloaded into your browser and runs there.</p>
+      <p data-i18n="create.whatIsReadingAgain">When you change any of your texts, the reading must be run again to update your coordinates.</p>
       <div class="dialog-actions">
         <button class="btn btn-primary" value="close" data-i18n="common.close">Close</button>
       </div>

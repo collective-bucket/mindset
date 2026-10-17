@@ -63,19 +63,19 @@ assert.strictEqual(reading.scoreDistance({ agency: -1 }, { agency: 50 }), Infini
 var scores212 = { agency: 80, communion: 50, codeClarity: 80, redemption: 20 };
 assert.strictEqual(
   reading.summary(212, scores212, "en"),
-  "212. Riding the current and scales hard against the current. The story sinks."
+  "212. Riding the current and scales hard against the current. The story sinks. Near the school."
 );
 assert.strictEqual(
   reading.summary(212, scores212, "tr"),
-  "212. Akıntı bende ve akıntıya karşı pulları sert. Hikaye dibe çöküyor."
+  "212. Akıntı bende ve akıntıya karşı pulları sert. Hikaye dibe çöküyor. Sürüye yakınım."
 );
 assert.strictEqual(
   reading.summary(3, { agency: 50, communion: 50, codeClarity: 50, redemption: 50 }, "en"),
-  "3. The surface reading sits in the middle."
+  "3. Drifting with the current and scales in between. The story holds still. Near the school."
 );
 assert.strictEqual(
   reading.summary(3, { agency: 50, communion: 50, codeClarity: 50, redemption: 50 }),
-  "3. The surface reading sits in the middle."
+  "3. Drifting with the current and scales in between. The story holds still. Near the school."
 );
 
 // Demographics normalize to known values only.
@@ -216,7 +216,7 @@ reading.CLOSED_TEXT_KEYS.concat(reading.CLOSED_KEYS, ["city"]).forEach(function 
 });
 assert.strictEqual(docs.publicDoc.lens, "v2");
 assert.strictEqual(docs.publicDoc.personalCode, "Keep your word.");
-assert.strictEqual(docs.publicDoc.headline, "Keep your word.");
+assert.strictEqual(docs.publicDoc.headline, "Keep your word");
 assert.ok(docs.publicDoc.blurb.length > 0);
 assert.ok(docs.publicDoc.blurb.indexOf("Keep your word.") < 0);
 assert.strictEqual(docs.publicDoc.bucket, "3u4u");
@@ -229,7 +229,7 @@ assert.strictEqual(docs.privateDoc.codeGap, 40);
 
 assert.strictEqual(
   reading.deriveHeadline({ personalCode: "Hold the line. More later.", currentPosition: "" }),
-  "Hold the line."
+  "Hold the line"
 );
 assert.ok(
   reading.deriveBlurb(1, { personalCode: "Hold the line." }, { agency: 70, communion: 50, codeClarity: 80, redemption: 50 }, "en")

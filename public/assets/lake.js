@@ -712,7 +712,7 @@
       document.querySelector("#card-number").textContent = doc.id;
       var cardHeadline = document.querySelector("#card-headline");
       if (cardHeadline) {
-        cardHeadline.textContent = doc.headline || "";
+        cardHeadline.textContent = String(doc.headline || "").replace(/\.$/, "");
         cardHeadline.hidden = !doc.headline;
       }
       document.querySelector("#card-badges").textContent = ui.badgeText(doc);
