@@ -147,6 +147,76 @@
       scanField(id);
     });
 
+    var focusScrollY = 0;
+    var focusViewportHandler = null;
+
+    function isMobileWizard() {
+      return window.matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+    }
+
+    function actionsTop() {
+      var actions = form.querySelector(".actions");
+      if (!actions) return window.innerHeight;
+      return actions.getBoundingClientRect().top;
+    }
+
+    function expandTextarea(ta) {
+      if (!isMobileWizard() || !ta || ta.tagName !== "TEXTAREA") return;
+      var rect = ta.getBoundingClientRect();
+      var gap = 12;
+      var available = Math.floor(actionsTop() - rect.top - gap);
+      if (available < 120) return;
+      if (!ta.dataset.baseMinHeight) {
+        ta.dataset.baseMinHeight = ta.style.minHeight || "";
+        ta.dataset.baseHeight = String(ta.offsetHeight);
+      }
+      ta.style.minHeight = available + "px";
+      ta.classList.add("is-focus-tall");
+    }
+
+    function collapseTextarea(ta) {
+      if (!ta || !ta.classList.contains("is-focus-tall")) return;
+      ta.style.minHeight = ta.dataset.baseMinHeight || "";
+      ta.classList.remove("is-focus-tall");
+      delete ta.dataset.baseMinHeight;
+      delete ta.dataset.baseHeight;
+    }
+
+    form.addEventListener("focusin", function (event) {
+      var ta = event.target;
+      if (!ta || ta.tagName !== "TEXTAREA" || !isTextField(ta.id)) return;
+      if (!isMobileWizard()) return;
+      var fromField = event.relatedTarget && event.relatedTarget.tagName === "TEXTAREA";
+      if (!fromField) focusScrollY = window.scrollY || 0;
+      ta.scrollIntoView({ block: "start", behavior: "auto" });
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          expandTextarea(ta);
+        });
+      });
+      if (window.visualViewport) {
+        focusViewportHandler = function () {
+          if (document.activeElement === ta) expandTextarea(ta);
+        };
+        window.visualViewport.addEventListener("resize", focusViewportHandler);
+        window.visualViewport.addEventListener("scroll", focusViewportHandler);
+      }
+    });
+
+    form.addEventListener("focusout", function (event) {
+      var ta = event.target;
+      if (!ta || ta.tagName !== "TEXTAREA" || !isTextField(ta.id)) return;
+      if (window.visualViewport && focusViewportHandler) {
+        window.visualViewport.removeEventListener("resize", focusViewportHandler);
+        window.visualViewport.removeEventListener("scroll", focusViewportHandler);
+        focusViewportHandler = null;
+      }
+      collapseTextarea(ta);
+      var next = event.relatedTarget;
+      if (next && next.tagName === "TEXTAREA" && form.contains(next)) return;
+      window.scrollTo(0, focusScrollY);
+    });
+
     function firstBlockingField() {
       return window.MindsetLens.fields.find(function (field) {
         return privacy.blocks(findings[field.key] || []);

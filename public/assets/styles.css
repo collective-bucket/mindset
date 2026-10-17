@@ -452,6 +452,19 @@ a.head-side:hover {
   margin: 12px 0;
 }
 
+#mindset-form [data-step="1"] .field {
+  margin: 24px 0 -12px;
+}
+
+#mindset-form [data-step="1"] textarea {
+  scroll-margin-top: 64px;
+  transition: min-height 0.18s ease;
+}
+
+#mindset-form [data-step="1"] textarea.is-focus-tall {
+  resize: none;
+}
+
 .field > span:first-child {
   font-weight: 600;
   font-size: 14px;

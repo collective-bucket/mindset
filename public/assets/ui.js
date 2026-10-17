@@ -263,13 +263,18 @@
     );
 
     window.MindsetStore.getOptionalSession().then(function (session) {
-      if (session) {
-        nav.hidden = false;
-        body.classList.add("has-gamebar");
+      if (!session) return;
+      if (body.hasAttribute("data-no-gamebar")) {
+        nav.hidden = true;
         siteFooter.hidden = true;
-        siteFooter.classList.remove("is-away");
-        nav.classList.remove("is-away");
+        body.classList.remove("has-gamebar");
+        return;
       }
+      nav.hidden = false;
+      body.classList.add("has-gamebar");
+      siteFooter.hidden = true;
+      siteFooter.classList.remove("is-away");
+      nav.classList.remove("is-away");
     });
   }
 
