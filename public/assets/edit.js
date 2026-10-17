@@ -138,13 +138,45 @@
 
     function showPreview(scores) {
       var texts = ui.collectTexts(form);
+      var demo = ui.collectDemo(form);
       var label = existingNumber || t("common.preview");
       var headline = math.deriveHeadline(texts);
       var blurb = math.deriveBlurb(label, texts, scores, i18n.lang);
-      var headlineNode = document.querySelector("#preview-headline");
-      headlineNode.textContent = headline;
-      headlineNode.hidden = !headline;
-      document.querySelector("#preview-summary").textContent = blurb;
+      var quote = math.deriveQuote(texts);
+      var previewDoc = {
+        id: existingNumber || "",
+        ownerUid: session && session.uid,
+        headline: headline,
+        blurb: blurb,
+        personalCode: texts.personalCode,
+        currentPosition: texts.currentPosition,
+        agency: scores.agency,
+        communion: scores.communion,
+        codeClarity: scores.codeClarity,
+        redemption: scores.redemption,
+        ageBand: demo.ageBand,
+        gender: demo.gender,
+        country: demo.country,
+        createdAt: existingNumber ? undefined : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      var host = document.querySelector("#preview-entry");
+      host.innerHTML = ui.card(previewDoc, {
+        preview: true,
+        quote: quote,
+        tag: existingNumber ? "" : t("common.preview")
+      });
+      // card() returns a full .entry root; unwrap into the host.
+      var built = host.querySelector(".entry");
+      if (built) {
+        host.className = built.className;
+        host.innerHTML = built.innerHTML;
+        if (existingNumber) host.setAttribute("data-id", String(existingNumber));
+        else host.removeAttribute("data-id");
+      }
+      host.hidden = false;
+      var radarHost = host.querySelector(".entry-radar");
+      if (radarHost) ui.renderRadar(radarHost, scores, null, { compact: true });
       ui.renderRadar(document.querySelector("#preview-radar"), scores);
       ui.renderBars(document.querySelector("#preview-open"), scores, math.OPEN_KEYS);
       ui.renderBars(document.querySelector("#preview-closed"), scores, math.CLOSED_KEYS);

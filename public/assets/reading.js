@@ -19,28 +19,28 @@
 
   var PHRASES = {
     en: {
-      agencyHigh: "in charge",
-      agencyLow: "not in charge",
-      codeHigh: "clear on the rules",
-      codeLow: "loose on the rules",
+      agencyHigh: "riding the current",
+      agencyLow: "swept by the current",
+      codeHigh: "scales hard against the current",
+      codeLow: "soft scales",
       join: " and ",
-      redemptionHigh: "The story turns out fine.",
-      redemptionLow: "The story doesn't turn out fine.",
-      communionHigh: "Part of an us.",
-      communionLow: "On my own.",
-      neutral: "The open reading sits in the middle."
+      redemptionHigh: "The story surfaces.",
+      redemptionLow: "The story sinks.",
+      communionHigh: "In a school.",
+      communionLow: "Alone in the lake.",
+      neutral: "The surface reading sits in the middle."
     },
     tr: {
-      agencyHigh: "iş bende",
-      agencyLow: "iş bende değil",
-      codeHigh: "kuralı net",
-      codeLow: "kuralı gevşek",
+      agencyHigh: "akıntı bende",
+      agencyLow: "akıntı beni sürüklüyor",
+      codeHigh: "akıntıya karşı pulları sert",
+      codeLow: "pulları yumuşak",
       join: " ve ",
-      redemptionHigh: "Hikaye düze çıkıyor.",
-      redemptionLow: "Hikaye düze çıkmıyor.",
-      communionHigh: "Bir aradayım.",
-      communionLow: "Kendi başımayım.",
-      neutral: "Açık okuma ortada duruyor."
+      redemptionHigh: "Hikaye yüzeye çıkıyor.",
+      redemptionLow: "Hikaye dibe çöküyor.",
+      communionHigh: "Sürüdeyim.",
+      communionLow: "Gölde yalnızım.",
+      neutral: "Yüzey okuması ortada."
     }
   };
 
@@ -262,16 +262,13 @@
     return firstSentence(texts.personalCode || texts.currentPosition || "", 70);
   }
 
-  // Card blurb: score phrase + a short quote. Not user-editable.
+  // Card blurb: score phrases only. Quote is rendered separately in the card.
   function deriveBlurb(number, texts, scores, lang) {
-    var line = summary(number, scores, lang).replace(/^\d+\.\s*/, "");
-    var quote = firstSentence(texts.personalCode || texts.currentPosition || "", 120);
-    if (quote && line.indexOf(quote) < 0) {
-      var joined = line + " «" + quote + "»";
-      if (joined.length > 220) joined = joined.slice(0, 217) + "…";
-      return joined;
-    }
-    return line;
+    return summary(number, scores, lang).replace(/^\d+\.\s*/, "");
+  }
+
+  function deriveQuote(texts) {
+    return firstSentence(texts.personalCode || texts.currentPosition || "", 120);
   }
 
   // Only the open side is ever copied into history.
@@ -386,6 +383,7 @@
     buildVersion: buildVersion,
     deriveHeadline: deriveHeadline,
     deriveBlurb: deriveBlurb,
+    deriveQuote: deriveQuote,
     versionId: versionId,
     historyLevel: historyLevel,
     parseNumber: parseNumber,

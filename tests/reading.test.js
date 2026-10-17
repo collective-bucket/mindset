@@ -63,19 +63,19 @@ assert.strictEqual(reading.scoreDistance({ agency: -1 }, { agency: 50 }), Infini
 var scores212 = { agency: 80, communion: 50, codeClarity: 80, redemption: 20 };
 assert.strictEqual(
   reading.summary(212, scores212, "en"),
-  "212. In charge and clear on the rules. The story doesn't turn out fine."
+  "212. Riding the current and scales hard against the current. The story sinks."
 );
 assert.strictEqual(
   reading.summary(212, scores212, "tr"),
-  "212. İş bende ve kuralı net. Hikaye düze çıkmıyor."
+  "212. Akıntı bende ve akıntıya karşı pulları sert. Hikaye dibe çöküyor."
 );
 assert.strictEqual(
   reading.summary(3, { agency: 50, communion: 50, codeClarity: 50, redemption: 50 }, "en"),
-  "3. The open reading sits in the middle."
+  "3. The surface reading sits in the middle."
 );
 assert.strictEqual(
   reading.summary(3, { agency: 50, communion: 50, codeClarity: 50, redemption: 50 }),
-  "3. The open reading sits in the middle."
+  "3. The surface reading sits in the middle."
 );
 
 // Demographics normalize to known values only.
@@ -217,7 +217,8 @@ reading.CLOSED_TEXT_KEYS.concat(reading.CLOSED_KEYS, ["city"]).forEach(function 
 assert.strictEqual(docs.publicDoc.lens, "v2");
 assert.strictEqual(docs.publicDoc.personalCode, "Keep your word.");
 assert.strictEqual(docs.publicDoc.headline, "Keep your word.");
-assert.ok(docs.publicDoc.blurb.indexOf("Keep your word.") >= 0);
+assert.ok(docs.publicDoc.blurb.length > 0);
+assert.ok(docs.publicDoc.blurb.indexOf("Keep your word.") < 0);
 assert.strictEqual(docs.publicDoc.bucket, "3u4u");
 assert.strictEqual(docs.publicDoc.country, "TR");
 assert.strictEqual(docs.publicDoc.ageBand, "35-44");
@@ -232,8 +233,9 @@ assert.strictEqual(
 );
 assert.ok(
   reading.deriveBlurb(1, { personalCode: "Hold the line." }, { agency: 70, communion: 50, codeClarity: 80, redemption: 50 }, "en")
-    .indexOf("Hold the line.") >= 0
+    .indexOf("Hold the line.") < 0
 );
+assert.strictEqual(reading.deriveQuote({ personalCode: "Hold the line. More later." }), "Hold the line.");
 assert.deepStrictEqual(
   demographics.suggestFromText("Ben 30 yaşında bir kadın, İstanbul'da yaşıyorum."),
   { ageBand: "25-34", gender: "woman", country: "TR", city: "İstanbul" }

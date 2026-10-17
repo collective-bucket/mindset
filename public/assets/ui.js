@@ -662,7 +662,14 @@
   }
 
   function plainSummary(doc) {
-    if (doc.blurb) return String(doc.blurb);
+    var raw = doc.blurb ? String(doc.blurb) : "";
+    if (raw) {
+      // Drop legacy guillemet quotes from older published blurbs.
+      return raw
+        .replace(/\s*«[^»]*»\s*/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
     var scores = window.MindsetReading.scoresOf(doc);
     return window.MindsetReading.summary(doc.id || doc.number, scores, i18n.lang).replace(/^\d+\.\s*/, "");
   }
@@ -675,39 +682,97 @@
     return items.join(" · ");
   }
 
-  // One fish per line: number on the left, when and badges on the right.
+  function isSimOwner(uid) {
+    return /^sim[0-9]+$/.test(String(uid || ""));
+  }
+
+  function entryFishClass(doc) {
+    if (isSimOwner(doc.ownerUid)) return "entry-fish is-sim";
+    if (doc.createdAt && doc.updatedAt && doc.createdAt !== doc.updatedAt) return "entry-fish is-fresh";
+    return "entry-fish is-real";
+  }
+
+  function entryQuote(doc, options) {
+    options = options || {};
+    var quote = options.quote;
+    if (quote == null && window.MindsetReading.deriveQuote) {
+      quote = window.MindsetReading.deriveQuote({
+        personalCode: doc.personalCode,
+        currentPosition: doc.currentPosition
+      });
+    }
+    if (!quote && doc.personalCode) {
+      quote = String(doc.personalCode).replace(/\s+/g, " ").trim();
+      if (quote.length > 120) quote = quote.slice(0, 117).replace(/\s+\S*$/, "") + "…";
+    }
+    quote = String(quote || "").trim();
+    if (!quote) return "";
+    if (doc.headline && quote === String(doc.headline).trim()) return "";
+    return quote;
+  }
+
+  // One fish per line: number + mini radar on the left, status fish on the right.
   function card(doc, options) {
     options = options || {};
-    if (!/^\d+$/.test(String(doc.id || ""))) return "";
+    var id = String(doc.id || "");
+    var preview = Boolean(options.preview);
+    if (!preview && !/^\d+$/.test(id)) return "";
     var alias = options.alias || "";
     var chip = options.chip || "";
-    var quote = String(doc.personalCode || "");
-    if (quote.length > 140) quote = quote.slice(0, 137) + "…";
-    var side = options.tag || relativeWhen(doc.updatedAt);
+    var side = options.tag || (doc.updatedAt ? relativeWhen(doc.updatedAt) : "");
+    var summary = plainSummary(doc);
+    var quote = entryQuote(doc, options);
+    var numberLabel = /^\d+$/.test(id) ? "#" + id : "#";
+    var tag = preview ? "div" : "a";
+    var open =
+      "<" +
+      tag +
+      ' class="entry"' +
+      (preview ? "" : ' href="' + profileHref(doc) + '"') +
+      (/^\d+$/.test(id) ? ' data-id="' + escapeHtml(id) + '"' : "") +
+      ">";
     return (
-      '<a class="entry" href="' +
-      profileHref(doc) +
-      '">' +
+      open +
       '<span class="entry-head">' +
-      fishGlyph("entry-fish") +
+      '<span class="entry-id">' +
       '<strong class="entry-number">' +
-      escapeHtml(doc.id) +
-      "</strong>" +
+      escapeHtml(numberLabel) +
+      '</strong><span class="entry-radar" aria-hidden="true"></span></span>' +
       (chip ? '<span class="entry-chip">' + escapeHtml(chip) + "</span>" : "") +
       (doc.headline
         ? '<span class="entry-headline">' + escapeHtml(doc.headline) + "</span>"
         : "") +
       (alias ? '<span class="alias">@' + escapeHtml(alias) + "</span>" : "") +
-      '<span class="entry-side">' +
-      escapeHtml(side) +
-      "</span></span>" +
-      '<span class="entry-summary">' +
-      escapeHtml(plainSummary(doc)) +
+      (side ? '<span class="entry-side">' + escapeHtml(side) + "</span>" : "") +
+      fishGlyph(entryFishClass(doc)) +
       "</span>" +
-      (!doc.blurb && quote ? '<span class="entry-quote">' + escapeHtml(quote) + "</span>" : "") +
+      (summary || quote
+        ? '<span class="entry-summary">' +
+          escapeHtml(summary) +
+          (quote
+            ? (summary ? " " : "") + '<span class="entry-quote">' + escapeHtml(quote) + "</span>"
+            : "") +
+          "</span>"
+        : "") +
       (badgeText(doc) ? '<span class="entry-meta">' + escapeHtml(badgeText(doc)) + "</span>" : "") +
-      "</a>"
+      "</" +
+      tag +
+      ">"
     );
+  }
+
+  function hydrateEntryRadars(container, rows) {
+    if (!container || !rows || !rows.length) return;
+    var byId = {};
+    rows.forEach(function (doc) {
+      byId[String(doc.id)] = doc;
+    });
+    container.querySelectorAll(".entry[data-id]").forEach(function (el) {
+      var doc = byId[el.getAttribute("data-id")];
+      var host = el.querySelector(".entry-radar");
+      if (!doc || !host) return;
+      renderRadar(host, window.MindsetReading.scoresOf(doc), null, { compact: true });
+    });
   }
 
   function renderCards(container, rows, emptyKey, options) {
@@ -720,6 +785,7 @@
         return card(doc, options && options(doc));
       })
       .join("");
+    hydrateEntryRadars(container, rows);
   }
 
   var DASHES = ["", "5 3", "1.5 2.5", "7 2 1.5 2"];
@@ -1073,6 +1139,7 @@
     badges: badges,
     card: card,
     renderCards: renderCards,
+    hydrateEntryRadars: hydrateEntryRadars,
     renderForm: renderForm,
     renderLeaks: renderLeaks,
     renderDemoForm: renderDemoForm,
