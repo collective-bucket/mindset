@@ -79,6 +79,7 @@
       "common.notFoundLead": "This fish swam away.",
       "common.mindset": "{n}",
       "common.preview": "Preview",
+      "common.welcome": "Welcome",
       "common.approx": "Approximate reading",
       "common.needMindset": "Dive in first.",
 
@@ -93,7 +94,8 @@
       "current.youAre": "You are {n}",
       "current.school": "Your school",
       "current.trail": "My trail",
-      "current.everyone": "Across the lake",
+      "current.everyone": "Lake",
+      "current.searchTab": "Search",
       "current.new": "new",
       "current.changed": "changed",
       "current.joined": "joined your school",
@@ -270,6 +272,7 @@
 
       "school.title": "School",
       "school.lead": "The fish you trust. It forms after a handshake: they swim after you, you shine a scale, they ask to join, you accept. Members see each other's alias and full reading.",
+      "school.aboutTab": "What is it?",
       "school.incoming": "Requests",
       "school.outgoing": "Sent",
       "school.members": "Members",
@@ -567,6 +570,7 @@
       "common.notFoundLead": "Bu balık kaçtı.",
       "common.mindset": "{n}",
       "common.preview": "Önizleme",
+      "common.welcome": "Karşılama",
       "common.approx": "Yaklaşık okuma",
       "common.needMindset": "Önce göle gir.",
 
@@ -581,7 +585,8 @@
       "current.youAre": "Sen {n}",
       "current.school": "Sürün",
       "current.trail": "İzini sürdüklerim",
-      "current.everyone": "Gölün geri kalanı",
+      "current.everyone": "Göl",
+      "current.searchTab": "Ara",
       "current.new": "yeni",
       "current.changed": "değişti",
       "current.joined": "sürüne katıldı",
@@ -756,6 +761,7 @@
 
       "school.title": "Sürü",
       "school.lead": "Güvendiğin balıklar. El sıkışmadan sonra oluşur: peşine takılırlar, pul parlatırsın, katılmak isterler, kabul edersin. Üyeler birbirinin takma adını ve tam okumasını görür.",
+      "school.aboutTab": "Nedir?",
       "school.incoming": "İstekler",
       "school.outgoing": "Gönderilenler",
       "school.members": "Üyeler",

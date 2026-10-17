@@ -186,6 +186,17 @@
       if (button) i18n.setLang(button.getAttribute("data-lang"));
     });
 
+    document.addEventListener("click", function (event) {
+      var back = event.target.closest("a.head-back");
+      if (!back) return;
+      event.preventDefault();
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+      window.location.assign("/");
+    });
+
     var nav = document.createElement("nav");
     nav.className = "gamebar dock";
     nav.id = "gamebar";

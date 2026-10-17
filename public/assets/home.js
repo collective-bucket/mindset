@@ -8,12 +8,7 @@
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
-  var LIMIT = 12;
   var ROW_LIMIT = 40;
-
-  function byUpdated(left, right) {
-    return String(right.updatedAt || "").localeCompare(String(left.updatedAt || ""));
-  }
 
   function changeTag(doc) {
     return t(doc.createdAt === doc.updatedAt ? "current.new" : "current.changed") + " · " + ui.relativeWhen(doc.updatedAt);
@@ -58,18 +53,6 @@
     var session = null;
     var own = null;
 
-    async function aliasMap(numbers, token) {
-      var map = {};
-      await Promise.all(
-        numbers.map(function (number) {
-          return social.aliasOf(number, token).then(function (entry) {
-            if (entry && entry.alias) map[number] = entry.alias;
-          });
-        })
-      );
-      return map;
-    }
-
     function quiet(promise) {
       return promise.catch(function () {
         return [];
@@ -87,11 +70,34 @@
       if (login) login.setAttribute("href", ui.loginHref());
     }
 
+    function selectCurrentSection(name) {
+      var panes = {
+        welcome: document.querySelector("#pane-current-welcome"),
+        ontail: document.querySelector("#pane-current-ontail"),
+        trail: document.querySelector("#pane-current-trail"),
+        everyone: document.querySelector("#pane-current-everyone")
+      };
+      var tabs = {
+        welcome: document.querySelector("#tab-current-welcome"),
+        ontail: document.querySelector("#tab-current-ontail"),
+        trail: document.querySelector("#tab-current-trail"),
+        everyone: document.querySelector("#tab-current-everyone")
+      };
+      Object.keys(panes).forEach(function (key) {
+        var on = key === name;
+        panes[key].hidden = !on;
+        tabs[key].setAttribute("aria-selected", String(on));
+      });
+    }
+
     function openLookup(event) {
       event.preventDefault();
-      var input = document.querySelector("#lookup-input");
+      var form = event.currentTarget;
+      var input = form.querySelector("input");
       var raw = String(input.value || "").trim();
-      var lookupStatus = document.querySelector("#lookup-status");
+      var lookupStatus = document.querySelector(
+        form.id === "current-lookup" ? "#current-lookup-status" : "#lookup-status"
+      );
       if (!raw) {
         ui.setStatus(lookupStatus, "");
         window.location.href = "/i/1";
@@ -108,6 +114,13 @@
     }
 
     document.querySelector("#lookup").addEventListener("submit", openLookup);
+    document.querySelector("#current-lookup").addEventListener("submit", openLookup);
+
+    document.querySelector(".current-stick .depth-tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest("[data-current-section]");
+      if (!tab) return;
+      selectCurrentSection(tab.getAttribute("data-current-section"));
+    });
 
     document.querySelector("#share").addEventListener("click", function () {
       if (!own) return;
@@ -161,10 +174,6 @@
         memberUids[row.uid || row.id] = true;
         return Number(row.number);
       });
-      var sinceByNumber = {};
-      members.forEach(function (row) {
-        sinceByNumber[row.number] = row.since;
-      });
 
       var onTail = lists[0]
         .filter(function (row) {
@@ -206,12 +215,9 @@
         })
       );
 
-      var numbers = onTail
-        .concat(trail)
-        .map(function (row) {
-          return Number(row.number);
-        })
-        .concat(schoolNumbers);
+      var numbers = onTail.concat(trail).map(function (row) {
+        return Number(row.number);
+      });
       var docs = numbers.length ? await store.byNumbers(numbers, session.idToken).catch(function () { return []; }) : [];
       var byId = {};
       docs.forEach(function (doc) {
@@ -219,7 +225,6 @@
       });
 
       var onTailHost = document.querySelector("#ontail");
-      document.querySelector("#ontail-section").hidden = false;
       onTailHost.innerHTML = onTail.length
         ? onTail
             .map(function (row) {
@@ -240,7 +245,6 @@
         : '<p class="empty">' + ui.escapeHtml(t("feed.emptyOnTail")) + "</p>";
 
       var trailHost = document.querySelector("#trail");
-      document.querySelector("#trail-section").hidden = false;
       trailHost.innerHTML = trail.length
         ? trail
             .map(function (row) {
@@ -251,24 +255,6 @@
             })
             .join("")
         : '<p class="empty">' + ui.escapeHtml(t("feed.emptyTrail")) + "</p>";
-
-      if (schoolNumbers.length) {
-        var aliases = await aliasMap(schoolNumbers, session.idToken);
-        var schoolDocs = docs
-          .filter(function (doc) {
-            return schoolNumbers.indexOf(Number(doc.id)) >= 0;
-          })
-          .sort(byUpdated);
-        document.querySelector("#school-section").hidden = false;
-        ui.renderCards(document.querySelector("#school-feed"), schoolDocs.slice(0, LIMIT), "feed.emptySchool", function (doc) {
-          var since = sinceByNumber[doc.id];
-          var joinedLater = since && since > doc.updatedAt;
-          return {
-            alias: aliases[doc.id],
-            tag: joinedLater ? t("current.joined") + " · " + ui.relativeWhen(since) : changeTag(doc)
-          };
-        });
-      }
 
       onTail.concat(trail).forEach(function (row) {
         seen[row.number] = true;
@@ -326,6 +312,7 @@
       });
     });
 
+    selectCurrentSection("everyone");
     ui.beginPageLoad();
     load()
       .catch(function (error) {

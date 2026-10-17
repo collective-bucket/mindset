@@ -92,14 +92,10 @@
     function selectMeSection(name) {
       var panes = {
         preview: document.querySelector("#pane-me-preview"),
-        school: document.querySelector("#pane-me-school"),
-        current: document.querySelector("#pane-me-current"),
         prefs: document.querySelector("#pane-me-prefs")
       };
       var tabs = {
         preview: document.querySelector("#tab-me-preview"),
-        school: document.querySelector("#tab-me-school"),
-        current: document.querySelector("#tab-me-current"),
         prefs: document.querySelector("#tab-me-prefs")
       };
       Object.keys(panes).forEach(function (key) {
@@ -165,22 +161,6 @@
       if (!currentAlias) ui.setStatus(aliasStatus, t("alias.required"), "error");
     }
 
-    async function renderCounts() {
-      var results = await Promise.all([
-        social.incoming(session).catch(function () { return []; }),
-        social.members(session).catch(function () { return []; }),
-        social.tailersOf(session).catch(function () { return []; }),
-        social.trailOf(session).catch(function () { return []; })
-      ]);
-      var incoming = results[0].length;
-      document.querySelector("#school-count").textContent =
-        String(results[1].length) + (incoming ? " · " + t("me.requests", { n: incoming }) : "");
-      document.querySelector("#current-count").textContent = t("me.currentCount", {
-        a: results[2].length,
-        b: results[3].length
-      });
-    }
-
     async function load(notice) {
       ui.beginPageLoad();
       ui.setStatus(status, "");
@@ -198,7 +178,6 @@
         if (own) {
           var entry = await social.aliasOf(own.publicDoc.id, session.idToken);
           renderAlias(entry && entry.alias);
-          await renderCounts();
           document.querySelector("#root-link").hidden = own.publicDoc.number !== 1;
           store.ensureFirstVersion(own.publicDoc, session.idToken).catch(function () {});
         }

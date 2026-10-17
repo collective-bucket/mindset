@@ -340,6 +340,7 @@ body.is-page-loading #profile:not([hidden]) {
 }
 
 body.is-page-loading .page-header,
+body.is-page-loading .page-chrome,
 body.is-page-loading .page-footer {
   display: none !important;
 }
@@ -581,6 +582,8 @@ body:not(.is-page-loading) .page-loading {
   align-items: center;
   justify-content: center;
   gap: 2px;
+  padding-top: calc(10px + 1lh);
+  padding-bottom: 10px;
 }
 
 .me-account-actions .actions-note {
@@ -2940,10 +2943,8 @@ body.has-gamebar #mindset-form > .actions {
   padding: 4px 0 0;
 }
 
-/* Lake / current / school: sticky page header with hairline + soft shadow */
-body[data-tab="lake"] .page-header,
-body[data-tab="current"] .page-header,
-body[data-tab="school"] .page-header {
+/* Lake: sticky page header with hairline + soft shadow */
+body[data-tab="lake"] .page-header {
   position: sticky;
   top: 0;
   z-index: 9;
@@ -2953,6 +2954,57 @@ body[data-tab="school"] .page-header {
   box-shadow:
     0 1px 0 var(--hair),
     0 10px 18px -14px rgba(20, 20, 20, 0.28);
+}
+
+/* Current / school: header + tabs sticky as one chrome block */
+body[data-tab="current"] .page-chrome,
+body[data-tab="school"] .page-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  margin: 6px 0 8px;
+  padding: 4px 0 0;
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 var(--hair),
+    0 10px 18px -14px rgba(20, 20, 20, 0.28);
+}
+
+body[data-tab="current"] .page-chrome .page-header,
+body[data-tab="school"] .page-chrome .page-header {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body[data-tab="current"] .page-chrome .profile-stick,
+body[data-tab="school"] .page-chrome .profile-stick {
+  position: relative;
+  top: auto;
+  z-index: auto;
+  margin: 8px -4px 0;
+  padding: 0 4px 8px;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Current / school tab panes: shared top rhythm + hint size */
+body[data-tab="current"] .page-body [role="tabpanel"] > .section,
+body[data-tab="school"] .page-body [role="tabpanel"] > .section {
+  padding-top: 12px;
+  padding-bottom: 20px;
+}
+
+body[data-tab="current"] .page-body [role="tabpanel"] > .section > .hint:first-child,
+body[data-tab="school"] .page-body [role="tabpanel"] > .section > .hint:first-child {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+body[data-tab="current"] .page-body [role="tabpanel"] > .links + .section {
+  padding-top: 8px;
 }
 
 .profile-top-main {

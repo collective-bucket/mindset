@@ -53,8 +53,34 @@
     var session = null;
     var ownDoc = null;
 
+    function selectSchoolSection(name) {
+      var panes = {
+        welcome: document.querySelector("#pane-school-welcome"),
+        incoming: document.querySelector("#pane-school-incoming"),
+        members: document.querySelector("#pane-school-members"),
+        outgoing: document.querySelector("#pane-school-outgoing")
+      };
+      var tabs = {
+        welcome: document.querySelector("#tab-school-welcome"),
+        incoming: document.querySelector("#tab-school-incoming"),
+        members: document.querySelector("#tab-school-members"),
+        outgoing: document.querySelector("#tab-school-outgoing")
+      };
+      Object.keys(panes).forEach(function (key) {
+        var on = key === name;
+        panes[key].hidden = !on;
+        tabs[key].setAttribute("aria-selected", String(on));
+      });
+    }
+
     document.querySelector("#share").addEventListener("click", function () {
       ui.shareMindset(ownDoc, status);
+    });
+
+    document.querySelector(".school-stick .depth-tabs").addEventListener("click", function (event) {
+      var tab = event.target.closest("[data-school-section]");
+      if (!tab) return;
+      selectSchoolSection(tab.getAttribute("data-school-section"));
     });
 
     function fill(container, rows, actions) {
@@ -121,7 +147,6 @@
         ]);
         fill(document.querySelector("#members"), members, [{ id: "remove", label: "school.remove" }]);
         fill(document.querySelector("#outgoing"), outgoing, [{ id: "cancel", label: "school.cancel" }]);
-        document.querySelector("#school-body").hidden = false;
         ui.setStatus(status, "");
       } finally {
         if (gate) await ui.endPageLoad();
@@ -150,6 +175,7 @@
         });
     });
 
+    selectSchoolSection("welcome");
     ui.requireAuth().then(function (next) {
       session = next;
       if (!session) {
