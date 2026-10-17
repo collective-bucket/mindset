@@ -2775,7 +2775,7 @@ body.has-gamebar #mindset-form > .actions {
   box-sizing: border-box;
   width: 100%;
   max-width: 560px;
-  margin: 8em auto 0;
+  margin: 12em auto 0;
   padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--hair);
   background: var(--paper);
