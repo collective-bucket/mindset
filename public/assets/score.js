@@ -2,11 +2,8 @@
   "use strict";
 
   // Runs only in the browser. Text never leaves the device.
-  var MODEL = "Xenova/multilingual-e5-small";
-  var CDN = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/+esm";
-  var CHUNK = 480;
-  var extractor = null;
-  var loading = null;
+  // Uses the lite on-device embedder (public/assets/embed.js). A neural
+  // ONNX model was killing mobile Chrome tabs (~1GB renderer peak).
   var poleCache = {};
   var textCache = {};
 
@@ -14,161 +11,55 @@
     return window.MindsetI18n.t(key, vars);
   }
 
-  function asVector(output) {
-    var list = output && output.tolist ? output.tolist() : output;
-    if (list && Array.isArray(list[0])) return list[0];
-    return Array.from(list);
-  }
-
-  function meanNormalize(vectors) {
-    var dim = vectors[0].length;
-    var acc = new Array(dim).fill(0);
-    var index;
-    vectors.forEach(function (vector) {
-      for (index = 0; index < dim; index += 1) acc[index] += vector[index];
-    });
-    var norm = 0;
-    for (index = 0; index < dim; index += 1) {
-      acc[index] /= vectors.length;
-      norm += acc[index] * acc[index];
-    }
-    norm = Math.sqrt(norm) || 1;
-    for (index = 0; index < dim; index += 1) acc[index] /= norm;
-    return acc;
-  }
-
-  function dot(left, right) {
-    var sum = 0;
-    for (var index = 0; index < left.length; index += 1) sum += left[index] * right[index];
-    return sum;
-  }
-
-  function chunks(text) {
-    var clean = text.replace(/\s+/g, " ").trim();
-    var parts = [];
-    for (var index = 0; index < clean.length; index += CHUNK) {
-      parts.push(clean.slice(index, index + CHUNK));
-    }
-    return parts;
+  function embedApi() {
+    return window.MindsetEmbed;
   }
 
   async function embedRaw(text) {
     if (Object.prototype.hasOwnProperty.call(textCache, text)) return textCache[text];
-    var output = await extractor("query: " + text, { pooling: "mean", normalize: true });
-    var vector;
-    try {
-      vector = asVector(output);
-    } finally {
-      if (output && typeof output.dispose === "function") output.dispose();
-    }
+    var vector = embedApi().embed(text);
     textCache[text] = vector;
     return vector;
   }
 
   async function embedDocument(text) {
-    var parts = chunks(text);
-    if (!parts.length) return null;
-    var vectors = [];
-    for (var index = 0; index < parts.length; index += 1) {
-      vectors.push(await embedRaw(parts[index]));
-    }
-    return vectors.length === 1 ? vectors[0] : meanNormalize(vectors);
+    var clean = String(text || "").replace(/\s+/g, " ").trim();
+    if (!clean) return null;
+    return embedRaw(clean);
   }
 
   async function embedPole(anchors) {
     var list = anchors.en.concat(anchors.tr);
     var key = list.join("\n");
-    if (!poleCache[key]) {
-      var vectors = [];
-      for (var index = 0; index < list.length; index += 1) {
-        vectors.push(await embedRaw(list[index]));
-      }
-      poleCache[key] = meanNormalize(vectors);
-    }
+    if (!poleCache[key]) poleCache[key] = embedApi().embedPole(anchors);
     return poleCache[key];
   }
 
-  async function startModel(onProgress) {
-    var transformers = await import(CDN);
-    if (transformers.env) {
-      transformers.env.allowLocalModels = false;
-      var wasm = transformers.env.backends && transformers.env.backends.onnx && transformers.env.backends.onnx.wasm;
-      // A long read on the main thread freezes Chrome until it kills the tab.
-      if (wasm) {
-        wasm.numThreads = 1;
-        wasm.proxy = true;
-      }
-    }
-    var downloading = true;
-    extractor = await transformers.pipeline("feature-extraction", MODEL, {
-      device: "wasm",
-      dtype: "q8",
-      session_options: {
-        enableCpuMemArena: false,
-        enableMemPattern: false
-      },
-      progress_callback: function (update) {
-        if (!onProgress || !update) return;
-        if (!downloading) {
-          onProgress(t("model.reading"));
-          return;
-        }
-        if (update.status === "progress" && update.progress != null) {
-          var raw = Number(update.progress);
-          var percent = raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
-          if (percent >= 100) {
-            onProgress(t("model.reading"));
-            return;
-          }
-          if (percent > 0) onProgress(t("model.downloading", { p: percent }));
-          else onProgress(t("model.preparing"));
-          return;
-        }
-        if (update.status === "done" || update.status === "ready") {
-          onProgress(t("model.reading"));
-          return;
-        }
-        if (update.status === "initiate") onProgress(t("model.preparing"));
-      }
+  function yieldUi() {
+    return new Promise(function (resolve) {
+      window.setTimeout(resolve, 0);
     });
-    downloading = false;
-    if (onProgress) onProgress(t("model.reading"));
-  }
-
-  async function load(onProgress) {
-    if (extractor) {
-      if (onProgress) onProgress(t("model.reading"));
-      return;
-    }
-    if (!loading) {
-      loading = startModel(onProgress).catch(function (error) {
-        loading = null;
-        throw error;
-      });
-    } else if (onProgress) {
-      onProgress(t("model.reading"));
-    }
-    await loading;
-    if (onProgress) onProgress(t("model.reading"));
   }
 
   async function read(texts, onProgress) {
     if (onProgress) onProgress(t("model.reading"));
-    await load(onProgress);
-    if (onProgress) onProgress(t("model.reading"));
+    await yieldUi();
     var lens = window.MindsetLens;
     var math = window.MindsetReading;
+    var api = embedApi();
     var scores = math.blankScores();
 
     for (var index = 0; index < lens.axes.length; index += 1) {
       var axis = lens.axes[index];
+      if (onProgress) onProgress(t("model.reading"));
       if (axis.kind === "polarity") {
         var source = math.joinFields(texts, axis.sources);
         if (!source) continue;
         var vector = await embedDocument(source);
         var low = await embedPole(axis.lowAnchors);
         var high = await embedPole(axis.highAnchors);
-        scores[axis.key] = math.polarityScore(dot(vector, low), dot(vector, high), axis.calibration);
+        scores[axis.key] = math.polarityScore(api.dot(vector, low), api.dot(vector, high), axis.calibration);
+        await yieldUi();
         continue;
       }
       var leftText = math.joinFields(texts, axis.left);
@@ -176,9 +67,11 @@
       if (!leftText || !rightText) continue;
       var left = await embedDocument(leftText);
       var right = await embedDocument(rightText);
-      scores[axis.key] = math.distanceScore(dot(left, right));
+      scores[axis.key] = math.distanceScore(api.dot(left, right));
+      await yieldUi();
     }
 
+    if (onProgress) onProgress(t("model.ready"));
     return scores;
   }
 

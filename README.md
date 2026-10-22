@@ -10,8 +10,9 @@ sit to fixed anchor sentences. Three closed texts (what I don't say out loud,
 desire, the side I'm ashamed of) and the four readings derived from them stay
 with their owner. They never reach lists, distributions, versions or profiles.
 
-Scoring runs in the browser with `multilingual-e5-small`. Text is never sent to
-a model or a server. The codebook, including the academic construct names,
+Scoring runs in the browser with a lightweight on-device embedder
+([`public/assets/embed.js`](public/assets/embed.js)). Text is never sent to a
+model or a server. The codebook, including the academic construct names,
 anchors and calibration, is in [`public/assets/lens-v2.js`](public/assets/lens-v2.js).
 
 The interface is English by default with a Turkish option
