@@ -279,7 +279,65 @@
     return { actions: actions, summary: summary };
   }
 
-  // Turns one action into Firestore writes. Each action is one commit.
+  // Which closed texts and deep readings this tick can actually use.
+  // Tails only need the open scores already on the public mindset.
+  function readsForTick(world) {
+    var index = indexWorld(world);
+    var closed = {};
+    var deep = {};
+
+    function fishOf(uid) {
+      return index.byUid[uid];
+    }
+
+    function member(a, b) {
+      return Boolean(index.members[pair(a, b)] || index.members[pair(b, a)]);
+    }
+
+    function openRequest(a, b) {
+      return Boolean(index.requests[pair(a, b)] || index.requests[pair(b, a)]);
+    }
+
+    function markDeep(fish) {
+      if (fish && (fish.sim || fish.root || fish.number === 1)) deep[fish.uid] = fish;
+    }
+
+    function markClosed(fish) {
+      if (fish && fish.sim) closed[fish.uid] = fish;
+    }
+
+    (world.requests || []).forEach(function (row) {
+      var self = fishOf(row.to);
+      if (!self || !self.sim) return;
+      markDeep(self);
+      markDeep(fishOf(row.from));
+    });
+
+    (world.glints || []).forEach(function (row) {
+      if (!liveGlint(index, row.from, row.to)) return;
+      var self = fishOf(row.to);
+      if (!self || !self.sim) return;
+      if (member(self.uid, row.from) || openRequest(self.uid, row.from)) return;
+      markClosed(self);
+      markDeep(self);
+      markDeep(fishOf(row.from));
+    });
+
+    (world.tails || []).forEach(function (row) {
+      var self = fishOf(row.to);
+      if (!self || !self.sim) return;
+      if (member(self.uid, row.from) || openRequest(self.uid, row.from)) return;
+      if (liveGlint(index, self.uid, row.from)) return;
+      markClosed(self);
+    });
+
+    return {
+      closed: Object.keys(closed).map(function (uid) { return closed[uid]; }),
+      deep: Object.keys(deep).map(function (uid) { return deep[uid]; })
+    };
+  }
+
+  // Turns one action into Firestore writes. Callers batch these into commits.
   function toWrites(action, world, writes, nowMs) {
     var byUid = {};
     (world.fish || []).forEach(function (fish) {
@@ -443,6 +501,7 @@
     distance: distance,
     matchScore: matchScore,
     planTick: planTick,
+    readsForTick: readsForTick,
     toWrites: toWrites,
     computeStats: computeStats
   };

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#eafbf5" />
   <title>me · Mindset Bucket</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcpket3" />
-  <link rel="stylesheet" href="/assets/styles.css?v=mvcpket3" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjt425z" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvjt425z" />
 </head>
 <body data-tab="me" data-title="me.title" class="is-page-loading">
   <main class="page">
@@ -33,51 +33,103 @@
 
     <div class="page-body">
       <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
-        <img class="page-loading-logo" src="/assets/logo.svg?v=mvcpket3" width="280" height="280" alt="" />
+        <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjt425z" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
       </div>
 
       <section id="empty" class="section" hidden>
-        <h1 data-i18n="profile.fish">Fish</h1>
-        <p class="lead" data-i18n="me.empty">You haven't dived in yet.</p>
-        <a class="btn btn-primary" href="/new" data-i18n="home.write">Dive in</a>
+        <h2 data-i18n="create.tagline">Become a fish</h2>
+        <p class="landing-dive">
+          <span data-i18n="landing.dive">To form your school and interact, descend into the lake first. Answer the 6 questions that map your mind and become a fish, a number.</span>
+          <a class="landing-register" href="/about" data-i18n="landing.whatIsThis">What is this?</a>
+        </p>
+        <div class="actions me-empty-actions">
+          <a class="btn btn-primary" href="/new" data-i18n="home.write">Dive in</a>
+        </div>
       </section>
 
       <section id="owner" hidden>
         <div class="profile-stick me-stick">
-          <div class="tabs depth-tabs" role="tablist" aria-label="Me">
-            <button type="button" id="tab-me-preview" role="tab" aria-selected="true" aria-controls="pane-me-preview" data-me-section="preview" data-i18n="common.preview">Preview</button>
-            <button type="button" id="tab-me-prefs" role="tab" aria-selected="false" aria-controls="pane-me-prefs" data-me-section="prefs" data-i18n="me.tabPrefs">Preferences</button>
+          <div id="face-timeline" class="face-timeline global-timeline" hidden>
+            <label class="visually-hidden" for="timeline-range" data-i18n="history.timeline">Change over time</label>
+            <div class="field timeline-field">
+              <input id="timeline-range" type="range" min="0" max="0" step="1" value="0" />
+              <div class="timeline-when">
+                <span class="timeline-now">
+                  <span id="timeline-when"></span>
+                  <button type="button" id="version-manage" class="timeline-manage" hidden aria-expanded="false" aria-controls="version-drawer" data-i18n-aria="profile.manage" aria-label="Manage"></button>
+                </span>
+                <span id="timeline-count"></span>
+              </div>
+            </div>
+            <div id="version-drawer" class="version-drawer" inert>
+              <div class="version-drawer-inner">
+                <div id="version-list" class="version-list"></div>
+              </div>
+            </div>
+          </div>
+          <div class="profile-tabs-bar">
+            <div class="tabs depth-tabs" role="tablist" aria-label="Me">
+              <button type="button" id="tab-me-preview" role="tab" aria-selected="true" aria-controls="pane-me-preview" data-me-section="preview" data-i18n="common.preview">Preview</button>
+              <button type="button" id="tab-me-prefs" role="tab" aria-selected="false" aria-controls="pane-me-prefs" data-me-section="prefs" data-i18n="me.tabPrefs">Preferences</button>
+            </div>
+            <button type="button" id="how-to-read" class="btn-round" data-i18n-aria="guide.howTo" aria-label="How should I read this?">?</button>
           </div>
         </div>
 
         <div id="pane-me-preview" role="tabpanel" aria-labelledby="tab-me-preview">
-          <section class="section">
+          <section id="me-nodata-preview" class="section me-nodata" hidden>
+            <p class="empty" data-i18n="me.noData">To form your school and interact, descend into the lake first. Answer the 6 questions that map your mind and become a fish, a number.</p>
+            <p class="actions"><a class="btn btn-primary" href="/new" data-i18n="me.enterToRead">Dive in</a></p>
+          </section>
+          <section id="me-preview-body" class="section">
             <div id="me-entry" class="entry" hidden></div>
 
             <div class="preview-toolbar">
               <div class="tabs depth-tabs" role="tablist" aria-label="Reading">
-                <button type="button" id="tab-me-radar" role="tab" aria-selected="true" aria-controls="pane-me-radar" data-me-tab="radar" data-i18n="create.tabRadar">Radar</button>
-                <button type="button" id="tab-me-open" role="tab" aria-selected="false" aria-controls="pane-me-open" data-me-tab="open" data-i18n="create.openTitle">On your profile</button>
+                <button type="button" id="tab-me-open" role="tab" aria-selected="true" aria-controls="pane-me-open" data-me-tab="open" data-i18n="create.openTitle">On your profile</button>
                 <button type="button" id="tab-me-closed" role="tab" aria-selected="false" aria-controls="pane-me-closed" data-me-tab="closed" data-i18n="create.privateTitle">Only for you</button>
               </div>
-              <button type="button" id="how-to-read" class="btn-round" data-i18n-aria="guide.howTo" aria-label="How should I read this?">?</button>
             </div>
 
-            <div id="pane-me-radar" role="tabpanel" aria-labelledby="tab-me-radar">
-              <div id="me-radar"></div>
-            </div>
-            <div id="pane-me-open" role="tabpanel" aria-labelledby="tab-me-open" hidden>
-              <div id="me-open"></div>
+            <div id="pane-me-open" role="tabpanel" aria-labelledby="tab-me-open">
+              <div id="me-open-stage" class="reading-stage">
+                <div class="reading-switch" role="group" aria-label="On your profile">
+                  <button type="button" class="btn-icon" data-view="radar" aria-pressed="true" data-i18n-aria="profile.slideRadar" aria-label="Radar"></button>
+                  <button type="button" class="btn-icon" data-view="bars" aria-pressed="false" data-i18n-aria="profile.slideBars" aria-label="Bars"></button>
+                </div>
+                <div class="reading-view" data-view="radar">
+                  <div id="me-open-radar" class="radar-face"></div>
+                </div>
+                <div class="reading-view" data-view="bars" hidden>
+                  <div id="me-open-bars" class="face-bars"></div>
+                </div>
+              </div>
+              <div id="open-texts" class="posts reading-texts"></div>
             </div>
             <div id="pane-me-closed" role="tabpanel" aria-labelledby="tab-me-closed" hidden>
-              <div id="me-closed"></div>
-              <h3 data-i18n="me.closedTexts">Closed texts</h3>
-              <div id="closed-texts" class="posts"></div>
+              <div id="me-closed-stage" class="reading-stage">
+                <div class="reading-switch" role="group" aria-label="Only for you">
+                  <button type="button" class="btn-icon" data-view="radar" aria-pressed="true" data-i18n-aria="profile.slideRadar" aria-label="Radar"></button>
+                  <button type="button" class="btn-icon" data-view="bars" aria-pressed="false" data-i18n-aria="profile.slideBars" aria-label="Bars"></button>
+                </div>
+                <div class="reading-view" data-view="radar">
+                  <div id="me-closed-radar" class="radar-face"></div>
+                </div>
+                <div class="reading-view" data-view="bars" hidden>
+                  <div id="me-closed-bars" class="face-bars"></div>
+                </div>
+              </div>
+              <div id="closed-texts" class="posts reading-texts"></div>
             </div>
           </section>
         </div>
 
         <div id="pane-me-prefs" role="tabpanel" aria-labelledby="tab-me-prefs" hidden>
+          <section id="me-nodata-prefs" class="section me-nodata" hidden>
+            <p class="empty" data-i18n="me.noData">To form your school and interact, descend into the lake first. Answer the 6 questions that map your mind and become a fish, a number.</p>
+            <p class="actions"><a class="btn btn-primary" href="/new" data-i18n="me.enterToRead">Dive in</a></p>
+          </section>
+          <div id="me-prefs-body">
           <section class="section" id="alias-panel">
             <h2 data-i18n="alias.title">Your alias</h2>
             <p class="hint" data-i18n="alias.hint">Your school sees it; nobody else. It's the only name you show.</p>
@@ -103,9 +155,8 @@
             <p id="history-status" class="status" role="status" hidden></p>
           </section>
 
-          <nav class="links" aria-label="Root">
-            <a class="link-row" id="root-link" href="/root" hidden><span data-i18n="me.root">Root screen</span><span class="link-side" aria-hidden="true"></span></a>
-          </nav>
+          <a class="btn btn-danger btn-block" id="root-link" href="/root" hidden data-i18n="me.root">Root screen</a>
+          </div>
         </div>
       </section>
     </div>
@@ -146,16 +197,17 @@
     </form>
   </dialog>
 
-  <script src="/assets/config.js?v=mvcpket3" defer></script>
-  <script src="/assets/i18n.js?v=mvcpket3" defer></script>
-  <script src="/assets/demographics.js?v=mvcpket3" defer></script>
-  <script src="/assets/lens-v2.js?v=mvcpket3" defer></script>
-  <script src="/assets/reading.js?v=mvcpket3" defer></script>
-  <script src="/assets/firestore.js?v=mvcpket3" defer></script>
-  <script type="module" src="/assets/auth.js?v=mvcpket3"></script>
-  <script src="/assets/store.js?v=mvcpket3" defer></script>
-  <script src="/assets/social.js?v=mvcpket3" defer></script>
-  <script src="/assets/ui.js?v=mvcpket3" defer></script>
-  <script src="/assets/me.js?v=mvcpket3" defer></script>
+  <script src="/assets/config.js?v=mvjt425z" defer></script>
+  <script src="/assets/i18n.js?v=mvjt425z" defer></script>
+  <script src="/assets/demographics.js?v=mvjt425z" defer></script>
+  <script src="/assets/lens-v2.js?v=mvjt425z" defer></script>
+  <script src="/assets/reading.js?v=mvjt425z" defer></script>
+  <script src="/assets/firestore.js?v=mvjt425z" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvjt425z"></script>
+  <script src="/assets/store.js?v=mvjt425z" defer></script>
+  <script src="/assets/social.js?v=mvjt425z" defer></script>
+  <script src="/assets/notices.js?v=mvjt425z" defer></script>
+  <script src="/assets/ui.js?v=mvjt425z" defer></script>
+  <script src="/assets/me.js?v=mvjt425z" defer></script>
 </body>
 </html>

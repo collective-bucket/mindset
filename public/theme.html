@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#eafbf5" />
+  <meta name="robots" content="noindex" />
+  <title>theme · Mindset Bucket</title>
+  <meta name="description" content="Gallery of the text, icons and buttons Mindset Bucket reuses." />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjt425z" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvjt425z" />
+</head>
+<body data-tab="" data-title="theme.pageTitle">
+  <main class="page">
+    <div class="head">
+      <a class="head-back" href="#" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      <div class="head-main">
+        <h1 data-i18n="theme.pageTitle">Theme</h1>
+        <p class="head-meta" data-i18n="theme.lead">Pieces this site reuses. It starts with text, icons and buttons.</p>
+      </div>
+    </div>
+
+    <section class="static-page theme-page">
+      <h2 data-i18n="theme.texts">Texts</h2>
+
+      <div class="theme-sample">
+        <span class="theme-label">.lead</span>
+        <p class="lead" data-i18n="theme.sampleBody">A mind in the lake is only a number.</p>
+      </div>
+      <div class="theme-sample">
+        <span class="theme-label">p</span>
+        <p data-i18n="theme.sampleBody">A mind in the lake is only a number.</p>
+      </div>
+      <div class="theme-sample">
+        <span class="theme-label">.hint</span>
+        <p class="hint" data-i18n="theme.sampleHint">A quieter line for a secondary note.</p>
+      </div>
+      <div class="theme-sample">
+        <span class="theme-label">.meta</span>
+        <p class="meta" data-i18n="theme.sampleMeta">published · today</p>
+      </div>
+      <div class="theme-sample">
+        <span class="theme-label">.eyebrow</span>
+        <p class="eyebrow">Surface</p>
+      </div>
+      <div class="theme-sample">
+        <span class="theme-label">.alias</span>
+        <p class="alias">@alias</p>
+      </div>
+      <div class="theme-sample">
+        <span class="theme-label">.tag</span>
+        <p>Reading <span class="tag">changed</span></p>
+      </div>
+      <div class="theme-sample">
+        <span class="theme-label">.empty</span>
+        <p class="empty" data-i18n="theme.sampleEmpty">Nothing here yet.</p>
+      </div>
+
+      <h2 data-i18n="theme.icons">Icons</h2>
+      <div id="theme-icons" class="theme-grid"></div>
+
+      <h2 data-i18n="theme.buttons">Buttons</h2>
+      <div class="theme-row">
+        <button type="button" class="btn">Button</button>
+        <button type="button" class="btn btn-primary">Primary</button>
+        <button type="button" class="btn btn-small">Small</button>
+        <button type="button" class="btn btn-compact">Compact</button>
+      </div>
+      <div class="theme-row">
+        <button type="button" class="btn btn-danger">Danger</button>
+        <button type="button" class="btn btn-quiet-danger">Quiet danger</button>
+        <button type="button" class="linkish">Linkish</button>
+        <a class="landing-register" href="/theme">Register link</a>
+      </div>
+      <div class="theme-row">
+        <button type="button" class="btn-icon" id="theme-icon-btn" aria-label="Icon button"></button>
+        <button type="button" class="btn-icon" aria-pressed="true" id="theme-icon-pressed" aria-label="Pressed icon button"></button>
+        <button type="button" class="btn-round" aria-label="Help">?</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/config.js?v=mvjt425z" defer></script>
+  <script src="/assets/i18n.js?v=mvjt425z" defer></script>
+  <script src="/assets/firestore.js?v=mvjt425z" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvjt425z"></script>
+  <script src="/assets/store.js?v=mvjt425z" defer></script>
+  <script src="/assets/ui.js?v=mvjt425z" defer></script>
+  <script src="/assets/theme.js?v=mvjt425z" defer></script>
+</body>
+</html>

@@ -21,6 +21,14 @@
     var current = null;
     var currentAlias = "";
     var pendingDelete = "";
+    var versions = [];
+    var range = document.querySelector("#timeline-range");
+    var versionDrawer = document.querySelector("#version-drawer");
+    var versionList = document.querySelector("#version-list");
+    var versionManage = document.querySelector("#version-manage");
+    var deletingVersion = false;
+    var openView = "radar";
+    var closedView = "radar";
 
     ui.closeOnBackdrop(dialog);
     ui.closeOnBackdrop(howDialog);
@@ -28,22 +36,32 @@
     document.querySelector("#share").innerHTML = ui.icon("share");
     document.querySelector("#edit").innerHTML = ui.icon("edit");
     document.querySelector("#profile-link").innerHTML = ui.icon("preview");
+    versionManage.innerHTML = ui.icon("manage");
+    document.querySelectorAll("#me-preview-body .reading-switch [data-view='radar']").forEach(function (button) {
+      button.innerHTML = ui.icon("radar");
+    });
+    document.querySelectorAll("#me-preview-body .reading-switch [data-view='bars']").forEach(function (button) {
+      button.innerHTML = ui.icon("bars");
+    });
     document.querySelector("#share").addEventListener("click", function () {
       if (!current) return;
       ui.shareMindset(current.publicDoc, status);
     });
 
-    function renderClosedTexts(privateDoc) {
-      document.querySelector("#closed-texts").innerHTML = window.MindsetLens.fields
+    function renderTexts(container, doc, open) {
+      container.innerHTML = window.MindsetLens.fields
         .filter(function (field) {
-          return !field.open;
+          return Boolean(field.open) === open;
         })
         .map(function (field) {
-          var value = (privateDoc && privateDoc[field.key]) || "";
+          var value = (doc && doc[field.key]) || "";
+          var plain = field.plain ? i18n.pick(field.plain) : "";
           return (
             '<article class="post"><h3>' +
             ui.escapeHtml(i18n.pick(field.label)) +
-            "</h3><p>" +
+            "</h3>" +
+            (plain ? '<p class="field-plain">' + ui.escapeHtml(plain) + "</p>" : "") +
+            "<p>" +
             (value ? ui.escapeHtml(value) : '<span class="hint">' + ui.escapeHtml(t("me.notWritten")) + "</span>") +
             "</p></article>"
           );
@@ -65,28 +83,52 @@
       if (radarHost) ui.renderRadar(radarHost, scores, null, { compact: true });
     }
 
-    function radarKeys() {
-      return math.OPEN_KEYS.concat(math.CLOSED_KEYS);
-    }
-
-    // Match renderRadar: the chart only draws when every axis score is known.
-    function hasRadarData(scores) {
-      return radarKeys().every(function (key) {
+    function hasScores(scores, keys) {
+      return keys.every(function (key) {
         return typeof scores[key] === "number" && scores[key] >= 0;
       });
     }
 
-    function syncRadarTab(scores) {
-      var tab = document.querySelector("#tab-me-radar");
-      var pane = document.querySelector("#pane-me-radar");
-      var show = hasRadarData(scores);
-      tab.hidden = !show;
-      if (!show) {
-        pane.hidden = true;
-        if (tab.getAttribute("aria-selected") === "true") selectMeTab("open");
-      } else {
-        tab.hidden = false;
+    function showReadingView(stage, name) {
+      function viewOpen(viewName) {
+        var button = stage.querySelector('.reading-switch [data-view="' + viewName + '"]');
+        var panel = stage.querySelector('.reading-view[data-view="' + viewName + '"]');
+        return Boolean(button && panel && !button.hidden);
       }
+      var chosen = viewOpen(name) ? name : viewOpen("radar") ? "radar" : "bars";
+      stage.querySelectorAll(".reading-switch [data-view]").forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button.getAttribute("data-view") === chosen));
+      });
+      stage.querySelectorAll(".reading-view").forEach(function (panel) {
+        panel.hidden = panel.getAttribute("data-view") !== chosen;
+      });
+      return chosen;
+    }
+
+    function paintStage(stage, radarId, barsId, scores, radarKeys, barKeys, view) {
+      var ready = hasScores(scores, radarKeys);
+      stage.querySelector('[data-view="radar"]').hidden = !ready;
+      var radarHost = document.querySelector(radarId);
+      if (ready) ui.renderRadar(radarHost, scores, null, { keys: radarKeys });
+      else radarHost.innerHTML = "";
+      ui.renderBars(document.querySelector(barsId), scores, barKeys);
+      return showReadingView(stage, view);
+    }
+
+    function selectMeTab(name) {
+      var panes = {
+        open: document.querySelector("#pane-me-open"),
+        closed: document.querySelector("#pane-me-closed")
+      };
+      var tabs = {
+        open: document.querySelector("#tab-me-open"),
+        closed: document.querySelector("#tab-me-closed")
+      };
+      Object.keys(panes).forEach(function (key) {
+        var on = key === name;
+        panes[key].hidden = !on;
+        tabs[key].setAttribute("aria-selected", String(on));
+      });
     }
 
     function selectMeSection(name) {
@@ -105,52 +147,204 @@
       });
     }
 
-    function selectMeTab(name) {
-      var panes = {
-        radar: document.querySelector("#pane-me-radar"),
-        open: document.querySelector("#pane-me-open"),
-        closed: document.querySelector("#pane-me-closed")
-      };
-      var tabs = {
-        radar: document.querySelector("#tab-me-radar"),
-        open: document.querySelector("#tab-me-open"),
-        closed: document.querySelector("#tab-me-closed")
-      };
-      Object.keys(panes).forEach(function (key) {
-        var on = key === name;
-        panes[key].hidden = !on;
-        tabs[key].setAttribute("aria-selected", String(on));
-      });
-    }
-
-    function render(own) {
-      current = own;
-      document.querySelector("#empty").hidden = Boolean(own);
-      document.querySelector("#owner").hidden = !own;
-      document.querySelector("#page-header").hidden = !own;
-      document.querySelector("#delete").hidden = !own;
-      if (!own) return;
-      var doc = own.publicDoc;
-      ui.paintOwnerHeader({ doc: doc, header: t("me.title") });
-      var scores = math.scoresOf(doc);
-      var closed = math.scoresOf(own.privateDoc);
+    function mixedScores(source) {
+      var scores = math.scoresOf(source);
+      var closed = math.scoresOf(current.privateDoc);
       math.CLOSED_KEYS.forEach(function (key) {
         scores[key] = closed[key];
       });
-      paintEntry(doc, scores);
-      syncRadarTab(scores);
-      if (hasRadarData(scores)) {
-        ui.renderRadar(document.querySelector("#me-radar"), scores, null, {
-          keys: radarKeys()
+      return scores;
+    }
+
+    function paintPreview(source) {
+      var scores = mixedScores(source);
+      var cardDoc = source;
+      if (source !== current.publicDoc) {
+        cardDoc = Object.assign({}, source, {
+          id: current.publicDoc.id,
+          updatedAt: source.createdAt || current.publicDoc.updatedAt
         });
-      } else {
-        document.querySelector("#me-radar").innerHTML = "";
       }
-      ui.renderBars(document.querySelector("#me-open"), scores, math.OPEN_KEYS);
-      ui.renderBars(document.querySelector("#me-closed"), scores, math.CLOSED_KEYS);
-      renderClosedTexts(own.privateDoc);
+      paintEntry(cardDoc, scores);
+      openView = paintStage(
+        document.querySelector("#me-open-stage"),
+        "#me-open-radar",
+        "#me-open-bars",
+        scores,
+        math.OPEN_KEYS,
+        math.OPEN_KEYS,
+        openView
+      );
+      closedView = paintStage(
+        document.querySelector("#me-closed-stage"),
+        "#me-closed-radar",
+        "#me-closed-bars",
+        scores,
+        math.OPEN_KEYS.concat(math.CLOSED_KEYS),
+        math.CLOSED_KEYS,
+        closedView
+      );
+      renderTexts(document.querySelector("#open-texts"), source, true);
+      renderTexts(document.querySelector("#closed-texts"), current.privateDoc, false);
+    }
+
+    function syncVersionManage() {
+      versionManage.hidden = Boolean(session && session.actingAs);
+    }
+
+    function markVersionRow() {
+      var currentIndex = String(range.value);
+      versionList.querySelectorAll(".version-row").forEach(function (row) {
+        row.classList.toggle("is-active", row.getAttribute("data-version-index") === currentIndex);
+      });
+    }
+
+    function renderVersionList() {
+      var currentIndex = Number(range.value);
+      var html = "";
+      for (var index = versions.length - 1; index >= 0; index -= 1) {
+        var version = versions[index];
+        html +=
+          '<div class="version-row' +
+          (index === currentIndex ? " is-active" : "") +
+          '" data-version-index="' +
+          index +
+          '"><button type="button" class="version-open" data-version-view="' +
+          index +
+          '">' +
+          ui.escapeHtml(ui.formatWhen(version.createdAt)) +
+          '</button><button type="button" class="btn-icon version-delete" data-version-delete="' +
+          ui.escapeHtml(version.id) +
+          '" aria-label="' +
+          ui.escapeHtml(t("me.delete")) +
+          '">' +
+          ui.icon("trash") +
+          "</button></div>";
+      }
+      versionList.innerHTML = html;
+    }
+
+    function setDrawer(open) {
+      versionDrawer.classList.toggle("is-open", open);
+      versionManage.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) versionDrawer.removeAttribute("inert");
+      else versionDrawer.setAttribute("inert", "");
+      if (open) renderVersionList();
+    }
+
+    function showMeVersion(index) {
+      var last = index === versions.length - 1;
+      var source = last ? current.publicDoc : versions[index];
+      var when = document.querySelector("#timeline-when");
+      when.textContent = last ? t("history.now") : ui.formatWhen(versions[index].createdAt);
+      document.querySelector("#timeline-count").textContent = t("history.position", {
+        i: index + 1,
+        n: versions.length
+      });
+      range.value = String(index);
+      range.setAttribute("aria-valuetext", when.textContent);
+      paintPreview(source);
+      markVersionRow();
+    }
+
+    async function loadHistory(options) {
+      options = options || {};
+      var timeline = document.querySelector("#face-timeline");
+      if (!current) return;
+      try {
+        versions = await store.versions(current.publicDoc.id, session.idToken);
+      } catch (error) {
+        versions = [];
+      }
+      if (versions.length < 2) {
+        setDrawer(false);
+        timeline.hidden = true;
+        range.disabled = true;
+        paintPreview(current.publicDoc);
+        return;
+      }
+      var index = versions.length - 1;
+      if (options.keepId) {
+        versions.forEach(function (version, at) {
+          if (version.id === options.keepId) index = at;
+        });
+      }
+      timeline.hidden = false;
+      range.max = String(versions.length - 1);
+      range.value = String(index);
+      range.disabled = false;
+      showMeVersion(index);
+      syncVersionManage();
+      if (options.keepOpen) setDrawer(true);
+    }
+
+    async function deleteVersion(id) {
+      if (deletingVersion || !session || session.actingAs || !current) return;
+      deletingVersion = true;
+      var viewing = versions[Number(range.value)];
+      var keepId = viewing && viewing.id !== id ? viewing.id : "";
+      try {
+        await store.removeVersion(current.publicDoc.id, id, session.idToken);
+        ui.setStatus(status, "");
+        await loadHistory({ keepId: keepId, keepOpen: true });
+      } catch (error) {
+        ui.setStatus(status, ui.errorText(error), "error");
+      } finally {
+        deletingVersion = false;
+      }
+    }
+
+    versionManage.addEventListener("click", function () {
+      setDrawer(!versionDrawer.classList.contains("is-open"));
+    });
+
+    versionList.addEventListener("click", function (event) {
+      var view = event.target.closest("[data-version-view]");
+      if (view) {
+        showMeVersion(Number(view.getAttribute("data-version-view")));
+        return;
+      }
+      var remove = event.target.closest("[data-version-delete]");
+      if (!remove) return;
+      deleteVersion(remove.getAttribute("data-version-delete"));
+    });
+
+    range.addEventListener("input", function () {
+      showMeVersion(Number(range.value));
+    });
+
+    function render(own) {
+      current = own;
+      var acting = Boolean(session && session.actingAs);
+      var edit = document.querySelector("#edit");
+      document.querySelector("#empty").hidden = true;
+      document.querySelector("#owner").hidden = false;
+      document.querySelector("#page-header").hidden = false;
+      document.querySelector("#delete").hidden = !own || acting;
+      document.querySelector("#delete-account").hidden = acting;
+      document.querySelector(".head-meta").hidden = !own;
+      document.querySelector("#me-nodata-preview").hidden = Boolean(own);
+      document.querySelector("#me-nodata-prefs").hidden = Boolean(own);
+      document.querySelector("#me-preview-body").hidden = !own;
+      document.querySelector("#me-prefs-body").hidden = !own;
+      if (edit) edit.hidden = acting;
+      if (!own) {
+        document.querySelector("#title").textContent = t("me.title");
+        ui.setCrumb(t("me.title"));
+        document.querySelector("#share").hidden = true;
+        document.querySelector("#profile-link").hidden = true;
+        if (edit) edit.href = "/new";
+        return;
+      }
+      document.querySelector("#share").hidden = false;
+      document.querySelector("#profile-link").hidden = false;
+      var doc = own.publicDoc;
+      ui.paintOwnerHeader({ doc: doc, header: t("me.title") });
+      if (acting && edit) edit.hidden = true;
+      paintPreview(doc);
       var level = math.historyLevel(doc.history);
       document.querySelector('input[name="history"][value="' + level + '"]').checked = true;
+      syncVersionManage();
     }
 
     function renderAlias(alias) {
@@ -179,7 +373,8 @@
           var entry = await social.aliasOf(own.publicDoc.id, session.idToken);
           renderAlias(entry && entry.alias);
           document.querySelector("#root-link").hidden = own.publicDoc.number !== 1;
-          store.ensureFirstVersion(own.publicDoc, session.idToken).catch(function () {});
+          await store.ensureFirstVersion(own.publicDoc, session.idToken).catch(function () {});
+          await loadHistory();
         }
         ui.setStatus(status, notice ? t(notice) : "", notice ? "error" : "");
       } finally {
@@ -201,6 +396,16 @@
       var tab = event.target.closest("[data-me-tab]");
       if (!tab) return;
       selectMeTab(tab.getAttribute("data-me-tab"));
+    });
+
+    document.querySelectorAll("#me-preview-body .reading-stage").forEach(function (stage) {
+      stage.querySelector(".reading-switch").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-view]");
+        if (!button || button.hidden) return;
+        var name = button.getAttribute("data-view");
+        if (stage.id === "me-open-stage") openView = showReadingView(stage, name);
+        else closedView = showReadingView(stage, name);
+      });
     });
 
     document.querySelector("#how-to-read").addEventListener("click", function () {

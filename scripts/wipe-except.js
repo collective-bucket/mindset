@@ -222,7 +222,7 @@ async function main() {
   });
 
   // Pair documents survive only when both ends are kept accounts.
-  var pairCollections = ["tails", "glints", "seals", "schoolRequests"];
+  var pairCollections = ["tails", "glints", "seals", "schoolRequests", "signals"];
   for (var pc = 0; pc < pairCollections.length; pc += 1) {
     (await listCollection(token, pairCollections[pc])).forEach(function (row) {
       if (keepUids[row.from] && keepUids[row.to]) return;

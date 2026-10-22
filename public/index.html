@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eafbf5" />
   <title>Mindset Bucket</title>
   <meta name="description" content="What's your mindset number? A collective lake where minds go nameless and appear as an eight-axis radar." />
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcpket3" />
-  <link rel="stylesheet" href="/assets/styles.css?v=mvcpket3" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjt425z" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvjt425z" />
 </head>
 <body data-tab="current" data-title="current.title" class="is-page-loading">
   <main class="page">
@@ -33,13 +33,13 @@
       <p class="landing-or" data-i18n="landing.or">or</p>
 
       <p class="landing-dive">
-        <span data-i18n="landing.dive">Enter the lake as a nameless fish. Take a number (#42). Show everyone the scales on the surface and the rules you live by; keep what you swallowed, the pull from below and the wound in your belly for your school alone.</span>
-        <a href="/about" data-i18n="landing.whatIsThis">What is this?</a>
+        <span data-i18n="landing.dive">To form your school and interact, descend into the lake first. Answer the 6 questions that map your mind and become a fish, a number.</span>
+        <a class="landing-register" href="/about" data-i18n="landing.whatIsThis">What is this?</a>
       </p>
 
       <div class="landing-actions">
-        <a class="landing-register" href="/register" data-i18n="auth.submitRegister">Create account</a>
-        <a class="btn btn-primary" data-auth-login href="/login" data-i18n="gate.enter">Enter the lake</a>
+        <a class="landing-register" href="/login" data-i18n="landing.haveAccount">I have an account</a>
+        <a class="btn btn-primary" href="/register?next=%2Fnew" data-i18n="gate.enter">Enter the lake</a>
       </div>
     </section>
 
@@ -60,34 +60,24 @@
             <a class="head-back" href="#" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
         </div>
-
-        <div class="profile-stick current-stick">
-          <div class="tabs depth-tabs" role="tablist" aria-label="Current">
-            <button type="button" id="tab-current-everyone" role="tab" aria-selected="true" aria-controls="pane-current-everyone" data-current-section="everyone" data-i18n="current.everyone">Lake</button>
-            <button type="button" id="tab-current-ontail" role="tab" aria-selected="false" aria-controls="pane-current-ontail" data-current-section="ontail" data-i18n="current.onTail">On my tail</button>
-            <button type="button" id="tab-current-trail" role="tab" aria-selected="false" aria-controls="pane-current-trail" data-current-section="trail" data-i18n="current.trail">My trail</button>
-            <button type="button" id="tab-current-welcome" role="tab" aria-selected="false" aria-controls="pane-current-welcome" data-current-section="welcome" data-i18n="current.searchTab">Search</button>
-          </div>
-        </div>
       </div>
 
-      <div class="page-body">
+    <div class="profile-stick current-stick">
+      <div class="profile-tabs-bar">
+        <div class="tabs depth-tabs" role="tablist" aria-label="Current">
+          <button type="button" id="tab-current-everyone" role="tab" aria-selected="true" aria-controls="pane-current-everyone" data-current-section="everyone" data-i18n="current.everyone">Lake</button>
+          <button type="button" id="tab-current-ontail" role="tab" aria-selected="false" aria-controls="pane-current-ontail" data-current-section="ontail" data-i18n="current.onTail">On my tail</button>
+          <button type="button" id="tab-current-trail" role="tab" aria-selected="false" aria-controls="pane-current-trail" data-current-section="trail" data-i18n="current.trail">My trail</button>
+        </div>
+        <button type="button" id="tabs-help" class="btn-round" data-i18n-aria="guide.current" aria-label="What is Current for?">?</button>
+      </div>
+    </div>
+
+    <div class="page-body">
         <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
-          <img class="page-loading-logo" src="/assets/logo.svg?v=mvcpket3" width="280" height="280" alt="" />
+          <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjt425z" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
         </div>
         <p id="feed-status" class="status" role="status" hidden></p>
-
-        <section id="hero" class="hero" hidden>
-          <div class="hero-art" aria-hidden="true" id="hero-art"></div>
-          <h2 data-i18n="home.title">Build a bucket of minds together.</h2>
-          <p class="lead" data-i18n="home.lead">Write what you hold true and how you tell your story. You become a number, a fish in the lake. Explore the lake for minds like yours, or unlike.</p>
-          <p class="hint" data-i18n="home.private">What you swallowed, the pull from below and the wound in your belly stay with you.</p>
-          <div class="actions">
-            <a class="btn btn-primary" href="/new" data-i18n="home.write">Dive in</a>
-            <a class="btn" href="/lake" data-i18n="home.hunt">Explore the lake</a>
-          </div>
-          <p class="fineprint"><span data-i18n="home.purpose">For fun or for research.</span> <span data-i18n="common.notTest">This is not a test result. It's an approximate reading.</span></p>
-        </section>
 
         <div id="pane-current-everyone" role="tabpanel" aria-labelledby="tab-current-everyone">
           <section class="section">
@@ -100,48 +90,40 @@
             <a class="link-row" href="/school"><span data-i18n="current.openRequests">Review requests</span><span class="link-side" id="requests-count"></span></a>
           </nav>
           <section class="section">
-            <p class="hint" data-i18n="current.onTailLead">Fish that swim after you. Shine a scale to one you are curious about.</p>
             <div id="ontail" class="list"></div>
           </section>
         </div>
 
         <div id="pane-current-trail" role="tabpanel" aria-labelledby="tab-current-trail" hidden>
           <section class="section">
-            <p class="hint" data-i18n="current.trailLead">Fish you swim after. They can see you on their tail.</p>
             <div id="trail" class="list"></div>
-          </section>
-        </div>
-
-        <div id="pane-current-welcome" role="tabpanel" aria-labelledby="tab-current-welcome" hidden>
-          <section class="section">
-            <form id="current-lookup" class="lookup" novalidate>
-              <label class="visually-hidden" for="current-lookup-input" data-i18n="landing.lookupLabel">Mindset number</label>
-              <div class="lookup-row">
-                <span class="lookup-field">
-                  <span class="lookup-hash" aria-hidden="true">#</span>
-                  <input id="current-lookup-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="80" data-i18n-placeholder="landing.lookupPlaceholder" placeholder="42" />
-                </span>
-                <button type="submit" class="btn btn-primary" data-i18n="landing.lookupGo">Open the mind</button>
-              </div>
-            </form>
-            <p class="hint" data-i18n="landing.lookupHint">Paste the mindset number or link someone gave you.</p>
-            <p id="current-lookup-status" class="status" role="status" hidden></p>
           </section>
         </div>
       </div>
     </div>
   </main>
 
-  <script src="/assets/config.js?v=mvcpket3" defer></script>
-  <script src="/assets/i18n.js?v=mvcpket3" defer></script>
-  <script src="/assets/demographics.js?v=mvcpket3" defer></script>
-  <script src="/assets/lens-v2.js?v=mvcpket3" defer></script>
-  <script src="/assets/reading.js?v=mvcpket3" defer></script>
-  <script src="/assets/firestore.js?v=mvcpket3" defer></script>
-  <script type="module" src="/assets/auth.js?v=mvcpket3"></script>
-  <script src="/assets/store.js?v=mvcpket3" defer></script>
-  <script src="/assets/social.js?v=mvcpket3" defer></script>
-  <script src="/assets/ui.js?v=mvcpket3" defer></script>
-  <script src="/assets/home.js?v=mvcpket3" defer></script>
+  <dialog id="current-help-dialog" class="modal" aria-labelledby="current-help-title">
+    <form method="dialog">
+      <h2 id="current-help-title"></h2>
+      <div id="current-help-body"></div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" value="close" data-i18n="common.close">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/assets/config.js?v=mvjt425z" defer></script>
+  <script src="/assets/i18n.js?v=mvjt425z" defer></script>
+  <script src="/assets/demographics.js?v=mvjt425z" defer></script>
+  <script src="/assets/lens-v2.js?v=mvjt425z" defer></script>
+  <script src="/assets/reading.js?v=mvjt425z" defer></script>
+  <script src="/assets/firestore.js?v=mvjt425z" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvjt425z"></script>
+  <script src="/assets/store.js?v=mvjt425z" defer></script>
+  <script src="/assets/social.js?v=mvjt425z" defer></script>
+  <script src="/assets/notices.js?v=mvjt425z" defer></script>
+  <script src="/assets/ui.js?v=mvjt425z" defer></script>
+  <script src="/assets/home.js?v=mvjt425z" defer></script>
 </body>
 </html>

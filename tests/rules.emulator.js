@@ -234,7 +234,26 @@ async function expect(label, status, wanted) {
   await expect("bob reads the live glint", await get("glints/alice_bob", "bob"), "ok");
   await expect("alice reads her own glint", await get("glints/alice_bob", "alice"), "ok");
   await expect("carol cannot read it", await get("glints/alice_bob", "carol"), 403);
-  await expect("glints cannot be listed by recipient", await call("POST", ROOT + ":runQuery", "bob", { structuredQuery: { from: [{ collectionId: "glints" }] } }), 403);
+  await expect(
+    "recipient lists glints toward them",
+    await call("POST", ROOT + ":runQuery", "bob", {
+      structuredQuery: {
+        from: [{ collectionId: "glints" }],
+        where: { fieldFilter: { field: { fieldPath: "to" }, op: "EQUAL", value: { stringValue: "bob" } } }
+      }
+    }),
+    "ok"
+  );
+  await expect(
+    "stranger cannot list others' glints",
+    await call("POST", ROOT + ":runQuery", "carol", {
+      structuredQuery: {
+        from: [{ collectionId: "glints" }],
+        where: { fieldFilter: { field: { fieldPath: "to" }, op: "EQUAL", value: { stringValue: "bob" } } }
+      }
+    }),
+    403
+  );
   await expect("bob cannot edit alice's glint", await commit("bob", [w.set("glints/alice_bob", glint())]), 403);
 
   // ---- Step 3: bob asks to form a school, with a sealed pledge ----
@@ -382,6 +401,20 @@ async function expect(label, status, wanted) {
   await expect("non-root cannot shine for a test fish", await commit("bob", [w.set("glints/sim10_sim11", simGlint("sim10", "sim11", 10, 11, "Sim ten wants more."))]), 403);
   await expect("root reads a test fish glint", await get("glints/sim10_sim11", "alice"), "ok");
   await expect("non-root cannot read it", await get("glints/sim10_sim11", "bob"), 403);
+  await expect(
+    "root lists glints",
+    await call("POST", ROOT + ":runQuery", "alice", {
+      structuredQuery: { from: [{ collectionId: "glints" }] }
+    }),
+    "ok"
+  );
+  await expect(
+    "non-root cannot list every glint",
+    await call("POST", ROOT + ":runQuery", "bob", {
+      structuredQuery: { from: [{ collectionId: "glints" }] }
+    }),
+    403
+  );
 
   await expect("root reads a test fish's closed text", await get("privateMindsets/10", "alice"), "ok");
   await expect("root cannot read a real fish's closed text", await get("privateMindsets/2", "alice"), 403);

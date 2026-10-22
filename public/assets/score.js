@@ -8,6 +8,7 @@
   var extractor = null;
   var loading = null;
   var poleCache = {};
+  var textCache = {};
 
   function t(key, vars) {
     return window.MindsetI18n.t(key, vars);
@@ -52,8 +53,16 @@
   }
 
   async function embedRaw(text) {
+    if (Object.prototype.hasOwnProperty.call(textCache, text)) return textCache[text];
     var output = await extractor("query: " + text, { pooling: "mean", normalize: true });
-    return asVector(output);
+    var vector;
+    try {
+      vector = asVector(output);
+    } finally {
+      if (output && typeof output.dispose === "function") output.dispose();
+    }
+    textCache[text] = vector;
+    return vector;
   }
 
   async function embedDocument(text) {
@@ -81,10 +90,23 @@
 
   async function startModel(onProgress) {
     var transformers = await import(CDN);
-    if (transformers.env) transformers.env.allowLocalModels = false;
+    if (transformers.env) {
+      transformers.env.allowLocalModels = false;
+      var wasm = transformers.env.backends && transformers.env.backends.onnx && transformers.env.backends.onnx.wasm;
+      // A long read on the main thread freezes Chrome until it kills the tab.
+      if (wasm) {
+        wasm.numThreads = 1;
+        wasm.proxy = true;
+      }
+    }
     var downloading = true;
     extractor = await transformers.pipeline("feature-extraction", MODEL, {
+      device: "wasm",
       dtype: "q8",
+      session_options: {
+        enableCpuMemArena: false,
+        enableMemPattern: false
+      },
       progress_callback: function (update) {
         if (!onProgress || !update) return;
         if (!downloading) {

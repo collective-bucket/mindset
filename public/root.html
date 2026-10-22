@@ -6,83 +6,117 @@
   <meta name="theme-color" content="#eafbf5" />
   <meta name="robots" content="noindex" />
   <title>root · Mindset Bucket</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcpket3" />
-  <link rel="stylesheet" href="/assets/styles.css?v=mvcpket3" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjt425z" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvjt425z" />
 </head>
-<body data-tab="" data-title="root.title">
+<body data-tab="root" data-title="root.title" class="is-page-loading">
   <main class="page">
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <div id="gated" hidden>
-      <div class="head">
-        <a class="head-back" href="#" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-        <div class="head-main">
-          <h1 class="visually-hidden" data-i18n="root.title">Root</h1>
-          <p class="head-meta" data-i18n="root.lead">Numbers for the whole lake, and the simulation that moves test fish one stage at a time.</p>
-        </div>
-      </div>
-      <p id="page-status" class="status" role="status" hidden></p>
       <p id="denied" class="empty" hidden data-i18n="root.denied">This screen is only for the root fish.</p>
 
       <div id="root-body" hidden>
-        <section class="section">
-          <h2 data-i18n="root.statsTitle">The lake in numbers</h2>
-          <dl id="stats" class="stat-grid"></dl>
-          <p class="hint"><a href="/lake" data-i18n="root.distributions">Age, gender and country charts live on the lake's Bucket tab.</a></p>
-        </section>
-
-        <section class="section">
-          <h2 data-i18n="root.funnelTitle">The handshake funnel</h2>
-          <div id="funnel" class="funnel"></div>
-        </section>
-
-        <section class="section">
-          <h2 data-i18n="root.simTitle">Simulation</h2>
-          <p class="hint" data-i18n="root.simLead">Each cycle moves every handshake one stage: swim after, shine a scale, ask to join, accept.</p>
-          <div class="sim-run">
-            <span id="sim-tick" class="sim-tick"></span>
-            <button type="button" id="sim-run" class="btn btn-primary" data-i18n="root.simRun">Run one cycle</button>
+        <div class="page-chrome">
+          <div class="page-header profile-top">
+            <div class="profile-top-main">
+              <h1 id="title" class="profile-number">Root</h1>
+              <p class="head-meta" id="root-meta">
+                <span id="alias-line" class="alias"></span>
+                <span id="meta-real"></span>
+                <span id="meta-sim"></span>
+                <span id="meta-school"></span>
+                <span id="meta-tick"></span>
+              </p>
+            </div>
+            <div class="profile-tools" role="group">
+              <a class="head-back" href="#" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            </div>
           </div>
-          <p id="sim-status" class="status" role="status" hidden></p>
+        </div>
 
-          <h3 data-i18n="root.cfgTitle">Settings</h3>
-          <form id="sim-config" class="sim-config" novalidate>
-            <label class="field" for="cfg-tailsPerTick"><span data-i18n="root.cfgTails">Tails per cycle</span>
-              <input id="cfg-tailsPerTick" type="number" min="0" max="10" step="1" inputmode="numeric" /></label>
-            <label class="field" for="cfg-maxTails"><span data-i18n="root.cfgMaxTails">Most tails per fish</span>
-              <input id="cfg-maxTails" type="number" min="1" max="50" step="1" inputmode="numeric" /></label>
-            <label class="field" for="cfg-shineChance"><span data-i18n="root.cfgShine">Chance to shine a scale (0 to 1)</span>
-              <input id="cfg-shineChance" type="number" min="0" max="1" step="0.05" inputmode="decimal" /></label>
-            <label class="field" for="cfg-threshold"><span data-i18n="root.cfgThreshold">Match needed (0 to 100)</span>
-              <input id="cfg-threshold" type="number" min="0" max="100" step="1" inputmode="numeric" /></label>
-            <label class="field" for="cfg-radius"><span data-i18n="root.cfgRadius">Nearby means within (0 to 100)</span>
-              <input id="cfg-radius" type="number" min="0" max="100" step="1" inputmode="numeric" /></label>
-            <label class="field" for="cfg-seed"><span data-i18n="root.cfgSeed">Seed</span>
-              <input id="cfg-seed" type="number" min="0" max="1000000" step="1" inputmode="numeric" /></label>
-            <label class="check"><input id="cfg-includeRoot" type="checkbox" /> <span data-i18n="root.cfgRoot">Test fish may swim after root</span></label>
-          </form>
-          <div class="actions">
-            <button type="button" id="sim-save" class="btn" data-i18n="root.cfgSave">Save settings</button>
-            <button type="button" id="sim-reset" class="btn btn-quiet-danger" data-i18n="root.reset">Reset simulation</button>
+        <div class="profile-stick root-stick">
+          <div class="tabs depth-tabs" role="tablist" aria-label="Root">
+            <button type="button" id="tab-root-lake" role="tab" aria-selected="true" aria-controls="pane-root-lake" data-root-section="lake" data-i18n="root.statsTitle">The lake in numbers</button>
+            <button type="button" id="tab-root-sim" role="tab" aria-selected="false" aria-controls="pane-root-sim" data-root-section="sim" data-i18n="root.simTitle">Simulation</button>
+            <button type="button" id="tab-root-fish" role="tab" aria-selected="false" aria-controls="pane-root-fish" data-root-section="fish" data-i18n="root.simFishTitle">Sims</button>
+          </div>
+        </div>
+
+        <div class="page-body">
+          <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
+            <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjt425z" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
+          </div>
+          <p id="page-status" class="status" role="status" hidden></p>
+          <div id="pane-root-lake" role="tabpanel" aria-labelledby="tab-root-lake">
+            <section class="section">
+              <dl id="stats" class="stat-grid"></dl>
+            </section>
+            <section class="section">
+              <h2 data-i18n="root.funnelTitle">The handshake funnel</h2>
+              <div id="funnel" class="funnel"></div>
+            </section>
           </div>
 
-          <h3 data-i18n="root.simLog">Recent cycles</h3>
-          <ul id="sim-log" class="sim-log"></ul>
-        </section>
+          <div id="pane-root-sim" role="tabpanel" aria-labelledby="tab-root-sim" hidden>
+            <section class="section">
+              <div class="sim-run">
+                <span id="sim-tick" class="sim-tick"></span>
+                <button type="button" id="sim-run" class="btn btn-primary" data-i18n="root.simRun">Run one cycle</button>
+              </div>
+              <p class="hint" data-i18n="root.simLead">Each cycle moves every handshake one stage: swim after, shine a scale, ask to join, accept.</p>
+              <p id="sim-status" class="status" role="status" hidden></p>
+
+              <hr class="sim-rule" />
+              <form id="sim-config" class="sim-config" novalidate>
+                <label class="field" for="cfg-tailsPerTick"><span data-i18n="root.cfgTails">Tails per cycle</span>
+                  <input id="cfg-tailsPerTick" type="number" min="0" max="10" step="1" inputmode="numeric" /></label>
+                <label class="field" for="cfg-maxTails"><span data-i18n="root.cfgMaxTails">Most tails per fish</span>
+                  <input id="cfg-maxTails" type="number" min="1" max="50" step="1" inputmode="numeric" /></label>
+                <label class="field" for="cfg-shineChance"><span data-i18n="root.cfgShine">Chance to shine a scale (0 to 1)</span>
+                  <input id="cfg-shineChance" type="number" min="0" max="1" step="0.05" inputmode="decimal" /></label>
+                <label class="field" for="cfg-threshold"><span data-i18n="root.cfgThreshold">Match needed (0 to 100)</span>
+                  <input id="cfg-threshold" type="number" min="0" max="100" step="1" inputmode="numeric" /></label>
+                <label class="field" for="cfg-radius"><span data-i18n="root.cfgRadius">Nearby means within (0 to 100)</span>
+                  <input id="cfg-radius" type="number" min="0" max="100" step="1" inputmode="numeric" /></label>
+                <label class="field" for="cfg-seed"><span data-i18n="root.cfgSeed">Seed</span>
+                  <input id="cfg-seed" type="number" min="0" max="1000000" step="1" inputmode="numeric" /></label>
+                <label class="check"><input id="cfg-includeRoot" type="checkbox" /> <span data-i18n="root.cfgRoot">Test fish may swim after root</span></label>
+              </form>
+              <div class="actions">
+                <button type="button" id="sim-reset" class="btn btn-quiet-danger" data-i18n="root.reset">Reset simulation</button>
+                <button type="button" id="sim-save" class="btn" data-i18n="root.cfgSave">Save settings</button>
+              </div>
+
+              <hr class="sim-rule" />
+              <h3 data-i18n="root.simLog">Recent cycles</h3>
+              <pre id="sim-log" class="sim-log"></pre>
+            </section>
+          </div>
+
+          <div id="pane-root-fish" role="tabpanel" aria-labelledby="tab-root-fish" hidden>
+            <section class="section">
+              <div class="sim-fish-bar">
+                <input id="sim-filter" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="root.simFilter" placeholder="Search" />
+              </div>
+              <div id="sim-fish" class="list"></div>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   </main>
 
-  <script src="/assets/config.js?v=mvcpket3" defer></script>
-  <script src="/assets/i18n.js?v=mvcpket3" defer></script>
-  <script src="/assets/demographics.js?v=mvcpket3" defer></script>
-  <script src="/assets/lens-v2.js?v=mvcpket3" defer></script>
-  <script src="/assets/reading.js?v=mvcpket3" defer></script>
-  <script src="/assets/firestore.js?v=mvcpket3" defer></script>
-  <script type="module" src="/assets/auth.js?v=mvcpket3"></script>
-  <script src="/assets/store.js?v=mvcpket3" defer></script>
-  <script src="/assets/sim.js?v=mvcpket3" defer></script>
-  <script src="/assets/ui.js?v=mvcpket3" defer></script>
-  <script src="/assets/root.js?v=mvcpket3" defer></script>
+  <script src="/assets/config.js?v=mvjt425z" defer></script>
+  <script src="/assets/i18n.js?v=mvjt425z" defer></script>
+  <script src="/assets/demographics.js?v=mvjt425z" defer></script>
+  <script src="/assets/lens-v2.js?v=mvjt425z" defer></script>
+  <script src="/assets/reading.js?v=mvjt425z" defer></script>
+  <script src="/assets/firestore.js?v=mvjt425z" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvjt425z"></script>
+  <script src="/assets/store.js?v=mvjt425z" defer></script>
+  <script src="/assets/sim.js?v=mvjt425z" defer></script>
+  <script src="/assets/ui.js?v=mvjt425z" defer></script>
+  <script src="/assets/root.js?v=mvjt425z" defer></script>
 </body>
 </html>

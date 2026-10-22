@@ -39,8 +39,12 @@
     var statusLine = document.querySelector("#form-status-line");
     var readingWhat = document.querySelector("#reading-what");
 
+    ui.beginPageLoad();
     ui.requireAuth().then(function (session) {
-      if (!session) return;
+      if (!session) {
+        ui.endPageLoad();
+        return;
+      }
       boot(session);
     });
 
@@ -76,6 +80,15 @@
     }
 
     function boot(session) {
+    var openView = "radar";
+    var closedView = "radar";
+    var draftTouched = false;
+    var DRAFT_KEY = "mindset.draft." + session.uid;
+    var PHASE_KEY = "mindset.edit.phase";
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+    });
     ui.renderForm(document.querySelector("#open-fields"), document.querySelector("#closed-fields"));
     ui.renderDemoForm(document.querySelector("#demo-fields"));
     wireEnterHints();
@@ -92,36 +105,65 @@
       });
     }
 
-    function radarKeys() {
-      return math.OPEN_KEYS.concat(math.CLOSED_KEYS);
-    }
-
-    // Match renderRadar: the chart only draws when every axis score is known.
-    function hasRadarData(scores) {
-      return radarKeys().every(function (key) {
+    function hasScores(scores, keys) {
+      return keys.every(function (key) {
         return typeof scores[key] === "number" && scores[key] >= 0;
       });
     }
 
-    function syncPreviewRadarTab(scores) {
-      var tab = document.querySelector("#tab-preview-radar");
-      var pane = document.querySelector("#pane-preview-radar");
-      var show = hasRadarData(scores);
-      if (tab) tab.hidden = !show;
-      if (!show) {
-        if (pane) pane.hidden = true;
-        if (tab && tab.getAttribute("aria-selected") === "true") selectPreviewTab("open");
+    function showReadingView(stage, name) {
+      function viewOpen(viewName) {
+        var button = stage.querySelector('.reading-switch [data-view="' + viewName + '"]');
+        var panel = stage.querySelector('.reading-view[data-view="' + viewName + '"]');
+        return Boolean(button && panel && !button.hidden);
       }
+      var chosen = viewOpen(name) ? name : viewOpen("radar") ? "radar" : "bars";
+      stage.querySelectorAll(".reading-switch [data-view]").forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button.getAttribute("data-view") === chosen));
+      });
+      stage.querySelectorAll(".reading-view").forEach(function (panel) {
+        panel.hidden = panel.getAttribute("data-view") !== chosen;
+      });
+      return chosen;
+    }
+
+    function paintStage(stage, radarId, barsId, scores, radarKeys, barKeys, view) {
+      var ready = hasScores(scores, radarKeys);
+      stage.querySelector('[data-view="radar"]').hidden = !ready;
+      var radarHost = document.querySelector(radarId);
+      if (ready) ui.renderRadar(radarHost, scores, null, { keys: radarKeys });
+      else radarHost.innerHTML = "";
+      ui.renderBars(document.querySelector(barsId), scores, barKeys);
+      return showReadingView(stage, view);
+    }
+
+    function renderPreviewTexts(container, texts, open) {
+      container.innerHTML = window.MindsetLens.fields
+        .filter(function (field) {
+          return Boolean(field.open) === open;
+        })
+        .map(function (field) {
+          var value = (texts && texts[field.key]) || "";
+          var plain = field.plain ? i18n.pick(field.plain) : "";
+          return (
+            '<article class="post"><h3>' +
+            ui.escapeHtml(i18n.pick(field.label)) +
+            "</h3>" +
+            (plain ? '<p class="field-plain">' + ui.escapeHtml(plain) + "</p>" : "") +
+            "<p>" +
+            (value ? ui.escapeHtml(value) : '<span class="hint">' + ui.escapeHtml(t("me.notWritten")) + "</span>") +
+            "</p></article>"
+          );
+        })
+        .join("");
     }
 
     function selectPreviewTab(name) {
       var panes = {
-        radar: document.querySelector("#pane-preview-radar"),
         open: document.querySelector("#pane-preview-open"),
         closed: document.querySelector("#pane-preview-closed")
       };
       var tabs = {
-        radar: document.querySelector("#tab-preview-radar"),
         open: document.querySelector("#tab-preview-open"),
         closed: document.querySelector("#tab-preview-closed")
       };
@@ -132,6 +174,13 @@
       });
     }
 
+    document.querySelectorAll("#preview-content .reading-switch [data-view='radar']").forEach(function (button) {
+      button.innerHTML = ui.icon("radar");
+    });
+    document.querySelectorAll("#preview-content .reading-switch [data-view='bars']").forEach(function (button) {
+      button.innerHTML = ui.icon("bars");
+    });
+
     var previewTabs = document.querySelector(".preview-toolbar .depth-tabs");
     if (previewTabs) {
       previewTabs.addEventListener("click", function (event) {
@@ -140,6 +189,16 @@
         selectPreviewTab(tab.getAttribute("data-preview-tab"));
       });
     }
+
+    document.querySelectorAll("#preview-content .reading-stage").forEach(function (stage) {
+      stage.querySelector(".reading-switch").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-view]");
+        if (!button || button.hidden) return;
+        var name = button.getAttribute("data-view");
+        if (stage.id === "preview-open-stage") openView = showReadingView(stage, name);
+        else closedView = showReadingView(stage, name);
+      });
+    });
 
     if (howButton && howDialog) {
       howButton.addEventListener("click", function () {
@@ -163,15 +222,19 @@
       paintStatus();
     }
 
-      form.addEventListener("input", function (event) {
+    form.addEventListener("input", function (event) {
       var id = event.target && event.target.id;
-      if (!isTextField(id)) return;
-      dirty = true;
-      reading = null;
-      hidePreviewContent();
-      ui.updateCount(form, id);
-      scanField(id);
+      if (isTextField(id)) {
+        dirty = true;
+        reading = null;
+        hidePreviewContent();
+        ui.updateCount(form, id);
+        scanField(id);
+      }
+      noteDraft();
     });
+
+    form.addEventListener("change", noteDraft);
 
     var advancingField = false;
 
@@ -281,17 +344,51 @@
         host.className = "entry";
         host.removeAttribute("data-id");
       }
-      ["#preview-radar", "#preview-open", "#preview-closed"].forEach(function (sel) {
+      ["#preview-open-radar", "#preview-open-bars", "#preview-closed-radar", "#preview-closed-bars", "#preview-open-texts", "#preview-closed-texts"].forEach(function (sel) {
         var node = document.querySelector(sel);
         if (node) node.innerHTML = "";
       });
     }
 
+    function placePreviewLoading() {
+      var loading = document.querySelector("#preview-loading");
+      if (!loading) return;
+      if (loading.hidden) {
+        loading.style.top = "";
+        loading.style.bottom = "";
+        return;
+      }
+      var top = 0;
+      var site = document.querySelector("header.top");
+      if (site) top = site.getBoundingClientRect().bottom;
+      [document.querySelector(".head"), document.querySelector(".wizard-steps")].forEach(function (node) {
+        if (!node || node.hidden || node.closest("[hidden]")) return;
+        var style = window.getComputedStyle(node);
+        if (style.display === "none" || style.visibility === "hidden") return;
+        var edge = node.getBoundingClientRect().bottom;
+        if (edge > top) top = edge;
+      });
+      var bottom = 0;
+      var actions = document.querySelector("#mindset-form > .actions");
+      if (actions) bottom = Math.max(0, window.innerHeight - actions.getBoundingClientRect().top);
+      loading.style.top = Math.max(0, Math.round(top)) + "px";
+      loading.style.bottom = Math.max(0, Math.round(bottom)) + "px";
+    }
+
+    window.addEventListener("resize", placePreviewLoading);
+    window.addEventListener("scroll", placePreviewLoading, { passive: true });
+
     function showPreviewPending() {
       hidePreviewContent();
+      var loading = document.querySelector("#preview-loading");
+      if (loading) loading.hidden = false;
+      placePreviewLoading();
     }
 
     function showPreview(scores) {
+      var loading = document.querySelector("#preview-loading");
+      if (loading) loading.hidden = true;
+      placePreviewLoading();
       var root = document.querySelector("#preview-content");
       if (root) root.hidden = false;
       var texts = ui.collectTexts(form);
@@ -330,29 +427,40 @@
         else host.removeAttribute("data-id");
       }
       host.hidden = false;
-      syncPreviewRadarTab(scores);
-      var radarHost = host.querySelector(".entry-radar");
-      if (radarHost) ui.renderRadar(radarHost, scores, null, { compact: true });
-      if (hasRadarData(scores)) {
-        ui.renderRadar(document.querySelector("#preview-radar"), scores, null, {
-          keys: radarKeys()
-        });
-      } else {
-        var previewRadar = document.querySelector("#preview-radar");
-        if (previewRadar) previewRadar.innerHTML = "";
-      }
-      ui.renderBars(document.querySelector("#preview-open"), scores, math.OPEN_KEYS);
-      ui.renderBars(document.querySelector("#preview-closed"), scores, math.CLOSED_KEYS);
+      var cardRadar = host.querySelector(".entry-radar");
+      if (cardRadar) ui.renderRadar(cardRadar, scores, null, { compact: true });
+      openView = paintStage(
+        document.querySelector("#preview-open-stage"),
+        "#preview-open-radar",
+        "#preview-open-bars",
+        scores,
+        math.OPEN_KEYS,
+        math.OPEN_KEYS,
+        openView
+      );
+      closedView = paintStage(
+        document.querySelector("#preview-closed-stage"),
+        "#preview-closed-radar",
+        "#preview-closed-bars",
+        scores,
+        math.OPEN_KEYS.concat(math.CLOSED_KEYS),
+        math.CLOSED_KEYS,
+        closedView
+      );
+      renderPreviewTexts(document.querySelector("#preview-open-texts"), texts, true);
+      renderPreviewTexts(document.querySelector("#preview-closed-texts"), texts, false);
     }
 
     async function runRead() {
       var texts = ui.collectTexts(form);
       publishButton.disabled = true;
+      writeStorage(PHASE_KEY, "reading");
       showPreviewPending();
       setFormStatus(t("create.reading"));
       reading = await window.MindsetScore.read(texts, function (message) {
         setFormStatus(message || t("create.reading"));
       });
+      writeStorage(PHASE_KEY, null);
       dirty = false;
       showPreview(reading);
       setFormStatus(t("create.ready"));
@@ -394,14 +502,68 @@
       ui.fillDemo(form, Object.assign({}, current, pendingSuggest));
       suggestBox.hidden = true;
       pendingSuggest = null;
+      noteDraft();
     });
+
+    function readStorage(key) {
+      try {
+        return sessionStorage.getItem(key);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function writeStorage(key, value) {
+      try {
+        if (value == null) sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key, value);
+      } catch (error) {}
+    }
+
+    function saveDraft() {
+      if (!draftTouched) return;
+      var texts = {};
+      window.MindsetLens.fields.forEach(function (field) {
+        var input = form.querySelector("#" + field.key);
+        texts[field.key] = input ? input.value : "";
+      });
+      writeStorage(DRAFT_KEY, JSON.stringify({
+        texts: texts,
+        demo: ui.collectDemo(form),
+        alias: aliasInput ? aliasInput.value : "",
+        step: step,
+        touched: true
+      }));
+    }
+
+    function noteDraft() {
+      draftTouched = true;
+      saveDraft();
+    }
+
+    function readDraft() {
+      var raw = readStorage(DRAFT_KEY);
+      if (!raw) return null;
+      try {
+        var draft = JSON.parse(raw);
+        if (!draft || !draft.touched) return null;
+        return draft;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function clearDraft() {
+      writeStorage(DRAFT_KEY, null);
+      writeStorage(PHASE_KEY, null);
+    }
 
     function aliasReady() {
       if (!needsAlias) return true;
       return social.ALIAS_PATTERN.test(social.cleanAlias(aliasInput.value));
     }
 
-    function go(next) {
+    function go(next, options) {
       if (next >= 2 && !guardPrivacy()) next = 1;
       else if (next === 3 && !aliasReady()) {
         next = 2;
@@ -420,13 +582,18 @@
         else button.removeAttribute("aria-current");
       });
       if (startButton) startButton.hidden = step !== 0;
+      var skipForNow = document.querySelector("#skip-for-now");
+      if (skipForNow) skipForNow.hidden = step !== 0;
       backButton.hidden = step < 1;
       nextButton.hidden = step === 0 || step === 3;
       publishButton.hidden = step !== 3;
       if (step === 2) refreshSuggest();
+      saveDraft();
       if (step === 3) {
         loginHint.hidden = true;
-        if (reading && !dirty) {
+        if (options && options.skipRead) {
+          publishButton.disabled = false;
+        } else if (reading && !dirty) {
           showPreview(reading);
         } else {
           runRead().catch(function (error) {
@@ -437,6 +604,7 @@
         }
       }
       window.scrollTo(0, 0);
+      placePreviewLoading();
     }
 
     document.querySelectorAll("[data-go]").forEach(function (button) {
@@ -453,6 +621,10 @@
     }
 
     backButton.addEventListener("click", function () {
+      if (step <= 1 && existingNumber) {
+        window.history.back();
+        return;
+      }
       go(Math.max(0, step - 1));
     });
 
@@ -560,6 +732,7 @@
           return store.publish(session, texts, reading, demoValues, alias, pendingHistory);
         })
         .then(function (result) {
+          clearDraft();
           if (result.aliasError) sessionStorage.setItem("mindset-warning", "create.aliasWarning");
           else if (result.warning) sessionStorage.setItem("mindset-warning", "create.publishWarning");
           window.location.assign("/i/" + result.number);
@@ -578,23 +751,54 @@
       wireEnterHints();
     }
 
+    setNeedsAlias(true);
+    window.MindsetLens.fields.forEach(function (field) {
+      ui.updateCount(form, field.key);
+    });
+
     store
       .findOwn(session.uid, session.idToken)
       .then(async function (own) {
-        if (!own) return;
-        existingNumber = own.publicDoc.id;
-        pendingHistory = math.historyLevel(own.publicDoc.history);
-        var entry = await social.aliasOf(existingNumber, session.idToken);
-        setNeedsAlias(!(entry && entry.alias));
-        document.querySelector("#heading").textContent = t("create.edit");
-        ui.setCrumb(t("create.edit"));
-        var editMeta = document.querySelector("#edit-meta");
-        if (editMeta) {
-          editMeta.removeAttribute("data-i18n");
-          editMeta.textContent =
-            "#" +
-            existingNumber +
-            (own.publicDoc.updatedAt ? " · " + ui.relativeWhen(own.publicDoc.updatedAt) : "");
+        if (own) {
+          existingNumber = own.publicDoc.id;
+          pendingHistory = math.historyLevel(own.publicDoc.history);
+          var entry = await social.aliasOf(existingNumber, session.idToken);
+          setNeedsAlias(!(entry && entry.alias));
+          document.querySelector("#heading").textContent = t("create.edit");
+          ui.setCrumb(t("create.edit"));
+          var editMeta = document.querySelector("#edit-meta");
+          if (editMeta) {
+            editMeta.removeAttribute("data-i18n");
+            editMeta.textContent =
+              "#" +
+              existingNumber +
+              (own.publicDoc.updatedAt ? " · " + ui.relativeWhen(own.publicDoc.updatedAt) : "");
+          }
+        }
+        var draft = readDraft();
+        if (draft) {
+          ui.fillTexts(form, draft.texts || {});
+          ui.fillDemo(form, draft.demo || {});
+          if (needsAlias && aliasInput && typeof draft.alias === "string") aliasInput.value = draft.alias;
+          window.MindsetLens.fields.forEach(function (field) {
+            scanField(field.key);
+            ui.updateCount(form, field.key);
+          });
+          dirty = true;
+          reading = null;
+          hidePreviewContent();
+          draftTouched = true;
+          var next = Number(draft.step);
+          if (!(next >= 0 && next <= 3)) next = own ? 1 : 0;
+          var interrupted = readStorage(PHASE_KEY) === "reading";
+          if (interrupted && next === 3) go(next, { skipRead: true });
+          else go(next);
+          if (interrupted) setFormStatus(t("create.readingInterrupted"), "error");
+          return;
+        }
+        if (!own) {
+          go(0);
+          return;
         }
         var privateDoc = own.privateDoc || {};
         ui.fillTexts(form, {
@@ -620,16 +824,15 @@
         }
         showPreview(scores);
         setFormStatus(t("create.loaded"), "", { readingHelp: true });
+        go(1);
       })
       .catch(function (error) {
         setFormStatus(ui.errorText(error), "error");
+        go(0);
+      })
+      .finally(function () {
+        return ui.endPageLoad();
       });
-
-    setNeedsAlias(true);
-    go(0);
-    window.MindsetLens.fields.forEach(function (field) {
-      ui.updateCount(form, field.key);
-    });
     } // boot
   });
 })();

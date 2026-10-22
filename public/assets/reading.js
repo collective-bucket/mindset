@@ -245,7 +245,7 @@
   var HISTORY_LEVELS = ["none", "school", "public"];
 
 
-  // Accepts "42", "#42", "/i/42" and full profile URLs. Rejects aliases and junk.
+  // Accepts "42", "#42", "/i/42", "/fish/42" and full profile URLs. Rejects aliases and junk.
   function parseNumber(text) {
     var raw = String(text || "").trim();
     if (!raw) return null;
@@ -257,7 +257,7 @@
     } catch (error) {
       return null;
     }
-    var match = raw.match(/(?:^|\/)(?:i\/)?#?(\d{1,7})\/?$/i);
+    var match = raw.match(/(?:^|\/)(?:(?:i|fish)\/)?#?(\d{1,7})\/?$/i);
     if (!match) return null;
     var n = Number(match[1]);
     if (!Number.isInteger(n) || n < 1) return null;

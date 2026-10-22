@@ -1,9 +1,9 @@
 "use strict";
 
 /**
- * Creates 100 seed mindsets numbered 2–101.
- * Login: {N}@ms.com / monkey{N}
- * Open texts are Turkish. Each public doc has seed:true.
+ * Creates 100 sim mindsets numbered 2–101 with ownerUid sim{N} (no Auth).
+ * Open + closed texts are Turkish. Public docs have seed:true.
+ * Needs firebase-tools login (admin token bypasses rules).
  *
  * Usage: NODE_PATH=/tmp/mindset-seed/node_modules node scripts/seed-accounts.js
  */
@@ -17,9 +17,9 @@ var API_KEY = "AIzaSyDJsuk_SaPUJkzP9gnlpB6qet0TUQJ5uZA";
 var PROJECT = "collective-bucket";
 var TARGET = 100;
 var FIRST = 2;
-var CACHE = path.join("/tmp", "mindset-seed-cache-tr.json");
-var AUTH = "https://identitytoolkit.googleapis.com/v1";
+var CACHE = path.join("/tmp", "mindset-seed-cache-sim-tr.json");
 var DB = "https://firestore.googleapis.com/v1/projects/" + PROJECT + "/databases/(default)/documents";
+var DOC_PREFIX = "projects/" + PROJECT + "/databases/(default)/documents/";
 
 var AGE = ["18-24", "25-34", "25-34", "25-34", "35-44", "35-44", "45-54", "55-64", "65+"];
 var GENDER = ["woman", "woman", "woman", "man", "man", "man", "nonbinary", "other"];
@@ -110,6 +110,27 @@ var COMMUNION = {
   ]
 };
 
+var CLOSED = {
+  unsayable: [
+    "Bazen yakınlarımın başarısını kıskandığımı kimseye söylemiyorum.",
+    "Yardım isterken küçüldüğümü hissediyorum; onu da saklıyorum.",
+    "Öfkem çoğu zaman korkudan geliyor; bunu itiraf etmek zor.",
+    "Sevilmeye layık olmadığımı düşündüğüm geceler oluyor."
+  ],
+  desire: [
+    "Daha az çalışıp daha net seçmek istiyorum ama tembel görünmekten korkuyorum.",
+    "Birinin beni tamamen görmesini istiyorum; aynı anda kaçmak da.",
+    "Güvenli bir isim ve sabit bir adres istiyorum, sonra yine hareket.",
+    "Sahneye çıkmak istiyorum; sahne ışığı beni yakıyor gibi."
+  ],
+  disowned: [
+    "İçimdeki sert yargıcı tanımıyorum; dışarıda nazik duruyorum.",
+    "Kontrolcü tarafımı inkâr ediyorum; 'sadece düzenliyorum' diyorum.",
+    "Bağımlı tarafımı saklıyorum; herkese yetiyormuşum gibi.",
+    "Kırılgan çocuğu kapalı tutuyorum; yetişkin maskesi yapışık."
+  ]
+};
+
 function pick(list, n) {
   return list[n % list.length];
 }
@@ -140,9 +161,9 @@ function buildPersona(index) {
       currentPosition: position,
       personalCode: pick(CODES[codeBand], index + 3),
       selfNarrative: pick(STORIES[storyBand], index + 5),
-      unsayableAttitude: "",
-      desireScript: "",
-      disownedSelf: ""
+      unsayableAttitude: pick(CLOSED.unsayable, index + 7),
+      desireScript: pick(CLOSED.desire, index + 11),
+      disownedSelf: pick(CLOSED.disowned, index + 13)
     },
     demo: {
       ageBand: pick(AGE, Math.floor(rnd() * 20) + index),
@@ -235,71 +256,49 @@ async function http(url, options) {
   return json;
 }
 
+function adminToken() {
+  return require(process.env.HOME + "/.config/configstore/firebase-tools.json").tokens.access_token;
+}
+
+function adminHeaders(token) {
+  return {
+    Authorization: "Bearer " + token,
+    "Content-Type": "application/json",
+    "x-goog-user-project": PROJECT
+  };
+}
+
 function withKey(url) {
   return url + (url.indexOf("?") >= 0 ? "&" : "?") + "key=" + encodeURIComponent(API_KEY);
 }
 
-async function signUp(email, password) {
-  try {
-    return await http(withKey(AUTH + "/accounts:signUp"), {
-      method: "POST",
-      body: { email: email, password: password, returnSecureToken: true }
-    });
-  } catch (error) {
-    if (/EMAIL_EXISTS/i.test(error.message)) {
-      return http(withKey(AUTH + "/accounts:signInWithPassword"), {
-        method: "POST",
-        body: { email: email, password: password, returnSecureToken: true }
-      });
-    }
-    throw error;
-  }
-}
-
 async function getDoc(docPath, token) {
   try {
-    var doc = await http(withKey(DB + "/" + docPath), {
-      headers: token ? { Authorization: "Bearer " + token } : {}
+    var doc = await http(DB + "/" + docPath, {
+      headers: token ? adminHeaders(token) : { "Content-Type": "application/json" }
     });
     return decodeDocument(doc);
   } catch (error) {
-    // Rules deny reads of missing or unpublished docs as 403, not 404.
     if (error.status === 404 || error.status === 403) return null;
     throw error;
   }
 }
 
-async function createDoc(collection, id, data, token) {
-  return http(withKey(DB + "/" + collection + "?documentId=" + encodeURIComponent(id)), {
-    method: "POST",
-    headers: { Authorization: "Bearer " + token },
-    body: { fields: encodeFields(data) }
-  });
-}
-
-async function patchDoc(docPath, data, token) {
-  var mask = Object.keys(data)
-    .filter(function (key) {
-      return key !== "id";
-    })
-    .map(function (key) {
-      return "updateMask.fieldPaths=" + encodeURIComponent(key);
-    })
-    .join("&");
-  return http(withKey(DB + "/" + docPath + "?" + mask), {
-    method: "PATCH",
-    headers: { Authorization: "Bearer " + token },
-    body: { fields: encodeFields(data) }
-  });
-}
-
 async function commit(writes, token) {
-  // Hosting client uses .../documents:commit (not .../databases/(default):commit).
-  return http(withKey(DB + ":commit"), {
+  return http(DB + ":commit", {
     method: "POST",
-    headers: { Authorization: "Bearer " + token },
+    headers: adminHeaders(token),
     body: { writes: writes }
   });
+}
+
+function setWrite(path, data) {
+  return {
+    update: {
+      name: DOC_PREFIX + path,
+      fields: encodeFields(data)
+    }
+  };
 }
 
 function incrementWrite(deltas) {
@@ -415,47 +414,34 @@ async function loadScorer() {
   };
 }
 
-async function takenNumbers() {
+async function takenNumbers(token) {
   var taken = { 1: true };
-  var page = await http(withKey(DB + ":runQuery"), {
-    method: "POST",
-    body: {
-      structuredQuery: {
-        from: [{ collectionId: "mindsets" }],
-        where: {
-          fieldFilter: {
-            field: { fieldPath: "published" },
-            op: "EQUAL",
-            value: { booleanValue: true }
-          }
-        },
-        select: { fields: [{ fieldPath: "number" }] },
-        limit: 500
-      }
-    }
-  });
-  (page || []).forEach(function (row) {
-    if (!row.document) return;
-    var doc = decodeDocument(row.document);
-    if (doc && doc.number) taken[doc.number] = true;
-  });
+  var pageToken = null;
+  for (;;) {
+    var url = DB + "/mindsets?pageSize=300" + (pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "");
+    var page = await http(url, { headers: adminHeaders(token) });
+    (page.documents || []).forEach(function (raw) {
+      var doc = decodeDocument(raw);
+      if (doc && doc.number) taken[doc.number] = true;
+      else if (doc && doc.id) taken[Number(doc.id)] = true;
+    });
+    if (!page.nextPageToken) break;
+    pageToken = page.nextPageToken;
+  }
   return taken;
 }
 
-function passwordFor(n) {
-  return "monkey" + n;
-}
-
 function aliasFor(n) {
-  return "ms" + n;
+  return "sim" + n;
 }
 
-function emailFor(n) {
-  return n + "@ms.com";
+function simUid(n) {
+  return "sim" + n;
 }
 
 async function main() {
-  var taken = await takenNumbers();
+  var token = adminToken();
+  var taken = await takenNumbers(token);
   var numbers = [];
   for (var n = FIRST; numbers.length < TARGET; n += 1) {
     if (taken[n]) {
@@ -464,7 +450,11 @@ async function main() {
     }
     numbers.push(n);
   }
-  console.log("will seed numbers", numbers[0] + "…" + numbers[numbers.length - 1], "(" + numbers.length + ")");
+  if (!numbers.length) {
+    console.log("nothing to seed");
+    return;
+  }
+  console.log("will seed sim fish", numbers[0] + "…" + numbers[numbers.length - 1], "(" + numbers.length + ")");
 
   var cache = fs.existsSync(CACHE) ? JSON.parse(fs.readFileSync(CACHE, "utf8")) : { scores: {} };
   var score = await loadScorer();
@@ -483,7 +473,8 @@ async function main() {
         "agency=" + cache.scores[cacheKey].agency,
         "communion=" + cache.scores[cacheKey].communion,
         "code=" + cache.scores[cacheKey].codeClarity,
-        "redemption=" + cache.scores[cacheKey].redemption
+        "redemption=" + cache.scores[cacheKey].redemption,
+        "gap=" + cache.scores[cacheKey].codeGap
       );
     }
   }
@@ -491,19 +482,17 @@ async function main() {
   var created = 0;
   var skipped = 0;
   var failed = [];
-  var lastToken = null;
   var maxNumber = 1;
 
   for (var j = 0; j < numbers.length; j += 1) {
     var num = numbers[j];
     maxNumber = Math.max(maxNumber, num);
-    var email = emailFor(num);
-    var password = passwordFor(num);
+    var uid = simUid(num);
     var alias = aliasFor(num);
     var person = personas[num];
     var scores = cache.scores[String(num)];
     try {
-      var existing = await getDoc("mindsets/" + num);
+      var existing = await getDoc("mindsets/" + num, token);
       if (existing && !existing.seed) {
         console.log("skip #" + num + " (real account)");
         skipped += 1;
@@ -515,9 +504,6 @@ async function main() {
         continue;
       }
 
-      var auth = await signUp(email, password);
-      lastToken = auth.idToken;
-      var uid = auth.localId;
       var now = new Date().toISOString();
       var docs = reading.buildDocuments(
         uid,
@@ -529,42 +515,32 @@ async function main() {
         now,
         person.demo,
         person.history,
-        true
+        true,
+        "tr"
       );
+      var version = reading.buildVersion(docs.publicDoc);
+      var deep = {
+        ownerUid: uid,
+        number: num,
+        updatedAt: now,
+        codeGap: scores.codeGap,
+        authorityLean: scores.authorityLean,
+        desireSplit: scores.desireSplit,
+        shadowDistance: scores.shadowDistance
+      };
 
-      await createDoc("mindsets", String(num), docs.publicDoc, auth.idToken);
-      await createDoc("privateMindsets", String(num), docs.privateDoc, auth.idToken);
-      await createDoc("owners", uid, { number: num }, auth.idToken);
-      await createDoc(
-        "mindsets/" + num + "/versions",
-        reading.versionId(now),
-        reading.buildVersion(docs.publicDoc),
-        auth.idToken
+      await commit(
+        [
+          setWrite("mindsets/" + num, docs.publicDoc),
+          setWrite("privateMindsets/" + num, docs.privateDoc),
+          setWrite("owners/" + uid, { number: num }),
+          setWrite("deepReadings/" + num, deep),
+          setWrite("mindsets/" + num + "/versions/" + reading.versionId(now), version),
+          setWrite("aliases/" + alias, { ownerUid: uid, number: num }),
+          setWrite("aliasOf/" + num, { ownerUid: uid, alias: alias })
+        ],
+        token
       );
-
-      try {
-        await commit(
-          [
-            {
-              update: {
-                name: "projects/" + PROJECT + "/databases/(default)/documents/aliases/" + alias,
-                fields: encodeFields({ ownerUid: uid, number: num })
-              },
-              currentDocument: { exists: false }
-            },
-            {
-              update: {
-                name: "projects/" + PROJECT + "/databases/(default)/documents/aliasOf/" + num,
-                fields: encodeFields({ ownerUid: uid, alias: alias })
-              },
-              currentDocument: { exists: false }
-            }
-          ],
-          auth.idToken
-        );
-      } catch (error) {
-        console.log("alias warn #" + num, error.message);
-      }
 
       var deltas = reading.histogramDelta(null, {
         published: true,
@@ -573,32 +549,29 @@ async function main() {
       });
       if (deltas.length) {
         try {
-          await commit([incrementWrite(deltas)], auth.idToken);
+          await commit([incrementWrite(deltas)], token);
         } catch (error) {
           console.log("stats warn #" + num, error.message);
         }
       }
 
       created += 1;
-      console.log("ok #" + num, email, password, "@" + alias, person.demo.country, person.demo.gender);
-      await sleep(120);
+      console.log("ok #" + num, uid, "@" + alias, person.demo.country, person.demo.gender);
+      await sleep(80);
     } catch (error) {
       failed.push({ number: num, error: error.message });
       console.log("FAIL #" + num, error.message);
-      await sleep(400);
+      await sleep(300);
     }
   }
 
-  if (lastToken) {
-    try {
-      var counter = await getDoc("counters/mindset", lastToken);
-      var next = Math.max((counter && counter.next) || 1, maxNumber + 1);
-      if (!counter) await createDoc("counters", "mindset", { next: next }, lastToken);
-      else if (counter.next < next) await patchDoc("counters/mindset", { next: next }, lastToken);
-      console.log("counter next =", next);
-    } catch (error) {
-      console.log("counter warn", error.message);
-    }
+  try {
+    var counter = await getDoc("counters/mindset", token);
+    var next = Math.max((counter && counter.next) || 1, maxNumber + 1);
+    await commit([setWrite("counters/mindset", { next: next })], token);
+    console.log("counter next =", next);
+  } catch (error) {
+    console.log("counter warn", error.message);
   }
 
   console.log(JSON.stringify({ created: created, skipped: skipped, failed: failed.length, fails: failed }, null, 2));

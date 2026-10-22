@@ -92,39 +92,208 @@
           "</p>"
         : "";
       return (
-        '<div class="hist"><h3>' +
-        ui.escapeHtml(i18n.pick(ui.axisByKey(key).label)) +
-        '</h3><div class="hist-bars">' +
+        '<div class="hist"><div class="hist-bars">' +
         cols +
-        "</div>" +
+        '</div><h3 class="dist-title">' +
+        ui.escapeHtml(i18n.pick(ui.axisByKey(key).label)) +
+        "</h3>" +
         legend +
         "</div>"
       );
     }).join("");
   }
 
-  function rowChart(container, rows) {
-    if (!rows.length) {
-      container.innerHTML = '<p class="empty">' + ui.escapeHtml(t("explore.noStats")) + "</p>";
-      return;
+  var demoGroups = { age: [], gender: [], country: [], city: [] };
+  var demoKey = "age";
+
+  function sliceColor(index, count) {
+    var tMix = count <= 1 ? 0 : index / (count - 1);
+    var deep = Math.round(100 - tMix * 72);
+    return "color-mix(in srgb, var(--accent-deep) " + deep + "%, var(--paper))";
+  }
+
+  function clipSliceLabel(label) {
+    return label.length > 12 ? label.slice(0, 12) : label;
+  }
+
+  function labelFits(mid, sweep, width, radius) {
+    var labelR = radius * 0.58;
+    var lx = Math.cos(mid) * labelR;
+    var ly = Math.sin(mid) * labelR;
+    var hw = width / 2;
+    var hh = 5;
+    var corners = [
+      [lx - hw, ly - hh],
+      [lx + hw, ly - hh],
+      [lx - hw, ly + hh],
+      [lx + hw, ly + hh],
+    ];
+    for (var i = 0; i < corners.length; i++) {
+      var x = corners[i][0];
+      var y = corners[i][1];
+      if (Math.hypot(x, y) > radius - 3) return false;
+      var delta = Math.atan2(y, x) - mid;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      if (Math.abs(delta) > sweep / 2 - 0.04) return false;
     }
-    var max = Math.max.apply(null, rows.map(function (row) { return row.n; }).concat([1]));
-    container.innerHTML =
-      '<div class="row-chart">' +
+    return true;
+  }
+
+  function demoSlices(rows) {
+    var sum = rows.reduce(function (total, row) {
+      return total + row.n;
+    }, 0);
+    var radius = 52;
+    var angle = -Math.PI / 2;
+    var slices = rows.map(function (row, index) {
+      var sweep = sum ? (row.n / sum) * Math.PI * 2 : 0;
+      var start = angle;
+      angle += sweep;
+      var mid = start + sweep / 2;
+      var caption = clipSliceLabel(row.label);
+      var textWidth = Math.max(22, caption.length * 6.2);
+      return {
+        row: row,
+        caption: caption,
+        index: index,
+        start: start,
+        end: angle,
+        mid: mid,
+        sweep: sweep,
+        textWidth: textWidth,
+        outside: rows.length > 1 && !(sum && labelFits(mid, sweep, textWidth, radius)),
+      };
+    });
+    return { sum: sum, radius: radius, slices: slices };
+  }
+
+  function pieMarkup(rows) {
+    var laid = demoSlices(rows);
+    if (!rows.length || !laid.sum) {
+      return '<p class="empty">' + ui.escapeHtml(t("explore.noStats")) + "</p>";
+    }
+    var radius = laid.radius;
+    if (rows.length === 1 || rows[0].n === laid.sum) {
+      return (
+        '<svg class="demo-pie" viewBox="-60 -60 120 120"><circle cx="0" cy="0" r="' +
+        radius +
+        '" fill="' +
+        sliceColor(0, rows.length) +
+        '"/><text class="demo-slice-label is-on-slice" x="0" y="0" font-size="8" text-anchor="middle" dominant-baseline="middle">' +
+        ui.escapeHtml(clipSliceLabel(rows[0].label)) +
+        "</text></svg>"
+      );
+    }
+    var paths = laid.slices
+      .map(function (slice) {
+        var large = slice.sweep > Math.PI ? 1 : 0;
+        var x1 = radius * Math.cos(slice.start);
+        var y1 = radius * Math.sin(slice.start);
+        var x2 = radius * Math.cos(slice.end);
+        var y2 = radius * Math.sin(slice.end);
+        return (
+          '<path fill="' +
+          sliceColor(slice.index, rows.length) +
+          '" stroke="var(--paper)" stroke-width="1.5" d="M0 0 L' +
+          x1.toFixed(2) +
+          " " +
+          y1.toFixed(2) +
+          " A" +
+          radius +
+          " " +
+          radius +
+          " 0 " +
+          large +
+          " 1 " +
+          x2.toFixed(2) +
+          " " +
+          y2.toFixed(2) +
+          ' Z"/>'
+        );
+      })
+      .join("");
+    var labels = laid.slices
+      .filter(function (slice) {
+        return !slice.outside;
+      })
+      .map(function (slice) {
+        var deep = 100 - (slice.index / (rows.length - 1)) * 72;
+        var labelR = radius * 0.58;
+        return (
+          '<text class="demo-slice-label' +
+          (deep >= 55 ? " is-on-slice" : "") +
+          '" font-size="8" x="' +
+          (Math.cos(slice.mid) * labelR).toFixed(2) +
+          '" y="' +
+          (Math.sin(slice.mid) * labelR).toFixed(2) +
+          '" text-anchor="middle" dominant-baseline="middle">' +
+          ui.escapeHtml(slice.caption) +
+          "</text>"
+        );
+      })
+      .join("");
+    return '<svg class="demo-pie" viewBox="-60 -60 120 120">' + paths + labels + "</svg>";
+  }
+
+  function sideMarkup(rows, side) {
+    var laid = demoSlices(rows);
+    var wantRight = side === "right";
+    return laid.slices
+      .filter(function (slice) {
+        return slice.outside && (Math.cos(slice.mid) >= 0) === wantRight;
+      })
+      .sort(function (left, right) {
+        return Math.sin(left.mid) - Math.sin(right.mid);
+      })
+      .map(function (slice) {
+        return (
+          '<p class="demo-tag"><span class="demo-swatch" style="background:' +
+          sliceColor(slice.index, rows.length) +
+          '"></span><span>' +
+          ui.escapeHtml(slice.caption) +
+          "</span></p>"
+        );
+      })
+      .join("");
+  }
+
+  function legendMarkup(rows) {
+    if (!rows.length) return "";
+    return (
+      '<div class="demo-legend">' +
       rows
-        .map(function (row) {
+        .map(function (row, index) {
           return (
-            '<div class="row"><span class="row-label">' +
+            '<div class="demo-key"><span class="demo-swatch" style="background:' +
+            sliceColor(index, rows.length) +
+            '"></span><span>' +
             ui.escapeHtml(row.label) +
-            '</span><div class="row-track"><div class="row-fill" style="width:' +
-            Math.round((row.n / max) * 100) +
-            '%"></div></div><span class="row-value">' +
+            '</span><span class="demo-count">' +
             row.n +
             "</span></div>"
           );
         })
         .join("") +
-      "</div>";
+      "</div>"
+    );
+  }
+
+  function paintDemo() {
+    var rows = demoGroups[demoKey] || [];
+    var pie = document.querySelector("#demo-pie");
+    var legend = document.querySelector("#demo-legend");
+    var note = document.querySelector("#demo-city-note");
+    if (pie) pie.innerHTML = pieMarkup(rows);
+    var left = document.querySelector("#demo-left");
+    var right = document.querySelector("#demo-right");
+    if (left) left.innerHTML = sideMarkup(rows, "left");
+    if (right) right.innerHTML = sideMarkup(rows, "right");
+    if (legend) legend.innerHTML = legendMarkup(rows);
+    if (note) note.hidden = demoKey !== "city";
+    document.querySelectorAll("[data-demo]").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.getAttribute("data-demo") === demoKey));
+    });
   }
 
   function count(node) {
@@ -133,13 +302,12 @@
 
   function prettyCity(key) {
     var cut = key.indexOf("_");
-    var country = key.slice(0, cut);
     var city = key.slice(cut + 1).replace(/_/g, " ");
     var locale = i18n.lang === "tr" ? "tr-TR" : "en-US";
     city = city.replace(/(^|\s)\S/g, function (letter) {
       return letter.toLocaleUpperCase(locale);
     });
-    return city + ", " + i18n.countryName(country);
+    return city;
   }
 
   function top(entries) {
@@ -155,39 +323,28 @@
 
   function renderDemoCharts(stats) {
     stats = stats || {};
-    rowChart(
-      document.querySelector("#age-chart"),
-      demo.AGE_BANDS.map(function (band) {
-        return { label: band.id, n: count((stats.byAge || {})[band.key]) };
-      }).filter(function (row) {
-        return row.n > 0;
+    demoGroups.age = demo.AGE_BANDS.map(function (band) {
+      return { label: band.id, n: count((stats.byAge || {})[band.key]) };
+    }).filter(function (row) {
+      return row.n > 0;
+    });
+    demoGroups.gender = demo.GENDERS.map(function (gender) {
+      return { label: t("gender." + gender), n: count((stats.byGender || {})[gender]) };
+    }).filter(function (row) {
+      return row.n > 0;
+    });
+    demoGroups.country = top(
+      Object.keys(stats.byCountry || {}).map(function (code) {
+        return { label: i18n.countryName(code), n: count(stats.byCountry[code]) };
       })
     );
-    rowChart(
-      document.querySelector("#gender-chart"),
-      demo.GENDERS.map(function (gender) {
-        return { label: t("gender." + gender), n: count((stats.byGender || {})[gender]) };
-      }).filter(function (row) {
-        return row.n > 0;
+    demoGroups.city = top(
+      Object.keys(stats.cities || {}).map(function (key) {
+        return { label: prettyCity(key), n: Number(stats.cities[key] || 0) };
       })
     );
-    rowChart(
-      document.querySelector("#country-chart"),
-      top(
-        Object.keys(stats.byCountry || {}).map(function (code) {
-          return { label: i18n.countryName(code), n: count(stats.byCountry[code]) };
-        })
-      )
-    );
-    rowChart(
-      document.querySelector("#city-chart"),
-      top(
-        Object.keys(stats.cities || {}).map(function (key) {
-          return { label: prettyCity(key), n: Number(stats.cities[key] || 0) };
-        })
-      )
-    );
-    document.querySelector("#total").textContent = t("explore.total", { n: Number(stats.count || 0) });
+    document.querySelector("#stats-count").textContent = String(Number(stats.count || 0));
+    paintDemo();
   }
 
   // ---- Page ----------------------------------------------------------------
@@ -222,7 +379,7 @@
       math.OPEN_KEYS.forEach(function (key) {
         ranges[key] = [0, 100];
       });
-      return { ranges: ranges, ageBand: "", gender: "", country: "", untrailed: false };
+      return { ranges: ranges, number: "", ageBand: "", gender: "", country: "", untrailed: false };
     }
 
     // ---- SVG lake ----
@@ -313,7 +470,8 @@
         var spot = position(doc);
         if (!spot) return;
         var group = document.createElementNS(SVG_NS, "g");
-        var classes = ["fish"];
+        var classes = ["fish", ui.isSimOwner(doc.ownerUid) ? "is-sim" : "is-real"];
+        if (doc.createdAt && doc.updatedAt && doc.createdAt !== doc.updatedAt) classes.push("is-fresh");
         if (ownDoc && doc.id === ownDoc.id) classes.push("is-mine");
         if (inSchool[doc.id]) classes.push("is-school");
         else if (onTrail[doc.id]) classes.push("is-trail");
@@ -322,14 +480,16 @@
         group.setAttribute("role", "button");
         group.setAttribute("tabindex", "0");
         group.setAttribute("aria-label", fishLabel(doc));
+        var mine = ownDoc && doc.id === ownDoc.id;
         group.innerHTML =
+          (mine ? '<path class="fish-me" d="M1.6 -6.2 L4.8 -10.6 L-1.6 -10.6 Z"/>' : "") +
           '<g class="fish-sway" style="animation-delay:' + (-(Number(doc.id) % 7) * 0.4).toFixed(1) + 's">' +
-          '<circle class="fish-ring" r="9"/>' +
-          '<path class="fish-body" d="' + ui.FISH_PATH + '"/>' +
-          '<circle class="fish-eye" cx="-2.6" cy="-.6" r=".6"/></g>';
+          ui.fishMark() +
+          "</g>";
         school.appendChild(group);
         nodes[doc.id] = { el: group, doc: doc, spot: spot, size: sizeFor(doc) };
       });
+      if (ownDoc && nodes[ownDoc.id]) school.appendChild(nodes[ownDoc.id].el);
       placeFish();
     }
 
@@ -343,6 +503,8 @@
           "translate(" + node.spot.x.toFixed(2) + " " + node.spot.y.toFixed(2) + ") scale(" +
             (scale * node.spot.facing).toFixed(3) + " " + scale.toFixed(3) + ")"
         );
+        var arrow = node.el.querySelector(".fish-me");
+        if (arrow) arrow.setAttribute("transform", node.spot.facing < 0 ? "scale(-1 1)" : "");
       });
     }
 
@@ -356,6 +518,7 @@
         return scores[key] >= 0 && scores[key] >= range[0] && scores[key] <= range[1];
       });
       if (!ok) return false;
+      if (filters.number && String(doc.id) !== filters.number) return false;
       if (filters.ageBand && doc.ageBand !== filters.ageBand) return false;
       if (filters.gender && doc.gender !== filters.gender) return false;
       if (filters.country && doc.country !== filters.country) return false;
@@ -368,7 +531,7 @@
         var range = filters.ranges[key];
         return range[0] > 0 || range[1] < 100;
       }).length;
-      ["ageBand", "gender", "country", "untrailed"].forEach(function (key) {
+      ["number", "ageBand", "gender", "country", "untrailed"].forEach(function (key) {
         if (filters[key]) countActive += 1;
       });
       return countActive;
@@ -443,10 +606,10 @@
       var xHigh = document.querySelector("#x-high");
       var yHigh = document.querySelector("#y-high");
       var yLow = document.querySelector("#y-low");
-      xLow.textContent = "← " + i18n.pick(x.lowLabel);
-      xHigh.textContent = i18n.pick(x.highLabel) + " →";
+      xLow.textContent = "↑ " + i18n.pick(x.lowLabel);
+      xHigh.textContent = "↑ " + i18n.pick(x.highLabel);
       yHigh.textContent = "↑ " + i18n.pick(y.highLabel);
-      yLow.textContent = "↓ " + i18n.pick(y.lowLabel);
+      yLow.textContent = "↑ " + i18n.pick(y.lowLabel);
       var xHint = ui.axisHint(x);
       var yHint = ui.axisHint(y);
       xLow.title = xHint;
@@ -548,9 +711,17 @@
       refresh(true);
     });
 
+    document.querySelector("#f-number").addEventListener("input", function (event) {
+      var digits = String(event.target.value || "").replace(/\D/g, "");
+      if (event.target.value !== digits) event.target.value = digits;
+      filters.number = digits;
+      refresh(true);
+    });
+
     document.querySelector("#f-clear").addEventListener("click", function () {
       filters = blankFilters();
       renderRanges();
+      document.querySelector("#f-number").value = "";
       ["ageBand", "gender", "country"].forEach(function (key) {
         document.querySelector("#f-" + key).value = "";
       });
@@ -567,18 +738,31 @@
       });
     });
 
-    document.querySelector("#zoom-reset").addEventListener("click", function () {
+    var zoomReset = document.querySelector("#zoom-reset");
+    zoomReset.innerHTML = ui.icon("whole");
+    zoomReset.addEventListener("click", function () {
       animateView(Object.assign({}, FULL));
     });
 
-    var viewToggle = document.querySelector("#view-toggle");
-    viewToggle.addEventListener("click", function () {
-      var showList = list.hidden;
+    var viewList = document.querySelector("#view-list");
+    var viewLake = document.querySelector("#view-lake");
+    viewList.innerHTML = ui.icon("list");
+    viewLake.innerHTML = ui.icon("waves");
+
+    function showView(which) {
+      var showList = which === "list";
+      if (showList === !list.hidden) return;
       list.hidden = !showList;
-      viewToggle.setAttribute("aria-pressed", String(showList));
-      viewToggle.textContent = t(showList ? "lake.asLake" : "lake.asList");
+      viewList.setAttribute("aria-pressed", String(showList));
+      viewLake.setAttribute("aria-pressed", String(!showList));
       document.querySelector(".lake-wrap").classList.toggle("is-collapsed", showList);
       if (showList) ui.renderCards(list, matches, "lake.none", optionsFor);
+    }
+    viewList.addEventListener("click", function () {
+      showView("list");
+    });
+    viewLake.addEventListener("click", function () {
+      showView("lake");
     });
 
     var panelToggle = document.querySelector("#panel-toggle");
@@ -589,18 +773,39 @@
     });
 
     function selectTab(which) {
-      var filterOn = which === "filter";
-      document.querySelector("#tab-filter").setAttribute("aria-selected", String(filterOn));
-      document.querySelector("#tab-bucket").setAttribute("aria-selected", String(!filterOn));
-      document.querySelector("#filter-pane").hidden = !filterOn;
-      document.querySelector("#bucket-pane").hidden = filterOn;
+      var mapOn = which === "map";
+      document.querySelector("#tab-lake-map").setAttribute("aria-selected", String(mapOn));
+      document.querySelector("#tab-lake-stats").setAttribute("aria-selected", String(!mapOn));
+      document.querySelector("#pane-lake-map").hidden = !mapOn;
+      document.querySelector("#pane-lake-stats").hidden = mapOn;
     }
-    document.querySelector("#tab-filter").addEventListener("click", function () {
-      selectTab("filter");
+    document.querySelector("#tab-lake-map").addEventListener("click", function () {
+      selectTab("map");
     });
-    document.querySelector("#tab-bucket").addEventListener("click", function () {
-      selectTab("bucket");
+    document.querySelector("#tab-lake-stats").addEventListener("click", function () {
+      selectTab("stats");
     });
+    var tabsHelp = document.querySelector("#tabs-help-dialog");
+    document.querySelector("#tabs-help").addEventListener("click", function () {
+      document.querySelector("#tabs-help-body").innerHTML = String(t("guide.lakeBody") || "")
+        .split(/\n+/)
+        .filter(Boolean)
+        .map(function (line) {
+          return "<p>" + ui.escapeHtml(line) + "</p>";
+        })
+        .join("");
+      tabsHelp.showModal();
+    });
+    if (ui.closeOnBackdrop) ui.closeOnBackdrop(tabsHelp);
+    var demoSwitch = document.querySelector(".demo-switch");
+    if (demoSwitch) {
+      demoSwitch.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-demo]");
+        if (!button) return;
+        demoKey = button.getAttribute("data-demo");
+        paintDemo();
+      });
+    }
 
     // ---- Pan and pinch ----
 
@@ -624,8 +829,14 @@
 
     svg.addEventListener("pointerdown", function (event) {
       pointers[event.pointerId] = { x: event.clientX, y: event.clientY };
-      gesture = { view: Object.assign({}, view), start: Object.assign({}, pointers[event.pointerId]), spread: spread() };
+      gesture = {
+        view: Object.assign({}, view),
+        start: Object.assign({}, pointers[event.pointerId]),
+        spread: spread(),
+        time: Date.now()
+      };
       moved = false;
+      svg.removeAttribute("data-panned");
     });
 
     svg.addEventListener("pointermove", function (event) {
@@ -640,9 +851,18 @@
         view = clampView({ x: cx - span / 2, y: cy - span / 2, w: span, h: span });
         moved = true;
       } else if (ids.length === 1) {
-        var delta = toLake(event.clientX - gesture.start.x, event.clientY - gesture.start.y);
-        if (Math.abs(event.clientX - gesture.start.x) + Math.abs(event.clientY - gesture.start.y) > 6) moved = true;
+        var rawX = event.clientX - gesture.start.x;
+        var rawY = event.clientY - gesture.start.y;
+        var horizontal = Math.abs(rawX) > Math.abs(rawY) * 1.4;
+        if (gesture.hold) return;
+        if (horizontal && Date.now() - gesture.time < 420) {
+          if (Math.abs(rawX) >= 56) gesture.hold = true;
+          return;
+        }
+        var delta = toLake(rawX, rawY);
+        if (Math.abs(rawX) + Math.abs(rawY) > 6) moved = true;
         if (!moved) return;
+        svg.setAttribute("data-panned", "1");
         if (!svg.hasPointerCapture(event.pointerId)) svg.setPointerCapture(event.pointerId);
         view = clampView({
           x: gesture.view.x - delta.x,
@@ -713,16 +933,21 @@
     async function openCard(doc) {
       cardDoc = doc;
       var mine = ownDoc && doc.id === ownDoc.id;
-      document.querySelector("#card-number").textContent = doc.id;
+      document.querySelector("#card-number").innerHTML = ui.mindsetIdTitle(doc.id, "", doc.ownerUid);
       var cardHeadline = document.querySelector("#card-headline");
       if (cardHeadline) {
         cardHeadline.textContent = String(doc.headline || "").replace(/\.$/, "");
         cardHeadline.hidden = !doc.headline;
       }
       document.querySelector("#card-badges").textContent = ui.badgeText(doc);
-      document.querySelector("#card-summary").textContent = ui.plainSummary(doc);
-      document.querySelector("#card-quote").textContent = doc.personalCode || "";
+      document.querySelector("#card-meta").textContent = ui.relativeWhen(doc.updatedAt);
+      var cardSummary = document.querySelector("#card-summary");
+      var code = String(doc.personalCode || "").trim();
+      cardSummary.textContent = code || ui.plainSummary(doc);
+      cardSummary.hidden = !cardSummary.textContent;
+      document.querySelector("#card-quote").textContent = "";
       document.querySelector("#card-view").href = "/i/" + doc.id;
+      ui.renderRadar(document.querySelector("#card-radar"), math.scoresOf(doc), null);
       var aliasNode = document.querySelector("#card-alias");
       aliasNode.hidden = true;
       ui.setStatus(cardStatus, "");
@@ -745,9 +970,12 @@
     }
 
     tailButton.addEventListener("click", function () {
-      if (!session) return window.location.assign(ui.loginHref());
+      if (!session) {
+        window.location.assign("/register?next=" + encodeURIComponent("/i/" + cardDoc.id));
+        return;
+      }
       if (!ownDoc) {
-        ui.setStatus(cardStatus, t("profile.needsMindset"), "error");
+        window.location.assign("/me");
         return;
       }
       var doc = cardDoc;
@@ -761,7 +989,7 @@
         : social.untail(session, doc.ownerUid)
       )
         .then(function () {
-          ui.setStatus(cardStatus, t(tailing ? "lake.tailed" : "lake.released"));
+          ui.setStatus(cardStatus, tailing ? "" : t("lake.released"));
         })
         .catch(function (error) {
           if (tailing) delete onTrail[doc.id];

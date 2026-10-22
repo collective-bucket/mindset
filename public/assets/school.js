@@ -4,35 +4,86 @@
   var ui = window.MindsetUi;
   var store = window.MindsetStore;
   var social = window.MindsetSocial;
+  var notices = window.MindsetNotices;
   var t = window.MindsetI18n.t;
 
-  function personRow(number, alias, uid, actions) {
+  function personChip(tool) {
+    if (!tool || !tool.label || !tool.id) return "";
+    return (
+      '<button type="button" class="btn btn-small' +
+      (tool.open ? " btn-primary" : "") +
+      '" data-action="' +
+      tool.id +
+      '">' +
+      ui.escapeHtml(tool.label) +
+      "</button>"
+    );
+  }
+
+  function statusChip(tool) {
+    if (!tool || !tool.label) return "";
+    return '<span class="chip person-status">' + ui.escapeHtml(tool.label) + "</span>";
+  }
+
+  function memberSpan(since) {
+    var date = new Date(since);
+    if (Number.isNaN(date.getTime())) return "";
+    var days = Math.floor((Date.now() - date.getTime()) / 86400000);
+    if (days < 1) return t("school.memberToday");
+    if (days === 1) return t("school.memberForOne");
+    return t("school.memberFor", { n: days });
+  }
+
+  function personRow(number, alias, uid, actions, since, copy) {
+    var href = "/i/" + ui.escapeHtml(number);
+    var statuses = [];
+    var tools = [];
+    (actions || []).forEach(function (action) {
+      tools.push({
+        id: action.id,
+        label: t(action.label),
+        open: Boolean(action.primary)
+      });
+    });
+    var when = since ? ui.formatWhen(since) : "";
+    var span = since ? memberSpan(since) : "";
+    var meta =
+      span || when
+        ? '<p class="head-meta person-meta">' +
+          (span ? "<span>" + ui.escapeHtml(span) + "</span>" : "") +
+          (when ? "<span>" + ui.escapeHtml(when) + "</span>" : "") +
+          "</p>"
+        : "";
+    var headline = copy && copy.headline ? copy.headline : "";
+    var blurb = copy && copy.blurb ? copy.blurb : "";
+    var body = copy
+      ? headline
+        ? '<p class="head-meta"><span class="alias">' +
+          ui.escapeHtml(headline) +
+          "</span></p>" +
+          (blurb
+            ? '<p class="head-meta person-meta"><span>' + ui.escapeHtml(blurb) + "</span></p>"
+            : "")
+        : '<strong class="person-title">#' + ui.escapeHtml(number) + "</strong>"
+      : (alias
+          ? '<p class="head-meta"><span class="alias">@' + ui.escapeHtml(alias) + "</span></p>"
+          : '<strong class="person-title">#' + ui.escapeHtml(number) + "</strong>") + meta;
     return (
       '<div class="person" data-uid="' +
       ui.escapeHtml(uid) +
-      '"><a class="person-link" href="/i/' +
-      number +
       '">' +
-      ui.avatar(number, "sm") +
-      "<span><strong>" +
-      ui.escapeHtml(number) +
-      "</strong>" +
-      (alias ? '<small class="alias">@' + ui.escapeHtml(alias) + "</small>" : "") +
-      '</span></a><span class="person-actions">' +
-      actions
-        .map(function (action) {
-          return (
-            '<button type="button" class="btn btn-small ' +
-            (action.primary ? "btn-primary" : "") +
-            '" data-action="' +
-            action.id +
-            '">' +
-            ui.escapeHtml(t(action.label)) +
-            "</button>"
-          );
-        })
-        .join("") +
-      "</span></div>"
+      '<a class="person-hit" href="' +
+      href +
+      '" tabindex="-1" aria-hidden="true"></a>' +
+      ui.mindsetMarkStatic(number, uid, "person-id") +
+      '<div class="person-body">' +
+      body +
+      (statuses.length
+        ? '<div class="person-statuses">' + statuses.map(statusChip).join("") + "</div>"
+        : "") +
+      "</div>" +
+      (tools.length ? '<div class="person-tools">' + tools.map(personChip).join("") + "</div>" : "") +
+      "</div>"
     );
   }
 
@@ -55,13 +106,11 @@
 
     function selectSchoolSection(name) {
       var panes = {
-        welcome: document.querySelector("#pane-school-welcome"),
         incoming: document.querySelector("#pane-school-incoming"),
         members: document.querySelector("#pane-school-members"),
         outgoing: document.querySelector("#pane-school-outgoing")
       };
       var tabs = {
-        welcome: document.querySelector("#tab-school-welcome"),
         incoming: document.querySelector("#tab-school-incoming"),
         members: document.querySelector("#tab-school-members"),
         outgoing: document.querySelector("#tab-school-outgoing")
@@ -71,6 +120,11 @@
         panes[key].hidden = !on;
         tabs[key].setAttribute("aria-selected", String(on));
       });
+      if (notices) {
+        if (name === "incoming") notices.markSeen("schoolRequest");
+        if (name === "members") notices.markSeen("schoolMember");
+        if (name === "outgoing") notices.markSeen("requestDeclined");
+      }
     }
 
     document.querySelector("#share").addEventListener("click", function () {
@@ -83,23 +137,54 @@
       selectSchoolSection(tab.getAttribute("data-school-section"));
     });
 
-    function fill(container, rows, actions) {
+    var tabsHelp = document.querySelector("#tabs-help-dialog");
+    document.querySelector("#tabs-help").addEventListener("click", function () {
+      document.querySelector("#tabs-help-body").innerHTML = String(t("guide.schoolBody") || "")
+        .split(/\n+/)
+        .filter(Boolean)
+        .map(function (line) {
+          return "<p>" + ui.escapeHtml(line) + "</p>";
+        })
+        .join("");
+      tabsHelp.showModal();
+    });
+    if (ui.closeOnBackdrop) ui.closeOnBackdrop(tabsHelp);
+
+    function fill(container, rows, actions, request, emptyKey) {
       if (!rows.length) {
-        container.innerHTML = '<p class="empty">' + ui.escapeHtml(t("school.none")) + "</p>";
+        container.innerHTML = '<p class="empty">' + ui.escapeHtml(t(emptyKey)) + "</p>";
         return;
       }
       container.innerHTML = rows
         .map(function (row) {
-          return personRow(row.number, row.alias, row.uid, actions);
+          return personRow(
+            row.number,
+            row.alias,
+            row.uid,
+            actions,
+            row.since,
+            request ? { headline: row.headline, blurb: row.blurb } : null
+          );
         })
         .join("");
+    }
+
+    function requestCopy(doc) {
+      var headline = doc && doc.headline ? String(doc.headline).replace(/\.$/, "") : "";
+      var blurb = doc ? ui.plainSummary(doc) : "";
+      if (!headline && blurb) {
+        headline = blurb;
+        blurb = "";
+      }
+      if (blurb === headline) blurb = "";
+      return { headline: headline, blurb: blurb };
     }
 
     async function load(options) {
       var gate = !(options && options.soft);
       if (gate) ui.beginPageLoad();
       try {
-        ui.setStatus(status, t("common.loading"));
+        if (gate) ui.setStatus(status, t("common.loading"));
         var own = await store.findOwn(session.uid, session.idToken).catch(function () {
           return null;
         });
@@ -111,7 +196,8 @@
           ui.paintOwnerHeader({
             doc: ownDoc,
             header: t("school.title"),
-            alias: aliasEntry && aliasEntry.alias
+            alias: aliasEntry && aliasEntry.alias,
+            plainMark: true
           });
         } else {
           ui.clearOwnerHeader(t("school.title"));
@@ -128,7 +214,26 @@
           return { uid: row.to, number: row.toNumber };
         });
         var members = results[2].map(function (row) {
-          return { uid: row.uid || row.id, number: row.number };
+          return { uid: row.uid || row.id, number: row.number, since: row.since };
+        });
+        var incomingDocs = incoming.length
+          ? await store.byNumbers(
+              incoming.map(function (row) {
+                return row.number;
+              }),
+              session.idToken
+            ).catch(function () {
+              return [];
+            })
+          : [];
+        var byNumber = {};
+        incomingDocs.forEach(function (doc) {
+          byNumber[String(doc.number)] = doc;
+        });
+        incoming.forEach(function (row) {
+          var copy = requestCopy(byNumber[String(row.number)]);
+          row.headline = copy.headline;
+          row.blurb = copy.blurb;
         });
         var aliases = await aliasMap(
           incoming.concat(outgoing, members).map(function (row) {
@@ -144,10 +249,11 @@
         fill(document.querySelector("#incoming"), incoming, [
           { id: "accept", label: "school.accept", primary: true },
           { id: "decline", label: "school.decline" }
-        ]);
-        fill(document.querySelector("#members"), members, [{ id: "remove", label: "school.remove" }]);
-        fill(document.querySelector("#outgoing"), outgoing, [{ id: "cancel", label: "school.cancel" }]);
+        ], true, "school.incomingEmpty");
+        fill(document.querySelector("#members"), members, [{ id: "remove", label: "school.remove" }], false, "school.membersEmpty");
+        fill(document.querySelector("#outgoing"), outgoing, [{ id: "cancel", label: "school.cancel" }], false, "school.outgoingEmpty");
         ui.setStatus(status, "");
+        if (notices) notices.refresh(session).catch(function () {});
       } finally {
         if (gate) await ui.endPageLoad();
       }
@@ -175,7 +281,7 @@
         });
     });
 
-    selectSchoolSection("welcome");
+    selectSchoolSection("members");
     ui.requireAuth().then(function (next) {
       session = next;
       if (!session) {
