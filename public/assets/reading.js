@@ -11,11 +11,11 @@
   var CLOSED_TEXT_KEYS = ["unsayableAttitude", "desireScript", "disownedSelf"];
   var BUCKETS = ["b0", "b1", "b2", "b3", "b4"];
 
-  // e5-small pole gaps are tiny (~0.01-0.03); each axis carries its own midpoint and half-gap.
+  // Lite embedder pole gaps are wider than e5; each axis carries its own midpoint and half-gap.
   var DEFAULT_CALIBRATION = { center: 0, spread: 0.02 };
-  // Identical text is 1, a paraphrase ~0.87, the same line across EN/TR ~0.89, unrelated ~0.77.
-  var DISTANCE_CLOSE = 0.9;
-  var DISTANCE_FAR = 0.78;
+  // Lite embedder: identical is 1, same-language paraphrase ~0.55, unrelated ~0.
+  var DISTANCE_CLOSE = 0.65;
+  var DISTANCE_FAR = 0;
 
   var PHRASES = {
     en: {
@@ -245,7 +245,7 @@
   var HISTORY_LEVELS = ["none", "school", "public"];
 
 
-  // Accepts "42", "#42", "/i/42" and full profile URLs. Rejects aliases and junk.
+  // Accepts "42", "#42", "/i/42", "/fish/42" and full profile URLs. Rejects aliases and junk.
   function parseNumber(text) {
     var raw = String(text || "").trim();
     if (!raw) return null;
@@ -257,7 +257,7 @@
     } catch (error) {
       return null;
     }
-    var match = raw.match(/(?:^|\/)(?:i\/)?#?(\d{1,7})\/?$/i);
+    var match = raw.match(/(?:^|\/)(?:(?:i|fish)\/)?#?(\d{1,7})\/?$/i);
     if (!match) return null;
     var n = Number(match[1]);
     if (!Number.isInteger(n) || n < 1) return null;

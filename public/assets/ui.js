@@ -4,16 +4,39 @@
   var i18n = window.MindsetI18n;
   var t = i18n.t;
 
-  // Entry / lake fish outline around (0,0), facing right — shared by cards and nav icons.
-  var FISH_PATH = "M-5 0c2.6-3.4 6.6-4 10-1.2C1.6 2.6-2.4 3.4-5 0zM5-1.2l3-2.2-.8 3.6.8 3-3-2";
+  // Shared fish mark around (0,0), facing right — cards, avatar, gamebar, lake.
+  // Ichthys body (forked tail) + small dorsal/ventral fins + eye.
+  var FISH_BODY =
+    "M5.2 0C2.2-3.2-1.8-3.2-4.6 0L-7.2-2.6L-5 0L-7.2 2.6L-4.6 0C-1.8 3.2 2.2 3.2 5.2 0Z";
+  var FISH_DORSAL = "M.4-2.7L1.7-4.4L2.7-2.4Z";
+  var FISH_VENTRAL = "M.4 2.7L1.7 4.4L2.7 2.4Z";
+  var FISH_PATH = FISH_BODY;
+  var FISH_EYE = { cx: 3.4, cy: -0.45, r: 0.5 };
+
+  function fishMark() {
+    return (
+      '<path class="fish-body" d="' +
+      FISH_BODY +
+      '"/>' +
+      '<path class="fish-fin fish-fin-dorsal" d="' +
+      FISH_DORSAL +
+      '"/>' +
+      '<path class="fish-fin fish-fin-ventral" d="' +
+      FISH_VENTRAL +
+      '"/>' +
+      '<circle class="fish-eye" cx="' +
+      FISH_EYE.cx +
+      '" cy="' +
+      FISH_EYE.cy +
+      '" r="' +
+      FISH_EYE.r +
+      '"/>'
+    );
+  }
 
   function entryFishIcon(x, y, scale) {
     return (
-      '<g transform="translate(' + x + " " + y + ") scale(" + scale + ')">' +
-      '<path d="' +
-      FISH_PATH +
-      '"/>' +
-      '<circle cx="-2.6" cy="-.6" r=".5"/></g>'
+      '<g transform="translate(' + x + " " + y + ") scale(" + scale + ')">' + fishMark() + "</g>"
     );
   }
 
@@ -80,6 +103,83 @@
     lock: {
       box: "0 0 24 24",
       body: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
+    },
+    close: {
+      box: "0 0 24 24",
+      body: '<path d="M6 6l12 12M18 6L6 18"/>'
+    },
+    more: {
+      box: "0 0 24 24",
+      body:
+        '<circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none"/>' +
+        '<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>' +
+        '<circle cx="12" cy="18" r="1.6" fill="currentColor" stroke="none"/>'
+    },
+    search: {
+      box: "0 0 24 24",
+      body: '<circle cx="10.5" cy="10.5" r="6.2"/><path d="M15.2 15.2 20 20"/>'
+    },
+    shine: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M5 16.2c1.8-4.4 4.2-6.6 7-6.6s5.2 2.2 7 6.6"/>' +
+        '<path d="M8.2 16.2c1-2.3 2.3-3.5 3.8-3.5s2.8 1.2 3.8 3.5"/>' +
+        '<path d="M12 3.6v2.4M9.6 5.2l1.4 1.4M14.4 5.2L13 6.6"/>'
+    },
+    dismiss: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M2.8 12S6 7.2 12 7.2 21.2 12 21.2 12 18 16.8 12 16.8 2.8 12 2.8 12z"/>' +
+        '<path d="M4.6 5.4l14.8 13.2"/>'
+    },
+    withdraw: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M8.6 8.2H6a6.6 6.6 0 1 0 1.9 7.8"/>' +
+        '<path d="M8.6 4v6.4L4.8 6.8"/>'
+    },
+    stop: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M9.4 14.6l-1.5 1.5a3.2 3.2 0 0 1-4.5-4.5l1.5-1.5"/>' +
+        '<path d="M14.6 9.4l1.5-1.5a3.2 3.2 0 0 1 4.5 4.5l-1.5 1.5"/>'
+    },
+    review: {
+      box: "0 0 24 24",
+      body: entryFishIcon(7, 12, 0.72) + entryFishIcon(17, 12, 0.72)
+    },
+    radar: {
+      box: "0 0 24 24",
+      body: '<path d="M12 3.5l7.2 8.5L12 20.5 4.8 12z"/><path d="M12 3.5v17M4.8 12h14.4"/>'
+    },
+    bars: {
+      box: "0 0 24 24",
+      body: '<path d="M5 19V11M12 19V5M19 19v-7"/>'
+    },
+    trend: {
+      box: "0 0 24 24",
+      body: '<path d="M4 16.5l5.2-4.2 3.6 2.6L20 7"/><path d="M14.5 7H20v5.5"/>'
+    },
+    trash: {
+      box: "0 0 24 24",
+      body: '<path d="M5 7h14"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v6M14 11v6"/>'
+    },
+    whole: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>' +
+        '<path d="M3 3v5h5"/>'
+    },
+    list: {
+      box: "0 0 24 24",
+      body: '<path d="M9 7h11M9 12h11M9 17h11"/><path d="M4 7h1.2M4 12h1.2M4 17h1.2"/>'
+    },
+    waves: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M3 8.5c2-1.6 3.5-1.6 5.2 0s3.2 1.6 5.2 0 3-1.2 5.1-.5"/>' +
+        '<path d="M3 13c2-1.6 3.5-1.6 5.2 0s3.2 1.6 5.2 0 3-1.2 5.1-.5"/>' +
+        '<path d="M3 17.5c2-1.6 3.5-1.6 5.2 0s3.2 1.6 5.2 0 3-1.2 5.1-.5"/>'
     }
   };
 
@@ -105,12 +205,32 @@
     );
   }
 
+  function iconNames() {
+    return Object.keys(ICONS);
+  }
+
   function fishGlyph(className) {
     return (
-      '<svg class="glyph ' + (className || "") + '" viewBox="-7 -5 16 10" aria-hidden="true"><path d="' +
-      FISH_PATH +
-      '"/><circle cx="-2.6" cy="-.6" r=".5"/></svg>'
+      '<svg class="glyph ' +
+      (className || "") +
+      '" viewBox="-8 -5.2 16.4 10.4" aria-hidden="true">' +
+      fishMark() +
+      "</svg>"
     );
+  }
+
+  function footerMenuLinks() {
+    return [
+      { href: "/", label: t("footer.home") },
+      { href: "/privacy", label: t("footer.privacy") },
+      { href: "/cookies", label: t("footer.cookies") },
+      { href: "/terms", label: t("footer.terms") },
+      { href: "/about", label: t("landing.whatIsThis") },
+      { href: "https://github.com/collective-bucket/mindset", label: t("footer.github"), external: true },
+      { href: "/contribute", label: t("footer.contribute") },
+      { href: "/license", label: t("footer.license") },
+      { href: "https://collectivebucket.com", label: t("footer.collective"), external: true }
+    ];
   }
 
   function brandLabel() {
@@ -140,6 +260,30 @@
     if (label) document.title = label + titleSuffix();
   }
 
+  var LANG_CHOICES = [
+    { code: "tr", label: "Türkçe" },
+    { code: "en", label: "English" }
+  ];
+
+  function flag(code) {
+    if (code === "tr") {
+      return (
+        '<svg class="flag" viewBox="0 0 30 20" aria-hidden="true">' +
+        '<rect width="30" height="20" fill="#E30A17"/>' +
+        '<circle cx="11.2" cy="10" r="5" fill="#fff"/>' +
+        '<circle cx="12.8" cy="10" r="4" fill="#E30A17"/>' +
+        '<polygon fill="#fff" points="17.30,7.85 17.80,9.31 19.34,9.34 18.11,10.26 18.56,11.74 17.30,10.85 16.04,11.74 16.49,10.26 15.26,9.34 16.80,9.31"/>' +
+        "</svg>"
+      );
+    }
+    return (
+      '<svg class="flag" viewBox="0 0 30 20" aria-hidden="true">' +
+      '<rect width="30" height="20" fill="#fff"/>' +
+      '<path fill="#CF142B" d="M13 0h4v20h-4zM0 8h30v4H0z"/>' +
+      "</svg>"
+    );
+  }
+
   function mountShell() {
     var body = document.body;
     var active = body.getAttribute("data-tab") || "";
@@ -165,26 +309,200 @@
       escapeHtml(crumb) +
       "</span></nav>" +
       '<div class="top-actions">' +
-      '<span class="lang dock" role="group" aria-label="' +
+      '<div class="lang dock">' +
+      '<form class="dock-search" id="dock-search" role="search" aria-hidden="true">' +
+      '<label class="visually-hidden" for="dock-search-input">' +
+      escapeHtml(t("landing.lookupLabel")) +
+      "</label>" +
+      '<span class="dock-search-hash" aria-hidden="true">#</span>' +
+      '<input id="dock-search-input" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="80" tabindex="-1" placeholder="' +
+      escapeHtml(t("landing.lookupPlaceholder")) +
+      '" />' +
+      "</form>" +
+      '<button type="button" class="dock-item" data-dock-search aria-expanded="false" aria-pressed="false" aria-controls="dock-search" aria-label="' +
+      escapeHtml(t("nav.search")) +
+      '">' +
+      icon("search") +
+      "</button>" +
+      '<button type="button" class="dock-item" data-lang-menu aria-expanded="false" aria-haspopup="menu" aria-controls="lang-menu" aria-label="' +
       escapeHtml(t("footer.language")) +
       '">' +
-      i18n.LANGS.map(function (code) {
+      flag(i18n.lang) +
+      "</button>" +
+      '<button type="button" class="dock-item" data-site-menu aria-expanded="false" aria-haspopup="menu" aria-controls="site-menu" aria-label="' +
+      escapeHtml(t("footer.menu")) +
+      '">' +
+      icon("more") +
+      "</button></div>" +
+      '<div id="lang-menu" class="lang-menu" role="menu" hidden>' +
+      LANG_CHOICES.map(function (choice) {
         return (
-          '<button type="button" class="dock-item" data-lang="' +
-          code +
-          '"' +
-          (code === i18n.lang ? ' aria-pressed="true"' : "") +
-          ">" +
-          code.toUpperCase() +
-          "</button>"
+          '<button type="button" role="menuitemradio" data-lang="' +
+          choice.code +
+          '" aria-checked="' +
+          (choice.code === i18n.lang ? "true" : "false") +
+          '">' +
+          flag(choice.code) +
+          "<span>" +
+          choice.label +
+          "</span></button>"
         );
       }).join("") +
-      "</span></div>";
+      "</div>" +
+      '<div id="site-menu" class="lang-menu" role="menu" hidden>' +
+      footerMenuLinks()
+        .map(function (link) {
+          return (
+            '<a role="menuitem" href="' +
+            escapeHtml(link.href) +
+            '"' +
+            (link.external ? ' rel="noopener noreferrer"' : "") +
+            ">" +
+            escapeHtml(link.label) +
+            "</a>"
+          );
+        })
+        .join("") +
+      "</div></div>";
     body.insertBefore(top, body.firstChild);
+    var siteMenu = top.querySelector("#site-menu");
+    var siteMenuButton = top.querySelector("[data-site-menu]");
+    var langMenu = top.querySelector("#lang-menu");
+    var langMenuButton = top.querySelector("[data-lang-menu]");
+    function setLangMenu(open) {
+      if (!langMenu || !langMenuButton) return;
+      langMenu.hidden = !open;
+      langMenuButton.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) setSiteMenu(false);
+    }
+    function setSiteMenu(open) {
+      if (!siteMenu || !siteMenuButton) return;
+      siteMenu.hidden = !open;
+      siteMenuButton.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) setLangMenu(false);
+    }
     top.addEventListener("click", function (event) {
-      var button = event.target.closest("[data-lang]");
-      if (button) i18n.setLang(button.getAttribute("data-lang"));
+      var langChoice = event.target.closest("[data-lang]");
+      if (langChoice) {
+        setLangMenu(false);
+        i18n.setLang(langChoice.getAttribute("data-lang"));
+        return;
+      }
+      var langToggle = event.target.closest("[data-lang-menu]");
+      if (langToggle) {
+        event.stopPropagation();
+        setLangMenu(langMenu.hidden);
+        return;
+      }
+      var menuButton = event.target.closest("[data-site-menu]");
+      if (!menuButton) return;
+      event.stopPropagation();
+      setSiteMenu(siteMenu.hidden);
     });
+    document.addEventListener("click", function (event) {
+      if (siteMenu && !siteMenu.hidden && !event.target.closest("#site-menu") && !event.target.closest("[data-site-menu]")) {
+        setSiteMenu(false);
+      }
+      if (langMenu && !langMenu.hidden && !event.target.closest("#lang-menu") && !event.target.closest("[data-lang-menu]")) {
+        setLangMenu(false);
+      }
+    });
+    var searchDock = top.querySelector(".lang.dock");
+    var searchForm = top.querySelector("#dock-search");
+    var searchInput = top.querySelector("#dock-search-input");
+    var searchButton = top.querySelector("[data-dock-search]");
+    var searchStatus = document.createElement("p");
+    searchStatus.id = "dock-search-status";
+    searchStatus.className = "status";
+    searchStatus.hidden = true;
+    searchStatus.setAttribute("role", "status");
+
+    function searchNumber(text) {
+      var raw = String(text || "").trim();
+      if (!raw) return null;
+      try {
+        if (/^https?:\/\//i.test(raw) || raw.indexOf("/") >= 0) {
+          raw = new URL(raw, window.location.origin).pathname || raw;
+        }
+      } catch (error) {
+        return null;
+      }
+      var match = raw.match(/(?:^|\/)(?:i\/)?#?(\d{1,7})\/?$/i);
+      if (!match) return null;
+      var n = Number(match[1]);
+      if (!Number.isInteger(n) || n < 1) return null;
+      return n;
+    }
+
+    function setSearchOpen(open) {
+      if (!searchDock || !searchForm || !searchButton || !searchInput) return;
+      searchDock.classList.toggle("is-search-open", open);
+      searchButton.setAttribute("aria-expanded", open ? "true" : "false");
+      searchButton.setAttribute("aria-pressed", "false");
+      searchForm.setAttribute("aria-hidden", open ? "false" : "true");
+      searchInput.tabIndex = open ? 0 : -1;
+      if (!open) setStatus(searchStatus, "");
+      if (open) {
+        setSiteMenu(false);
+        setLangMenu(false);
+        window.requestAnimationFrame(function () {
+          searchInput.focus();
+        });
+      }
+    }
+
+    function openSearchProfile() {
+      var raw = String(searchInput.value || "").trim();
+      if (!raw) return;
+      var number = searchNumber(raw);
+      if (!number) {
+        setStatus(searchStatus, t("landing.lookupBad"), "error");
+        searchInput.focus();
+        return;
+      }
+      setStatus(searchStatus, "");
+      window.location.assign("/i/" + number);
+    }
+
+    if (searchForm) {
+      searchForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        openSearchProfile();
+      });
+    }
+    if (searchInput) {
+      searchInput.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        openSearchProfile();
+      });
+    }
+    if (searchButton) {
+      searchButton.addEventListener("click", function (event) {
+        event.stopPropagation();
+        var open = searchDock.classList.contains("is-search-open");
+        if (!open) {
+          setSearchOpen(true);
+          return;
+        }
+        openSearchProfile();
+      });
+    }
+    document.addEventListener("click", function (event) {
+      if (!searchDock || !searchDock.classList.contains("is-search-open")) return;
+      if (event.target.closest("#dock-search") || event.target.closest("[data-dock-search]")) return;
+      setSearchOpen(false);
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key !== "Escape") return;
+      setSiteMenu(false);
+      setSearchOpen(false);
+    });
+    if (siteMenu) {
+      siteMenu.addEventListener("click", function (event) {
+        if (event.target.closest("a")) setSiteMenu(false);
+      });
+    }
 
     document.addEventListener("click", function (event) {
       var back = event.target.closest("a.head-back");
@@ -195,6 +513,64 @@
         return;
       }
       window.location.assign("/");
+    });
+
+    document.addEventListener("click", function (event) {
+      var kindHelp = event.target.closest("[data-kind-help]");
+      if (!kindHelp) return;
+      event.preventDefault();
+      event.stopPropagation();
+      showSimHelp(kindHelp.getAttribute("data-kind-help"));
+    });
+
+    document.addEventListener("keydown", function (event) {
+      var kindHelp = event.target.closest("[data-kind-help]");
+      if (!kindHelp) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      event.stopPropagation();
+      showSimHelp(kindHelp.getAttribute("data-kind-help"));
+    });
+
+    function paintActingExit() {
+      var dock = top.querySelector(".lang.dock");
+      var existing = dock && dock.querySelector("[data-acting-exit]");
+      var as = window.MindsetStore && window.MindsetStore.getActingAs && window.MindsetStore.getActingAs();
+      if (!as) {
+        if (existing) existing.remove();
+        return;
+      }
+      if (!dock) return;
+      if (!existing) {
+        existing = document.createElement("button");
+        existing.type = "button";
+        existing.className = "dock-item";
+        existing.setAttribute("data-acting-exit", "");
+      }
+      var menu = dock.querySelector("[data-site-menu]");
+      if (menu) dock.insertBefore(existing, menu);
+      else dock.appendChild(existing);
+      existing.textContent = t("sim.exitMind");
+    }
+
+    paintActingExit();
+    var noticeDock = document.createElement("div");
+    noticeDock.className = "notice-dock";
+    document.querySelectorAll("#page-status, #feed-status, #auth-status").forEach(function (node) {
+      noticeDock.appendChild(node);
+    });
+    noticeDock.appendChild(searchStatus);
+    noticeDock.addEventListener("click", function (event) {
+      if (!event.target.closest("[data-notice-close]")) return;
+      var status = event.target.closest(".status");
+      setStatus(status, "");
+    });
+    body.appendChild(noticeDock);
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest("[data-acting-exit]")) return;
+      window.MindsetStore.clearActingAs();
+      paintActingExit();
+      window.location.assign("/root");
     });
 
     var nav = document.createElement("nav");
@@ -214,10 +590,14 @@
         icon(item.icon) +
         "<span>" +
         escapeHtml(t("bar." + item.id)) +
-        "</span></a>"
+        '</span><small class="notice-badge" hidden></small></a>'
       );
     }).join("");
     body.appendChild(nav);
+    if (body.getAttribute("data-tab") && !body.hasAttribute("data-no-gamebar")) {
+      nav.hidden = false;
+      body.classList.add("has-gamebar");
+    }
 
     var siteFooter = document.createElement("footer");
     siteFooter.className = "site-footer";
@@ -282,11 +662,12 @@
     );
 
     window.MindsetStore.getOptionalSession().then(function (session) {
-      if (!session) return;
-      if (body.hasAttribute("data-no-gamebar")) {
+      if (!session || body.hasAttribute("data-no-gamebar")) {
         nav.hidden = true;
-        siteFooter.hidden = true;
         body.classList.remove("has-gamebar");
+        placePageLoading();
+        if (!session) return;
+        siteFooter.hidden = true;
         return;
       }
       nav.hidden = false;
@@ -294,7 +675,12 @@
       siteFooter.hidden = true;
       siteFooter.classList.remove("is-away");
       nav.classList.remove("is-away");
+      if (window.MindsetNotices && window.MindsetNotices.refresh) {
+        window.MindsetNotices.refresh(session).catch(function () {});
+      }
+      placePageLoading();
     });
+    window.addEventListener("resize", placePageLoading);
   }
 
   function authWallHtml() {
@@ -386,13 +772,34 @@
     if (error.code && i18n.dict.en["error." + error.code]) return t("error." + error.code);
     if (error.i18n) return t(error.i18n);
     if (window.MindsetFirestore.isPermission(error)) return t("common.permission");
+    if (error.status === 429 || /quota exceeded/i.test(String(error.message || ""))) return t("common.quota");
     if (error.status) return t(fallbackKey || "common.error");
     return error.message || t(fallbackKey || "common.error");
   }
 
+  function ensureNoticeClose(element) {
+    if (!element.closest || !element.closest(".notice-dock")) return null;
+    var text = element.querySelector(".notice-text");
+    if (text) return text;
+    element.textContent = "";
+    text = document.createElement("span");
+    text.className = "notice-text";
+    var close = document.createElement("button");
+    close.type = "button";
+    close.className = "notice-close";
+    close.setAttribute("data-notice-close", "");
+    close.setAttribute("aria-label", t("common.close"));
+    close.innerHTML = icon("close");
+    element.appendChild(text);
+    element.appendChild(close);
+    return text;
+  }
+
   function setStatus(element, message, kind) {
     if (!element) return;
-    element.textContent = message || "";
+    var text = ensureNoticeClose(element);
+    if (text) text.textContent = message || "";
+    else element.textContent = message || "";
     element.className = "status" + (kind ? " " + kind : "");
     element.hidden = !message;
   }
@@ -700,9 +1107,9 @@
 
   function badgeText(doc) {
     var items = [];
-    if (doc.ageBand) items.push(doc.ageBand);
-    if (doc.gender) items.push(t("gender." + doc.gender));
-    if (doc.country) items.push(i18n.countryName(doc.country));
+    if (doc && doc.ageBand) items.push(doc.ageBand);
+    if (doc && doc.gender) items.push(t("gender." + doc.gender));
+    if (doc && doc.country) items.push(i18n.countryName(doc.country));
     return items.join(" · ");
   }
 
@@ -710,10 +1117,34 @@
     return /^sim[0-9]+$/.test(String(uid || ""));
   }
 
+  function simChip(doc) {
+    return doc && isSimOwner(doc.ownerUid) ? t("sim.badge") : "";
+  }
+
   function entryFishClass(doc) {
-    if (isSimOwner(doc.ownerUid)) return "entry-fish is-sim";
-    if (doc.createdAt && doc.updatedAt && doc.createdAt !== doc.updatedAt) return "entry-fish is-fresh";
-    return "entry-fish is-real";
+    var kind = isSimOwner(doc.ownerUid) ? "is-sim" : "is-real";
+    var fresh = doc.createdAt && doc.updatedAt && doc.createdAt !== doc.updatedAt ? " is-fresh" : "";
+    return "entry-fish " + kind + fresh;
+  }
+
+  function showSimHelp(kind) {
+    var real = kind === "real";
+    var dialog = document.querySelector("#sim-help-dialog");
+    if (!dialog) {
+      dialog = document.createElement("dialog");
+      dialog.id = "sim-help-dialog";
+      dialog.className = "modal";
+      dialog.setAttribute("aria-labelledby", "sim-help-title");
+      dialog.innerHTML =
+        '<form method="dialog"><h2 id="sim-help-title"></h2><p id="sim-help-body"></p>' +
+        '<div class="dialog-actions"><button class="btn btn-primary" value="close"></button></div></form>';
+      document.body.appendChild(dialog);
+      closeOnBackdrop(dialog);
+    }
+    dialog.querySelector("#sim-help-title").textContent = t(real ? "entry.humanTitle" : "sim.helpTitle");
+    dialog.querySelector("#sim-help-body").textContent = t(real ? "entry.humanBody" : "sim.helpBody");
+    dialog.querySelector(".btn-primary").textContent = t("common.close");
+    dialog.showModal();
   }
 
   // Number + mini radar on the left; status fish pinned top-right (no aside column).
@@ -726,6 +1157,14 @@
     var chip = options.chip || "";
     var side = options.tag || (doc.updatedAt ? relativeWhen(doc.updatedAt) : "");
     var summary = plainSummary(doc);
+    var meta = badgeText(doc);
+    var foot =
+      meta || side
+        ? '<span class="entry-foot">' +
+          (meta ? '<span class="entry-meta">' + escapeHtml(meta) + "</span>" : "") +
+          (side ? '<span class="entry-side">' + escapeHtml(side) + "</span>" : "") +
+          "</span>"
+        : "";
     var numberLabel = /^\d+$/.test(id) ? id : "";
     var tag = preview ? "div" : "a";
     var open =
@@ -740,14 +1179,13 @@
       '<span class="entry-status" aria-hidden="true">' +
       fishGlyph(entryFishClass(doc)) +
       "</span>" +
+      (chip ? '<span class="entry-chip">' + escapeHtml(chip) + "</span>" : "") +
       '<span class="entry-id">' +
       (numberLabel
-        ? '<strong class="entry-number mindset-id">' + escapeHtml(numberLabel) + "</strong>"
+        ? '<span class="entry-id-top">' + mindsetMark(numberLabel, doc.ownerUid, "entry-number") + "</span>"
         : "") +
       '<span class="entry-radar" aria-hidden="true"></span></span>' +
       '<span class="entry-body">' +
-      (side ? '<span class="entry-side">' + escapeHtml(side) + "</span>" : "") +
-      (chip ? '<span class="entry-chip">' + escapeHtml(chip) + "</span>" : "") +
       (doc.headline
         ? '<span class="entry-headline">' +
           escapeHtml(String(doc.headline).replace(/\.$/, "")) +
@@ -755,7 +1193,7 @@
         : "") +
       (alias ? '<span class="alias">@' + escapeHtml(alias) + "</span>" : "") +
       (summary ? '<span class="entry-summary">' + escapeHtml(summary) + "</span>" : "") +
-      (badgeText(doc) ? '<span class="entry-meta">' + escapeHtml(badgeText(doc)) + "</span>" : "") +
+      foot +
       "</span>" +
       "</" +
       tag +
@@ -1132,6 +1570,33 @@
     return document.querySelector("#page-loading");
   }
 
+  function placePageLoading() {
+    var el = pageLoadingEl();
+    if (!el) return;
+    if (!document.body.classList.contains("is-page-loading")) {
+      el.style.top = "";
+      el.style.bottom = "";
+      return;
+    }
+    var top = 0;
+    var site = document.querySelector("header.top");
+    if (site) top = site.getBoundingClientRect().bottom;
+    document.querySelectorAll(".page-chrome, .head").forEach(function (node) {
+      if (node.closest("[hidden]")) return;
+      var style = window.getComputedStyle(node);
+      if (style.display === "none" || style.visibility === "hidden") return;
+      var edge = node.getBoundingClientRect().bottom;
+      if (edge > top) top = edge;
+    });
+    var bottom = 0;
+    var bar = document.querySelector("#gamebar");
+    if (bar && !bar.hidden) {
+      bottom = Math.max(0, window.innerHeight - bar.getBoundingClientRect().top);
+    }
+    el.style.top = Math.max(0, Math.round(top)) + "px";
+    el.style.bottom = Math.max(0, Math.round(bottom)) + "px";
+  }
+
   function beginPageLoad() {
     document.body.classList.add("is-page-loading");
     // Reveal shell so the logo gate can fill page content under site chrome.
@@ -1144,6 +1609,7 @@
       el.hidden = false;
       el.setAttribute("aria-busy", "true");
     }
+    placePageLoading();
   }
 
   async function endPageLoad() {
@@ -1158,11 +1624,41 @@
       el.setAttribute("aria-busy", "false");
     }
     document.body.classList.remove("is-page-loading");
+    placePageLoading();
   }
 
-  // Page h1: <span class="mindset-id">n</span> [header] — no dash between.
-  function mindsetIdTitle(number, header) {
-    var id = '<span class="mindset-id">' + escapeHtml(String(number)) + "</span>";
+  function mindsetMarkStatic(number, ownerUid, extraClass) {
+    var sim = isSimOwner(ownerUid);
+    var cls =
+      "mindset-id mindset-id-static" +
+      (sim ? " is-sim" : "") +
+      (extraClass ? " " + extraClass : "");
+    return '<span class="' + cls + '" aria-hidden="true">' + escapeHtml(String(number)) + "</span>";
+  }
+
+  function mindsetMark(number, ownerUid, extraClass) {
+    var sim = isSimOwner(ownerUid);
+    var cls = "mindset-id" + (extraClass ? " " + extraClass : "");
+    return (
+      '<span class="' +
+      cls +
+      '" role="button" tabindex="0" data-kind-help="' +
+      (sim ? "sim" : "real") +
+      '" aria-label="' +
+      escapeHtml(t(sim ? "sim.helpTitle" : "entry.humanTitle")) +
+      '"><span class="entry-sim' +
+      (sim ? "" : " entry-real") +
+      '">' +
+      escapeHtml(t(sim ? "sim.badge" : "entry.real")) +
+      "</span>" +
+      escapeHtml(String(number)) +
+      "</span>"
+    );
+  }
+
+  // Page h1: mindset number, then an optional header — no dash between.
+  function mindsetIdTitle(number, header, ownerUid, plain) {
+    var id = plain ? mindsetMarkStatic(number, ownerUid) : mindsetMark(number, ownerUid);
     return header ? id + " " + escapeHtml(String(header)) : id;
   }
 
@@ -1173,7 +1669,7 @@
     if (!doc) return;
     var number = doc.id;
     var title = document.querySelector("#title");
-    if (title) title.innerHTML = mindsetIdTitle(number, opts.header || "");
+    if (title) title.innerHTML = mindsetIdTitle(number, opts.header || "", doc.ownerUid, opts.plainMark);
     // Keep breadcrumb / document title as the page name (Ben, Göl, …), not the mindset id.
     if (opts.setCrumb !== false && opts.header) setCrumb(opts.header);
 
@@ -1247,17 +1743,319 @@
     );
   }
 
+  function bindHeaderTabs() {
+    var stick = document.querySelector(".profile-stick");
+    if (!stick) return;
+    var list = stick.querySelector("[role='tablist']");
+    if (!list) return;
+    var tabs = [].slice.call(list.querySelectorAll("[role='tab']"));
+    if (tabs.length < 2) return;
+    var panes = tabs.map(function (tab) {
+      var id = tab.getAttribute("aria-controls");
+      return id ? document.getElementById(id) : null;
+    });
+
+    function slug(tab) {
+      var id = tab.id || "";
+      return id.indexOf("tab-") === 0 ? id.slice(4) : id;
+    }
+
+    function tabFromHash() {
+      var hash = "";
+      try {
+        hash = decodeURIComponent((location.hash || "").replace(/^#/, ""));
+      } catch (error) {
+        hash = "";
+      }
+      if (!hash) return null;
+      for (var i = 0; i < tabs.length; i++) {
+        if (slug(tabs[i]) === hash) return tabs[i];
+      }
+      return null;
+    }
+
+    function writeHash(tab) {
+      var name = slug(tab);
+      if (!name) return;
+      var next = "#" + name;
+      if (location.hash === next) return;
+      history.replaceState(null, "", next);
+    }
+
+    var suppressMotion = true;
+    var fromSwipe = false;
+    var pending = null;
+    var finishSlide = null;
+
+    function selectedTab() {
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i].getAttribute("aria-selected") === "true") return tabs[i];
+      }
+      return null;
+    }
+
+    function revealTab(tab, keepFocus) {
+      if (!keepFocus && document.activeElement && list.contains(document.activeElement) && document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+      var fade = list.closest(".profile-tabs-bar") ? 28 : 0;
+      var tabRect = tab.getBoundingClientRect();
+      var listRect = list.getBoundingClientRect();
+      var target = list.scrollLeft;
+      if (tabRect.left < listRect.left) target += tabRect.left - listRect.left;
+      else if (tabRect.right > listRect.right - fade) target += tabRect.right - (listRect.right - fade);
+      target = Math.max(0, target);
+      if (Math.abs(target - list.scrollLeft) < 1) return;
+      list.scrollTo({ left: target, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    }
+
+    function clearPin(pane) {
+      pane.classList.remove("tab-slide-pin");
+      pane.style.top = "";
+      pane.style.left = "";
+      pane.style.width = "";
+      pane.style.transform = "";
+      pane.style.transition = "";
+    }
+
+    function lockScroll() {
+      var y = window.scrollY;
+      function hold() {
+        if (window.scrollY !== y) window.scrollTo(0, y);
+      }
+      window.addEventListener("scroll", hold);
+      return function unlock() {
+        window.removeEventListener("scroll", hold);
+        if (window.scrollY !== y) window.scrollTo(0, y);
+      };
+    }
+
+    function scrollContentToTop(pane) {
+      if (!pane) return;
+      var bar = stick.getBoundingClientRect().height;
+      var y = pane.getBoundingClientRect().top + window.scrollY - bar;
+      window.scrollTo(0, y < 0 ? 0 : y);
+    }
+
+    function slidePanes(outgoing, incoming, dir, box) {
+      if (finishSlide) finishSlide();
+      scrollContentToTop(incoming);
+      var frame = incoming.getBoundingClientRect();
+      if (frame.width) box = frame;
+      var unlockScroll = lockScroll();
+      outgoing.hidden = false;
+      var hold = Math.max(outgoing.offsetHeight, incoming.offsetHeight);
+      var spacer = document.createElement("div");
+      spacer.style.height = hold + "px";
+      incoming.parentNode.insertBefore(spacer, incoming);
+      var outgoingMark = document.createComment("");
+      outgoing.parentNode.insertBefore(outgoingMark, outgoing);
+      var clip = document.createElement("div");
+      clip.className = "tab-slide-clip";
+      clip.style.top = box.top + "px";
+      clip.style.left = box.left + "px";
+      clip.style.width = box.width + "px";
+      clip.style.height = Math.max(0, window.innerHeight - box.top) + "px";
+      document.body.appendChild(clip);
+      clip.appendChild(outgoing);
+      clip.appendChild(incoming);
+      function pin(pane, shift) {
+        pane.classList.add("tab-slide-pin");
+        pane.style.transition = "none";
+        pane.style.transform = "translateX(" + shift + ")";
+      }
+      var enterFrom = dir > 0 ? "100%" : "-100%";
+      var leaveTo = dir > 0 ? "-100%" : "100%";
+      pin(outgoing, "0%");
+      pin(incoming, enterFrom);
+      incoming.getBoundingClientRect();
+      var settled = false;
+      function finish() {
+        if (settled) return;
+        settled = true;
+        finishSlide = null;
+        var outgoingTab = tabs[panes.indexOf(outgoing)];
+        if (!outgoingTab || outgoingTab.getAttribute("aria-selected") !== "true") outgoing.hidden = true;
+        clearPin(outgoing);
+        clearPin(incoming);
+        if (outgoingMark.parentNode) {
+          outgoingMark.parentNode.insertBefore(outgoing, outgoingMark);
+          outgoingMark.parentNode.removeChild(outgoingMark);
+        }
+        if (spacer.parentNode) {
+          spacer.parentNode.insertBefore(incoming, spacer);
+          spacer.parentNode.removeChild(spacer);
+        }
+        if (clip.parentNode) clip.parentNode.removeChild(clip);
+        unlockScroll();
+      }
+      finishSlide = finish;
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          if (settled) return;
+          outgoing.style.transition = "";
+          incoming.style.transition = "";
+          outgoing.style.transform = "translateX(" + leaveTo + ")";
+          incoming.style.transform = "translateX(0)";
+        });
+      });
+      var timer = setTimeout(finish, 500);
+      incoming.addEventListener("transitionend", function onEnd(event) {
+        if (event.target !== incoming || event.propertyName !== "transform") return;
+        incoming.removeEventListener("transitionend", onEnd);
+        clearTimeout(timer);
+        finish();
+      });
+    }
+
+    list.addEventListener(
+      "click",
+      function (event) {
+        var tab = event.target.closest("[role='tab']");
+        if (!tab || !list.contains(tab)) return;
+        var from = selectedTab();
+        var outgoing = from ? document.getElementById(from.getAttribute("aria-controls")) : null;
+        var box = outgoing ? outgoing.getBoundingClientRect() : null;
+        var dir = tabs.indexOf(tab) >= tabs.indexOf(from) ? 1 : -1;
+        pending = {
+          tab: tab,
+          outgoing: outgoing,
+          box: box,
+          dir: dir,
+          swipe: fromSwipe,
+          skip: suppressMotion || prefersReducedMotion() || !outgoing || from === tab
+        };
+        writeHash(tab);
+      },
+      true
+    );
+
+    window.addEventListener("click", function () {
+      if (!pending) return;
+      var job = pending;
+      pending = null;
+      revealTab(job.tab, !job.swipe);
+      if (!job.swipe) job.tab.focus({ preventScroll: true });
+      var incoming = document.getElementById(job.tab.getAttribute("aria-controls"));
+      if (job.skip) {
+        if (!suppressMotion && incoming && incoming !== job.outgoing) scrollContentToTop(incoming);
+        return;
+      }
+      if (!incoming || incoming === job.outgoing || !job.box) return;
+      slidePanes(job.outgoing, incoming, job.dir, job.box);
+    });
+
+    window.addEventListener("hashchange", function () {
+      var tab = tabFromHash();
+      if (!tab || tab.hidden || tab.getAttribute("aria-selected") === "true") return;
+      tab.click();
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+      setTimeout(function () {
+        var tab = tabFromHash();
+        if (tab && !tab.hidden && tab.getAttribute("aria-selected") !== "true") tab.click();
+        suppressMotion = false;
+      }, 0);
+    });
+
+    var gesture = null;
+
+    function paneOf(node) {
+      var el = node && node.nodeType === 1 ? node : node && node.parentElement;
+      while (el && el !== document.body) {
+        if (panes.indexOf(el) !== -1) return el;
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    document.addEventListener(
+      "touchstart",
+      function (event) {
+        gesture = null;
+        if (event.touches.length !== 1) return;
+        if (document.querySelector("dialog[open]")) return;
+        var target = event.target;
+        if (target.closest && target.closest(".reading-slides, input, textarea, select")) return;
+        var pane = paneOf(target);
+        if (!pane || pane.hidden) return;
+        var touch = event.touches[0];
+        gesture = { x: touch.clientX, y: touch.clientY, target: target, time: Date.now() };
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      "touchmove",
+      function (event) {
+        if (!gesture || !event.touches[0]) return;
+        var dx = event.touches[0].clientX - gesture.x;
+        var dy = event.touches[0].clientY - gesture.y;
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          event.preventDefault();
+          gesture.axis = "x";
+          return;
+        }
+        gesture = null;
+      },
+      { passive: false }
+    );
+
+    document.addEventListener(
+      "touchcancel",
+      function () {
+        gesture = null;
+      },
+      { passive: true }
+    );
+
+    document.addEventListener(
+      "touchend",
+      function (event) {
+        if (!gesture) return;
+        var start = gesture;
+        gesture = null;
+        var touch = event.changedTouches && event.changedTouches[0];
+        if (!touch) return;
+        var dx = touch.clientX - start.x;
+        var dy = touch.clientY - start.y;
+        if (Date.now() - start.time > 420) return;
+        if (start.target.closest && start.target.closest("#lake") && document.querySelector("#lake").getAttribute("data-panned") === "1") return;
+        if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        var index = 0;
+        tabs.forEach(function (tab, i) {
+          if (tab.getAttribute("aria-selected") === "true") index = i;
+        });
+        var next = tabs[index + (dx < 0 ? 1 : -1)];
+        if (!next || next.hidden) return;
+        fromSwipe = true;
+        next.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+        fromSwipe = false;
+      },
+      { passive: true }
+    );
+  }
+
   window.MindsetUi = {
     escapeHtml: escapeHtml,
     fieldLabel: fieldLabel,
     fieldByKey: fieldByKey,
     icon: icon,
+    iconNames: iconNames,
+    mindsetMark: mindsetMark,
+    mindsetMarkStatic: mindsetMarkStatic,
     mindsetIdTitle: mindsetIdTitle,
     paintOwnerHeader: paintOwnerHeader,
     clearOwnerHeader: clearOwnerHeader,
     shareMindset: shareMindset,
     fishGlyph: fishGlyph,
+    fishMark: fishMark,
     FISH_PATH: FISH_PATH,
+    isSimOwner: isSimOwner,
+    simChip: simChip,
+    showSimHelp: showSimHelp,
     formatWhen: formatWhen,
     relativeWhen: relativeWhen,
     plainSummary: plainSummary,
@@ -1300,4 +2098,5 @@
   };
 
   mountShell();
+  bindHeaderTabs();
 })();

@@ -1,7 +1,7 @@
 # Mindset Bucket
 
 Build a bucket of minds together. A mindset is a number and a fish in a lake.
-Number 212 lives at `/i/212`. Outside, nobody has a name: only numbers travel.
+Number 212 lives at `/i/212`. `/fish/212` opens the same card. Outside, nobody has a name: only numbers travel.
 
 What is public is not a test result. Three open texts (right now, what I hold
 true, how I tell my story) appear on the profile as written. Four open readings
@@ -10,8 +10,9 @@ sit to fixed anchor sentences. Three closed texts (what I don't say out loud,
 desire, the side I'm ashamed of) and the four readings derived from them stay
 with their owner. They never reach lists, distributions, versions or profiles.
 
-Scoring runs in the browser with `multilingual-e5-small`. Text is never sent to
-a model or a server. The codebook, including the academic construct names,
+Scoring runs in the browser with a lightweight on-device embedder
+([`public/assets/embed.js`](public/assets/embed.js)). Text is never sent to a
+model or a server. The codebook, including the academic construct names,
 anchors and calibration, is in [`public/assets/lens-v2.js`](public/assets/lens-v2.js).
 
 The interface is English by default with a Turkish option
@@ -21,7 +22,7 @@ both.
 
 ## Access
 
-Profiles (`/i/{number}`), the sign-in pages and the 404 page are public. The
+Profiles (`/i/{number}`, and `/fish/{number}` which redirects there), the sign-in pages, the theme gallery (`/theme`) and the 404 page are public. The
 home page (`/`) is also public when signed out: a short landing, a number
 lookup that opens `/i/{n}`, and `/about` for the manifesto. Everything else (current, lake,
 school, me, create, `/a/{alias}`) sits behind a sign-in wall. The wall is
@@ -34,8 +35,9 @@ handed them. The depth of that card is what asks them to join. In the wild the
 ask becomes "what's your mindset number?" or "here's my link" — the ICQ-number
 nostalgia keeps it playful; the manifesto underneath keeps the weight.
 
-The page title doubles as a breadcrumb in the header (`Mindset Bucket › current`),
-with the EN/TR switch on the right. The brand mark is a mint line-drawn bucket
+The page title doubles as a breadcrumb in the header (`Mindset Bucket › current`
+in English, `Zihin Kovası › akıntı` in Turkish), with the EN/TR switch and a
+menu of the footer links on the right. The brand mark is a mint line-drawn bucket
 with one fish leaping out ([`public/assets/logo.svg`](public/assets/logo.svg)).
 
 ## Screens
@@ -73,18 +75,13 @@ Words: the **lake** is everyone, a **current** is what moves around you, a
 **school** is the fish you chose, and **me** is you. A fish **swims after**
 another (its *tail* and *trail*); nobody hunts or hooks anyone.
 
-Getting into a school is a handshake of three small steps, all enforced by
-Firestore rules (no Cloud Functions):
-
-1. **Tail.** A swims after B (`tails/{A}_{B}`). B sees A on their current.
-   Nothing else is revealed and nobody is notified.
-2. **Glint.** If A swims after B, B can shine **one closed field** for A
-   (`glints/{B}_{A}`): a verbatim copy of that closed text. A can read it for
-   seven days, and only the rules' clock decides when it ends.
-3. **School request.** A answers with a request (`schoolRequests/{A}_{B}`) and
-   a sealed pledge of one of A's own closed fields (`seals/{A}_{B}`). B can read
-   the pledge only after accepting. When B accepts, both memberships appear
-   (`schools/{uid}/members/{other}`).
+Getting into a school is a handshake, enforced by Firestore rules (no Cloud
+Functions). A swims after B. B may shine one closed field for seven days. A
+answers with a sealed pledge and a request. B accepts, and both memberships
+appear. Either side can step away before a school exists: that drops the tail
+both ways and the scale they shone, and tells the other side. Counters on
+**current** and **school** mark what is new. The pair diagram, the branches,
+and which tab clears which counter are in [`docs/handshake.md`](docs/handshake.md).
 
 After that, closed texts never open fully: only the one field each side
 showed persists, and the school sees the other's **alias** plus the full
@@ -101,10 +98,16 @@ name anyone ever sees, and only inside a school.
 ## Root and simulation
 
 **Root** is the owner of mindset 1 (`firstfish`). Root alone can open `/root`
-(linked from the me page, absent from the game bar). It shows lake counts (fish,
-tails, scales, requests, schools) and the handshake funnel, and runs the
-simulation. Root cannot read real fish's closed texts or readings; the rules let
-it read only test fish's.
+(a full-width danger button on the me preferences tab, absent from the game bar).
+It shows lake counts (fish, tails, scales, requests, schools) and the handshake
+funnel, and runs the simulation. Opening the screen lists published mindsets,
+tails, requests, school memberships and glints. Closed texts and deep readings
+are not part of that paint. A cycle reads them only for the test fish that might
+shine, pledge or be scored, plus root's own deep reading. Real fish stay closed.
+Writes go out in batches of about 400. After a cycle the counts are painted from
+the plan; the lake is not read again. Root cannot read real fish's closed texts
+or readings; the rules let it read only test fish's, and list every glint so the
+screen and the hourly tick share one query.
 
 **Test fish** have no Auth account. Their owner uid is `sim{N}` (`seed: true` on
 the public document), and root writes for them: the rules accept a write "from"
@@ -160,6 +163,7 @@ for people aged 18 and over.
 | `seals/{from}_{to}` | owner; receiver once in a school | the sealed pledge |
 | `schoolRequests/{from}_{to}` | both sides | pending requests |
 | `schools/{uid}/members/{uid}` | owner and school | accepted members |
+| `signals/{id}` | the recipient | one-shot notices: `requestDeclined`, `requestWithdrawn`, `joinPassed`, `distanced` |
 | `sim/state`, `simTicks/{n}` | root | simulation settings, cycle number and log |
 | `stats/public` | everyone | histogram counts per axis, age range, gender, country, city |
 
@@ -179,7 +183,8 @@ Static HTML and vanilla JS, no build step. Line drawings with ink for text and
 structure; the accent is mint (`--accent` and its soft, mid, strong, deep and
 pastel variations in [`public/assets/styles.css`](public/assets/styles.css)).
 Hover, active, selected and focus states, primary buttons and chart fills all
-use it.
+use it. Reused texts, icons and buttons are listed at `/theme`
+([`public/theme.html`](public/theme.html)) for anyone working on the interface.
 
 ## Local
 

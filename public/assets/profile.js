@@ -37,12 +37,15 @@
     var buttons = {
       tail: document.querySelector("#tail"),
       shine: document.querySelector("#shine"),
+      distance: document.querySelector("#distance"),
       join: document.querySelector("#join"),
       accept: document.querySelector("#accept"),
       decline: document.querySelector("#decline"),
       withdraw: document.querySelector("#withdraw")
     };
     var ritual = document.querySelector("#ritual");
+    var ritualBody = document.querySelector("#ritual-body");
+    var ritualClosed = false;
     var shareButton = document.querySelector("#share");
     var range = document.querySelector("#timeline-range");
     var howDialog = document.querySelector("#how-to-read-dialog");
@@ -54,8 +57,8 @@
     var ownRecord = null;
     var versions = [];
     var shownScores = null;
-    var surfaceSlide = 0;
-    var deepSlide = 0;
+    var surfaceView = "radar";
+    var deepView = "radar";
 
     ui.closeOnBackdrop(howDialog);
 
@@ -63,6 +66,16 @@
       shareButton.innerHTML = ui.icon("share");
       document.querySelector("#edit").innerHTML = ui.icon("edit");
       document.querySelector("#manage").innerHTML = ui.icon("profile");
+      document.querySelectorAll(".reading-switch [data-view='radar']").forEach(function (button) {
+        button.innerHTML = ui.icon("radar");
+      });
+      document.querySelectorAll(".reading-switch [data-view='bars']").forEach(function (button) {
+        button.innerHTML = ui.icon("bars");
+      });
+      document.querySelectorAll(".reading-switch [data-view='trend']").forEach(function (button) {
+        button.innerHTML = ui.icon("trend");
+      });
+      document.querySelector("#version-manage").innerHTML = ui.icon("manage");
     }
     paintIcons();
 
@@ -92,149 +105,60 @@
       );
     });
 
-    function wireCarousel(hostId, getIndex, setIndex) {
-      var host = document.querySelector(hostId);
-      host.addEventListener("click", function (event) {
-        var dot = event.target.closest("[data-slide-to]");
-        if (dot) setIndex(Number(dot.getAttribute("data-slide-to")));
-      });
-      var startX = 0;
-      var startY = 0;
-      var axis = null;
-      host.addEventListener(
-        "touchstart",
-        function (event) {
-          if (!event.changedTouches || !event.changedTouches[0]) return;
-          startX = event.changedTouches[0].clientX;
-          startY = event.changedTouches[0].clientY;
-          axis = null;
-        },
-        { passive: true }
-      );
-      host.addEventListener(
-        "touchmove",
-        function (event) {
-          if (!event.touches || !event.touches[0]) return;
-          var dx = event.touches[0].clientX - startX;
-          var dy = event.touches[0].clientY - startY;
-          if (axis == null) {
-            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-            axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-          }
-          if (axis === "x") event.preventDefault();
-        },
-        { passive: false }
-      );
-      host.addEventListener(
-        "touchend",
-        function (event) {
-          if (!event.changedTouches || !event.changedTouches[0]) return;
-          if (axis !== "x") return;
-          var dx = event.changedTouches[0].clientX - startX;
-          if (Math.abs(dx) < 40) return;
-          setIndex(getIndex() + (dx < 0 ? 1 : -1));
-        },
-        { passive: true }
-      );
-    }
-
     function hasRadarData(scores, keys) {
       return keys.every(function (key) {
         return typeof scores[key] === "number" && scores[key] >= 0;
       });
     }
 
-    function reindexSlides(hostSel, trackSel) {
-      var slides = Array.prototype.slice.call(
-        document.querySelectorAll(trackSel + " .slide:not([hidden])")
-      );
-      var dots = Array.prototype.slice.call(
-        document.querySelectorAll(hostSel + " .slide-dot:not([hidden])")
-      );
-      slides.forEach(function (slide, index) {
-        slide.setAttribute("data-slide", String(index));
+    function viewButton(stage, name) {
+      return stage.querySelector('.reading-switch [data-view="' + name + '"]');
+    }
+
+    function viewOpen(stage, name) {
+      var button = viewButton(stage, name);
+      var panel = stage.querySelector('.reading-view[data-view="' + name + '"]');
+      return Boolean(button && panel && !button.hidden);
+    }
+
+    function showReadingView(stage, name) {
+      var chosen = viewOpen(stage, name) ? name : viewOpen(stage, "radar") ? "radar" : "bars";
+      stage.querySelectorAll(".reading-switch [data-view]").forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button.getAttribute("data-view") === chosen));
       });
-      dots.forEach(function (dot, index) {
-        dot.setAttribute("data-slide-to", String(index));
-        if (slides[index]) dot.setAttribute("aria-controls", slides[index].id);
+      stage.querySelectorAll(".reading-view").forEach(function (panel) {
+        panel.hidden = panel.getAttribute("data-view") !== chosen;
       });
-      return Math.max(0, slides.length - 1);
+      return chosen;
     }
 
     function syncSurfaceRadarSlide(scores) {
-      var show = hasRadarData(scores, math.OPEN_KEYS);
-      document.querySelector("#slide-radar").hidden = !show;
-      document.querySelector("#surface-slides .slide-dot[data-radar-dot]").hidden = !show;
-      reindexSlides("#surface-slides", "#surface-track");
-      showSurfaceSlide(surfaceSlide);
+      var stage = document.querySelector("#surface-stage");
+      viewButton(stage, "radar").hidden = !hasRadarData(scores, math.OPEN_KEYS);
+      surfaceView = showReadingView(stage, surfaceView);
     }
 
     function syncDeepRadarSlide(scores) {
-      var show = hasRadarData(scores, math.OPEN_KEYS.concat(math.CLOSED_KEYS));
-      document.querySelector("#slide-deep-radar").hidden = !show;
-      document.querySelector("#deep-slides .slide-dot[data-radar-dot]").hidden = !show;
-      reindexSlides("#deep-slides", "#deep-track");
-      showDeepSlide(deepSlide);
+      var stage = document.querySelector("#deep-stage");
+      viewButton(stage, "radar").hidden = !hasRadarData(scores, math.OPEN_KEYS.concat(math.CLOSED_KEYS));
+      deepView = showReadingView(stage, deepView);
     }
 
-    function showSlide(opts) {
-      var max = opts.max != null ? opts.max : 1;
-      var index = Math.max(0, Math.min(max, Number(opts.index) || 0));
-      opts.setIndex(index);
-      document.querySelector(opts.track).style.transform = "translateX(-" + index * 100 + "%)";
-      document.querySelectorAll(opts.host + " .slide-dot:not([hidden])").forEach(function (dot) {
-        var on = Number(dot.getAttribute("data-slide-to")) === index;
-        dot.classList.toggle("is-active", on);
-        dot.setAttribute("aria-selected", String(on));
+    function syncTrendButton() {
+      var stage = document.querySelector("#surface-stage");
+      viewButton(stage, "trend").hidden = versions.length < 2;
+      surfaceView = showReadingView(stage, surfaceView);
+    }
+
+    document.querySelectorAll(".reading-stage").forEach(function (stage) {
+      stage.querySelector(".reading-switch").addEventListener("click", function (event) {
+        var button = event.target.closest("[data-view]");
+        if (!button || button.hidden) return;
+        var name = button.getAttribute("data-view");
+        if (stage.id === "surface-stage") surfaceView = showReadingView(stage, name);
+        else deepView = showReadingView(stage, name);
       });
-    }
-
-    function showSurfaceSlide(index) {
-      var max = Math.max(
-        0,
-        document.querySelectorAll("#surface-track .slide:not([hidden])").length - 1
-      );
-      showSlide({
-        index: index,
-        max: max,
-        setIndex: function (value) {
-          surfaceSlide = value;
-        },
-        track: "#surface-track",
-        host: "#surface-slides"
-      });
-    }
-
-    function showDeepSlide(index) {
-      var max = Math.max(
-        0,
-        document.querySelectorAll("#deep-track .slide:not([hidden])").length - 1
-      );
-      showSlide({
-        index: index,
-        max: max,
-        setIndex: function (value) {
-          deepSlide = value;
-        },
-        track: "#deep-track",
-        host: "#deep-slides"
-      });
-    }
-
-    wireCarousel(
-      "#surface-slides",
-      function () {
-        return surfaceSlide;
-      },
-      showSurfaceSlide
-    );
-    wireCarousel(
-      "#deep-slides",
-      function () {
-        return deepSlide;
-      },
-      showDeepSlide
-    );
+    });
 
     function openHowTo() {
       var body = document.querySelector("#how-to-read-body");
@@ -323,52 +247,15 @@
         html || '<p class="empty">' + ui.escapeHtml(t("feed.empty")) + "</p>";
     }
 
-    function setTailPopover(open) {
-      var pop = document.querySelector("#tail-popover");
-      if (!pop) return;
-      if (buttons.tail.hidden || state.self) {
-        pop.hidden = true;
-        return;
-      }
-      pop.hidden = !open;
-    }
-
-    function wireTailPopover() {
-      var pop = document.querySelector("#tail-popover");
-      var wrap = document.querySelector(".tail-wrap");
-      if (!pop || !wrap) return;
-      buttons.tail.addEventListener("mouseenter", function () {
-        setTailPopover(true);
-      });
-      buttons.tail.addEventListener("focus", function () {
-        setTailPopover(true);
-      });
-      wrap.addEventListener("mouseleave", function () {
-        setTailPopover(false);
-      });
-      buttons.tail.addEventListener("blur", function () {
-        setTailPopover(false);
-      });
-      document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") setTailPopover(false);
-      });
-      document.addEventListener("click", function (event) {
-        if (!wrap.contains(event.target)) setTailPopover(false);
-      });
-    }
-    wireTailPopover();
-
     function showProfile() {
       document.querySelector("#profile").hidden = false;
-      document.querySelector("#title").innerHTML = ui.mindsetIdTitle(doc.id);
+      document.querySelector("#title").innerHTML = ui.mindsetIdTitle(doc.id, "", doc.ownerUid);
       ui.setCrumb(String(doc.id));
       renderAlias();
       document.querySelector("#badges").textContent = ui.badgeText(doc);
       document.querySelector("#meta").textContent = ui.relativeWhen(doc.updatedAt);
       showReading(doc);
       renderSurface(doc);
-      showSurfaceSlide(0);
-      showDeepSlide(0);
       updateDeepAccess();
       if (doc.published === false) ui.setStatus(status, t("profile.onlyYou"));
     }
@@ -386,6 +273,55 @@
       renderSchoolChip();
     }
 
+    var versionDrawer = document.querySelector("#version-drawer");
+    var versionList = document.querySelector("#version-list");
+    var versionManage = document.querySelector("#version-manage");
+    var deletingVersion = false;
+
+    function syncVersionManage() {
+      versionManage.hidden = !state.self;
+    }
+
+    function markVersionRow() {
+      var current = String(range.value);
+      versionList.querySelectorAll(".version-row").forEach(function (row) {
+        row.classList.toggle("is-active", row.getAttribute("data-version-index") === current);
+      });
+    }
+
+    function renderVersionList() {
+      var current = Number(range.value);
+      var html = "";
+      for (var index = versions.length - 1; index >= 0; index -= 1) {
+        var version = versions[index];
+        html +=
+          '<div class="version-row' +
+          (index === current ? " is-active" : "") +
+          '" data-version-index="' +
+          index +
+          '"><button type="button" class="version-open" data-version-view="' +
+          index +
+          '">' +
+          ui.escapeHtml(ui.formatWhen(version.createdAt)) +
+          '</button><button type="button" class="btn-icon version-delete" data-version-delete="' +
+          ui.escapeHtml(version.id) +
+          '" aria-label="' +
+          ui.escapeHtml(t("me.delete")) +
+          '">' +
+          ui.icon("trash") +
+          "</button></div>";
+      }
+      versionList.innerHTML = html;
+    }
+
+    function setDrawer(open) {
+      versionDrawer.classList.toggle("is-open", open);
+      versionManage.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) versionDrawer.removeAttribute("inert");
+      else versionDrawer.setAttribute("inert", "");
+      if (open) renderVersionList();
+    }
+
     function showVersion(index) {
       var version = versions[index];
       var last = index === versions.length - 1;
@@ -401,9 +337,16 @@
       showReading(source, last ? null : math.scoresOf(doc));
       renderSurface(source, last ? null : doc);
       ui.renderTrend(document.querySelector("#trend"), versions, index);
+      markVersionRow();
     }
 
-    async function loadHistory() {
+    function showLiveReading() {
+      showReading(doc);
+      renderSurface(doc);
+    }
+
+    async function loadHistory(options) {
+      options = options || {};
       var timeline = document.querySelector("#face-timeline");
       try {
         versions = await store.versions(doc.id, session && session.idToken);
@@ -411,18 +354,63 @@
         versions = [];
       }
       if (versions.length < 2) {
+        setDrawer(false);
         timeline.hidden = true;
         range.disabled = true;
         if (!versions.length) document.querySelector("#trend").innerHTML = "";
         else ui.renderTrend(document.querySelector("#trend"), versions, 0);
+        showLiveReading();
+        syncTrendButton();
         return;
+      }
+      var index = versions.length - 1;
+      if (options.keepId) {
+        versions.forEach(function (version, at) {
+          if (version.id === options.keepId) index = at;
+        });
       }
       timeline.hidden = false;
       range.max = String(versions.length - 1);
-      range.value = range.max;
+      range.value = String(index);
       range.disabled = false;
-      showVersion(versions.length - 1);
+      showVersion(index);
+      syncTrendButton();
+      syncVersionManage();
+      if (options.keepOpen) setDrawer(true);
     }
+
+    async function deleteVersion(id) {
+      if (deletingVersion || !session || !state.self) return;
+      deletingVersion = true;
+      var viewing = versions[Number(range.value)];
+      var keepId = viewing && viewing.id !== id ? viewing.id : "";
+      try {
+        await store.removeVersion(doc.id, id, session.idToken);
+        ui.setStatus(status, "");
+        await loadHistory({ keepId: keepId, keepOpen: true });
+      } catch (error) {
+        ui.setStatus(status, ui.errorText(error), "error");
+      } finally {
+        deletingVersion = false;
+      }
+    }
+
+    versionManage.addEventListener("click", function () {
+      setDrawer(!versionDrawer.classList.contains("is-open"));
+    });
+
+    versionList.addEventListener("click", function (event) {
+      var view = event.target.closest("[data-version-view]");
+      if (view) {
+        var index = Number(view.getAttribute("data-version-view"));
+        range.value = String(index);
+        showVersion(index);
+        return;
+      }
+      var remove = event.target.closest("[data-version-delete]");
+      if (!remove) return;
+      deleteVersion(remove.getAttribute("data-version-delete"));
+    });
 
     range.addEventListener("input", function () {
       showVersion(Number(range.value));
@@ -494,6 +482,7 @@
             buttons.shine.hidden = false;
           }
           var theirs = liveGlint(state.theirGlint);
+          if (state.theyTail || mine || theirs) buttons.distance.hidden = false;
           if (theirs) {
             buttons.join.hidden = false;
             notes.push(
@@ -508,19 +497,14 @@
           }
         }
       }
-      ritual.innerHTML = notes.join("");
-      ritual.hidden = !notes.length;
-      setTailPopover(false);
+      ritualBody.innerHTML = notes.join("");
+      ritual.hidden = ritualClosed || !notes.length;
       renderSchoolChip();
       var actions = document.querySelector(".actions-primary");
-      var anyAction = ["shine", "join", "accept", "decline", "withdraw"].some(function (key) {
+      var anyAction = ["shine", "distance", "join", "accept", "decline", "withdraw"].some(function (key) {
         return !buttons[key].hidden;
       });
       actions.hidden = !anyAction;
-    }
-
-    function needLogin() {
-      window.location.assign(ui.loginHref());
     }
 
     function updateSameCurrent() {
@@ -568,8 +552,14 @@
     }
 
     buttons.tail.addEventListener("click", function () {
-      if (!session) return needLogin();
-      if (!needOwn()) return;
+      if (!session) {
+        window.location.assign("/register?next=" + encodeURIComponent("/i/" + doc.id));
+        return;
+      }
+      if (!ownRecord || !ownRecord.publicDoc) {
+        window.location.assign("/me");
+        return;
+      }
       var tailing = !state.iTail;
       state.iTail = tailing;
       renderActions();
@@ -595,6 +585,16 @@
       settle(
         social.shine(session, ownRecord.publicDoc.id, doc.ownerUid, doc.id, field, ownRecord.privateDoc[field])
       );
+    });
+
+    document.querySelector("#ritual-close").addEventListener("click", function () {
+      ritualClosed = true;
+      ritual.hidden = true;
+    });
+
+    buttons.distance.addEventListener("click", function () {
+      if (!needOwn()) return;
+      settle(social.distance(session, ownRecord.publicDoc.id, doc.ownerUid));
     });
 
     buttons.join.addEventListener("click", async function () {
@@ -695,6 +695,7 @@
         document.querySelector("#edit").hidden = false;
         document.querySelector("#manage").hidden = false;
         state = { self: true };
+        syncVersionManage();
         renderActions();
         updateSameCurrent();
         updateDeepAccess();

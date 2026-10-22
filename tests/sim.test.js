@@ -257,6 +257,48 @@ assert.deepStrictEqual(
 );
 assert.strictEqual(stats.schools, 0);
 
+function uids(rows) {
+  return rows.map(function (row) { return row.uid; }).sort();
+}
+
+var idleReads = sim.readsForTick(world());
+assert.deepStrictEqual(uids(idleReads.closed), []);
+assert.deepStrictEqual(uids(idleReads.deep), []);
+
+var shineReads = sim.readsForTick(world({ tails: [{ from: "sim2", to: "sim3" }] }));
+assert.deepStrictEqual(uids(shineReads.closed), ["sim3"]);
+assert.deepStrictEqual(uids(shineReads.deep), []);
+
+var askReads = sim.readsForTick(world({
+  glints: [{ from: "sim3", to: "sim2", expiresAt: LIVE }]
+}));
+assert.deepStrictEqual(uids(askReads.closed), ["sim2"]);
+assert.deepStrictEqual(uids(askReads.deep), ["sim2", "sim3"]);
+
+var answerReads = sim.readsForTick(world({
+  requests: [{ from: "sim2", to: "sim3" }]
+}));
+assert.deepStrictEqual(uids(answerReads.closed), []);
+assert.deepStrictEqual(uids(answerReads.deep), ["sim2", "sim3"]);
+
+var realReads = sim.readsForTick(world({
+  fish: [fish("rootuid", 1, 50), fish("sim2", 2, 52), fish("bob", 8, 60)],
+  requests: [{ from: "bob", to: "sim2" }]
+}));
+assert.deepStrictEqual(uids(realReads.deep), ["sim2"]);
+
+var schoolReads = sim.readsForTick(world({
+  tails: [{ from: "sim2", to: "sim3" }],
+  members: [{ uid: "sim2", other: "sim3" }]
+}));
+assert.deepStrictEqual(uids(schoolReads.closed), []);
+
+var expiredReads = sim.readsForTick(world({
+  glints: [{ from: "sim3", to: "sim2", expiresAt: DEAD }]
+}));
+assert.deepStrictEqual(uids(expiredReads.closed), []);
+assert.deepStrictEqual(uids(expiredReads.deep), []);
+
 assert.strictEqual(sim.isSim("sim12"), true);
 assert.strictEqual(sim.isSim("simulate"), false);
 assert.strictEqual(sim.configOf({ tailsPerTick: 999 }).tailsPerTick, 10);

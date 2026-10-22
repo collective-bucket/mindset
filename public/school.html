@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#eafbf5" />
   <title>school · Mindset Bucket</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcpket3" />
-  <link rel="stylesheet" href="/assets/styles.css?v=mvcpket3" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjv24za" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvjv24za" />
 </head>
 <body data-tab="school" data-title="school.title" class="is-page-loading">
   <main class="page">
@@ -29,38 +29,34 @@
             <a class="head-back" href="#" data-i18n-aria="common.back" aria-label="Back"><svg viewBox="0 0 8 16" aria-hidden="true"><path d="M7 1 1 8l6 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
         </div>
+      </div>
 
-        <div class="profile-stick school-stick">
+      <div class="profile-stick school-stick">
+        <div class="profile-tabs-bar">
           <div class="tabs depth-tabs" role="tablist" aria-label="School">
-            <button type="button" id="tab-school-welcome" role="tab" aria-selected="true" aria-controls="pane-school-welcome" data-school-section="welcome" data-i18n="school.aboutTab">What is it?</button>
+            <button type="button" id="tab-school-members" role="tab" aria-selected="true" aria-controls="pane-school-members" data-school-section="members" data-i18n="school.members">Members</button>
             <button type="button" id="tab-school-incoming" role="tab" aria-selected="false" aria-controls="pane-school-incoming" data-school-section="incoming" data-i18n="school.incoming">Requests</button>
-            <button type="button" id="tab-school-members" role="tab" aria-selected="false" aria-controls="pane-school-members" data-school-section="members" data-i18n="school.members">Members</button>
             <button type="button" id="tab-school-outgoing" role="tab" aria-selected="false" aria-controls="pane-school-outgoing" data-school-section="outgoing" data-i18n="school.outgoing">Sent</button>
           </div>
+          <button type="button" id="tabs-help" class="btn-round" data-i18n-aria="guide.school" aria-label="What is the school for?">?</button>
         </div>
       </div>
 
       <div class="page-body">
         <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
-          <img class="page-loading-logo" src="/assets/logo.svg?v=mvcpket3" width="280" height="280" alt="" />
+          <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjv24za" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
         </div>
         <p id="page-status" class="status" role="status" hidden></p>
 
-        <div id="pane-school-welcome" role="tabpanel" aria-labelledby="tab-school-welcome">
-          <section class="section">
-            <p class="hint" data-i18n="school.lead">The fish you trust. It forms after a handshake: they swim after you, you shine a scale, they ask to join, you accept. Members see each other's alias and full reading.</p>
-          </section>
-        </div>
-
         <div id="school-body">
+          <div id="pane-school-members" role="tabpanel" aria-labelledby="tab-school-members">
+            <section class="section">
+              <div id="members" class="list"></div>
+            </section>
+          </div>
           <div id="pane-school-incoming" role="tabpanel" aria-labelledby="tab-school-incoming" hidden>
             <section class="section">
               <div id="incoming" class="list"></div>
-            </section>
-          </div>
-          <div id="pane-school-members" role="tabpanel" aria-labelledby="tab-school-members" hidden>
-            <section class="section">
-              <div id="members" class="list"></div>
             </section>
           </div>
           <div id="pane-school-outgoing" role="tabpanel" aria-labelledby="tab-school-outgoing" hidden>
@@ -73,16 +69,27 @@
     </div>
   </main>
 
-  <script src="/assets/config.js?v=mvcpket3" defer></script>
-  <script src="/assets/i18n.js?v=mvcpket3" defer></script>
-  <script src="/assets/demographics.js?v=mvcpket3" defer></script>
-  <script src="/assets/lens-v2.js?v=mvcpket3" defer></script>
-  <script src="/assets/reading.js?v=mvcpket3" defer></script>
-  <script src="/assets/firestore.js?v=mvcpket3" defer></script>
-  <script type="module" src="/assets/auth.js?v=mvcpket3"></script>
-  <script src="/assets/store.js?v=mvcpket3" defer></script>
-  <script src="/assets/social.js?v=mvcpket3" defer></script>
-  <script src="/assets/ui.js?v=mvcpket3" defer></script>
-  <script src="/assets/school.js?v=mvcpket3" defer></script>
+  <dialog id="tabs-help-dialog" class="modal" aria-labelledby="tabs-help-title">
+    <form method="dialog">
+      <h2 id="tabs-help-title" data-i18n="guide.school">What is the school for?</h2>
+      <div id="tabs-help-body"></div>
+      <div class="dialog-actions">
+        <button class="btn btn-primary" value="close" data-i18n="common.close">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/assets/config.js?v=mvjv24za" defer></script>
+  <script src="/assets/i18n.js?v=mvjv24za" defer></script>
+  <script src="/assets/demographics.js?v=mvjv24za" defer></script>
+  <script src="/assets/lens-v2.js?v=mvjv24za" defer></script>
+  <script src="/assets/reading.js?v=mvjv24za" defer></script>
+  <script src="/assets/firestore.js?v=mvjv24za" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvjv24za"></script>
+  <script src="/assets/store.js?v=mvjv24za" defer></script>
+  <script src="/assets/social.js?v=mvjv24za" defer></script>
+  <script src="/assets/notices.js?v=mvjv24za" defer></script>
+  <script src="/assets/ui.js?v=mvjv24za" defer></script>
+  <script src="/assets/school.js?v=mvjv24za" defer></script>
 </body>
 </html>

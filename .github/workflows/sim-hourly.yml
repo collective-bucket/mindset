@@ -1,0 +1,20 @@
+name: Simulation hourly tick
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Run one sim cycle
+        env:
+          ROOT_EMAIL: ${{ secrets.ROOT_EMAIL }}
+          ROOT_PASSWORD: ${{ secrets.ROOT_PASSWORD }}
+        run: node scripts/sim-tick.js

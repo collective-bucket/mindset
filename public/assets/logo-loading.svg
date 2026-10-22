@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" overflow="hidden">
+  <style>
+    @media (prefers-reduced-motion: reduce) {
+      .well-water { display: none; }
+    }
+  </style>
+  <defs>
+    <clipPath id="well">
+      <path d="M15 30L19.5 54Q20 57 24 57H40Q44 57 44.5 54L49 30Z"/>
+    </clipPath>
+    <mask id="behind-fish" maskUnits="userSpaceOnUse">
+      <rect width="64" height="64" fill="#fff"/>
+      <path fill="#000" d="M21.5 33.8C20.5 23 27.5 12.5 37.5 9C41 8 45 9.5 46.8 12.5L44.2 15.2L47 18.8C45.8 25 42.5 30.5 40 34.4Z"/>
+    </mask>
+  </defs>
+  <g clip-path="url(#well)" opacity="0.55">
+    <g class="well-water" transform="translate(0 28)">
+      <animateTransform attributeName="transform" type="translate" from="0 28" to="0 0" dur="8s" fill="freeze" calcMode="spline" keySplines="0.45 0.05 0.55 0.95"/>
+      <g>
+        <animateTransform attributeName="transform" type="translate" values="0 0;-16 0" dur="2.2s" repeatCount="indefinite"/>
+        <path fill="#2f9a7c" d="M-16 30C-13.5 29.15-10.5 29.15-8 30C-5.5 30.85-2.5 30.85 0 30C2.5 29.15 5.5 29.15 8 30C10.5 30.85 13.5 30.85 16 30C18.5 29.15 21.5 29.15 24 30C26.5 30.85 29.5 30.85 32 30C34.5 29.15 37.5 29.15 40 30C42.5 30.85 45.5 30.85 48 30C50.5 29.15 53.5 29.15 56 30C58.5 30.85 61.5 30.85 64 30C66.5 29.15 69.5 29.15 72 30C74.5 30.85 77.5 30.85 80 30V74H-16Z"/>
+      </g>
+    </g>
+  </g>
+  <path d="M21.5 33.8C20.5 23 27.5 12.5 37.5 9C41 8 45 9.5 46.8 12.5L44.2 15.2L47 18.8C45.8 25 42.5 30.5 40 34.4Z" fill="#ffffff"/>
+  <path mask="url(#behind-fish)" d="M15 30A17 5 0 0 1 49 30" fill="none" stroke="#2f9a7c" stroke-width="2.6" stroke-linecap="round" opacity="0.28"/>
+  <g fill="none" stroke="#2f9a7c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.28">
+    <path d="M21.5 33.8C20.5 23 27.5 12.5 37.5 9C41 8 45 9.5 46.8 12.5L44.2 15.2L47 18.8C45.8 25 42.5 30.5 40 34.4"/>
+    <path d="M15 30A17 5 0 0 0 49 30"/>
+    <path d="M15 30L19.5 54Q20 57 24 57H40Q44 57 44.5 54L49 30"/>
+  </g>
+  <circle cx="39.6" cy="14.2" r="1.4" fill="#2f9a7c" opacity="0.28"/>
+</svg>

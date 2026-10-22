@@ -4,6 +4,7 @@
   var ui = window.MindsetUi;
   var store = window.MindsetStore;
   var social = window.MindsetSocial;
+  var notices = window.MindsetNotices;
   var reading = window.MindsetReading;
   var i18n = window.MindsetI18n;
   var t = i18n.t;
@@ -14,37 +15,57 @@
     return t(doc.createdAt === doc.updatedAt ? "current.new" : "current.changed") + " · " + ui.relativeWhen(doc.updatedAt);
   }
 
-  function button(action) {
+  function personChip(tool) {
+    if (!tool || !tool.label || !tool.id) return "";
     return (
-      '<button type="button" class="btn btn-small' +
-      (action.primary ? " btn-primary" : "") +
-      '" data-action="' +
-      action.id +
+      '<button type="button" class="btn-icon" data-action="' +
+      tool.id +
+      '" aria-label="' +
+      ui.escapeHtml(tool.label) +
       '">' +
-      ui.escapeHtml(action.label) +
+      ui.icon(tool.id) +
       "</button>"
     );
   }
 
-  function personRow(row, doc, chip, actions) {
-    var line = doc ? doc.headline || ui.plainSummary(doc) : "";
+  function statusChip(tool) {
+    if (!tool || !tool.label) return "";
+    return '<span class="chip person-status">' + ui.escapeHtml(tool.label) + "</span>";
+  }
+
+  function personRow(row, doc, tools) {
+    var title = doc && doc.headline ? String(doc.headline).replace(/\.$/, "") : "";
+    var blurb = doc ? ui.plainSummary(doc) : "";
+    if (!title && blurb) {
+      title = blurb;
+      blurb = "";
+    }
+    var statuses = [];
+    var actions = [];
+    (tools || []).forEach(function (tool) {
+      if (tool.id) actions.push(tool);
+      else statuses.push(tool);
+    });
+    var href = "/i/" + ui.escapeHtml(row.number);
     return (
       '<div class="person" data-uid="' +
       ui.escapeHtml(row.uid) +
       '" data-number="' +
       ui.escapeHtml(row.number) +
-      '"><a class="person-link" href="/i/' +
-      ui.escapeHtml(row.number) +
       '">' +
-      ui.avatar(row.number, "sm") +
-      "<span><strong>" +
-      ui.escapeHtml(row.number) +
-      "</strong>" +
-      (line ? '<small class="hint">' + ui.escapeHtml(line) + "</small>" : "") +
-      (chip ? '<small class="chip">' + ui.escapeHtml(chip) + "</small>" : "") +
-      '</span></a><span class="person-actions">' +
-      actions.map(button).join("") +
-      "</span></div>"
+      '<a class="person-hit" href="' +
+      href +
+      '" tabindex="-1" aria-hidden="true"></a>' +
+      ui.mindsetMark(row.number, row.uid, "person-id") +
+      '<div class="person-body">' +
+      (title ? '<strong class="person-title">' + ui.escapeHtml(title) + "</strong>" : "") +
+      (blurb ? '<small class="person-blurb">' + ui.escapeHtml(blurb) + "</small>" : "") +
+      (statuses.length
+        ? '<div class="person-statuses">' + statuses.map(statusChip).join("") + "</div>"
+        : "") +
+      "</div>" +
+      (actions.length ? '<div class="person-tools">' + actions.map(personChip).join("") + "</div>" : "") +
+      "</div>"
     );
   }
 
@@ -72,22 +93,28 @@
 
     function selectCurrentSection(name) {
       var panes = {
-        welcome: document.querySelector("#pane-current-welcome"),
+        everyone: document.querySelector("#pane-current-everyone"),
         ontail: document.querySelector("#pane-current-ontail"),
-        trail: document.querySelector("#pane-current-trail"),
-        everyone: document.querySelector("#pane-current-everyone")
+        trail: document.querySelector("#pane-current-trail")
       };
       var tabs = {
-        welcome: document.querySelector("#tab-current-welcome"),
+        everyone: document.querySelector("#tab-current-everyone"),
         ontail: document.querySelector("#tab-current-ontail"),
-        trail: document.querySelector("#tab-current-trail"),
-        everyone: document.querySelector("#tab-current-everyone")
+        trail: document.querySelector("#tab-current-trail")
       };
       Object.keys(panes).forEach(function (key) {
         var on = key === name;
         panes[key].hidden = !on;
         tabs[key].setAttribute("aria-selected", String(on));
       });
+      if (notices) {
+        if (name === "ontail") {
+          notices.markSeen("onTail");
+          notices.markSeen("requestWithdrawn");
+          notices.markSeen("distanced");
+        }
+        if (name === "trail") notices.markSeen("trailGlint");
+      }
     }
 
     function openLookup(event) {
@@ -95,14 +122,8 @@
       var form = event.currentTarget;
       var input = form.querySelector("input");
       var raw = String(input.value || "").trim();
-      var lookupStatus = document.querySelector(
-        form.id === "current-lookup" ? "#current-lookup-status" : "#lookup-status"
-      );
-      if (!raw) {
-        ui.setStatus(lookupStatus, "");
-        window.location.href = "/i/1";
-        return;
-      }
+      var lookupStatus = document.querySelector("#lookup-status");
+      if (!raw) return;
       var number = reading.parseNumber(raw);
       if (!number) {
         ui.setStatus(lookupStatus, t("landing.lookupBad"), "error");
@@ -113,14 +134,32 @@
       window.location.href = "/i/" + number;
     }
 
-    document.querySelector("#lookup").addEventListener("submit", openLookup);
-    document.querySelector("#current-lookup").addEventListener("submit", openLookup);
+    var lookupForm = document.querySelector("#lookup");
+    if (lookupForm) lookupForm.addEventListener("submit", openLookup);
 
     document.querySelector(".current-stick .depth-tabs").addEventListener("click", function (event) {
       var tab = event.target.closest("[data-current-section]");
       if (!tab) return;
       selectCurrentSection(tab.getAttribute("data-current-section"));
     });
+
+    var helpDialog = document.querySelector("#current-help-dialog");
+    if (helpDialog) {
+      document.querySelector("#gated").addEventListener("click", function (event) {
+        if (event.target.closest("#tabs-help")) {
+          document.querySelector("#current-help-title").textContent = t("guide.current");
+          document.querySelector("#current-help-body").innerHTML = String(t("guide.currentBody") || "")
+            .split(/\n+/)
+            .filter(Boolean)
+            .map(function (line) {
+              return "<p>" + ui.escapeHtml(line) + "</p>";
+            })
+            .join("");
+          helpDialog.showModal();
+        }
+      });
+      if (ui.closeOnBackdrop) ui.closeOnBackdrop(helpDialog);
+    }
 
     document.querySelector("#share").addEventListener("click", function () {
       if (!own) return;
@@ -138,12 +177,10 @@
       document.querySelector("#gated").hidden = false;
       document.querySelector("#gamebar").hidden = false;
       ui.setCrumb(t("current.title"));
-      document.querySelector("#hero-art").innerHTML = ui.icon("lake");
       ui.setStatus(status, t("common.loading"));
       own = await store.findOwn(session.uid, session.idToken).catch(function () {
         return null;
       });
-      document.querySelector("#hero").hidden = Boolean(own);
       if (own) {
         var aliasEntry = await social.aliasOf(own.publicDoc.id, session.idToken).catch(function () {
           return null;
@@ -229,17 +266,16 @@
         ? onTail
             .map(function (row) {
               var live = myLive[row.uid];
-              return personRow(
-                row,
-                byId[row.number],
-                live ? t("current.status.shown") + " · " + ui.formatWhen(live.expiresAt) : "",
-                live
-                  ? [{ id: "withdraw", label: t("profile.withdraw") }]
-                  : [
-                      { id: "shine", label: t("profile.shine"), primary: true },
-                      { id: "dismiss", label: t("current.dismiss") }
-                    ]
-              );
+              var tools = live
+                ? [
+                    { label: t("current.status.shown") + " · " + ui.formatWhen(live.expiresAt) },
+                    { id: "withdraw", label: t("profile.withdraw") }
+                  ]
+                : [
+                    { id: "shine", label: t("profile.shine"), open: true },
+                    { id: "dismiss", label: t("current.dismiss") }
+                  ];
+              return personRow(row, byId[row.number], tools);
             })
             .join("")
         : '<p class="empty">' + ui.escapeHtml(t("feed.emptyOnTail")) + "</p>";
@@ -248,10 +284,23 @@
       trailHost.innerHTML = trail.length
         ? trail
             .map(function (row) {
-              var chip = "";
-              if (requestedUids[row.uid]) chip = t("current.status.requested");
-              else if (theirGlints[row.uid]) chip = t("current.status.theyShowed");
-              return personRow(row, byId[row.number], chip, [{ id: "stop", label: t("current.stop") }]);
+              var tools = [{ id: "stop", label: t("current.stop") }];
+              var glint = theirGlints[row.uid];
+              var stamp = glint ? String(glint.createdAt || glint.expiresAt || row.uid) : "";
+              var passed = glint && notices && notices.isPassedGlint(session.uid, row.uid, stamp);
+              if (requestedUids[row.uid]) {
+                tools = [
+                  { label: t("current.status.requested") },
+                  { id: "stop", label: t("current.stop") }
+                ];
+              } else if (glint && !passed) {
+                tools = [
+                  { label: t("current.status.theyShowed") },
+                  { id: "review", label: t("current.reviewGlint"), open: true },
+                  { id: "stop", label: t("current.stop") }
+                ];
+              }
+              return personRow(row, byId[row.number], tools);
             })
             .join("")
         : '<p class="empty">' + ui.escapeHtml(t("feed.emptyTrail")) + "</p>";
@@ -271,6 +320,7 @@
         return { tag: changeTag(doc) };
       });
       ui.setStatus(status, "");
+      if (notices) notices.refresh(session).catch(function () {});
     }
 
     function fail(error) {
@@ -292,6 +342,26 @@
       await social.shine(session, own.publicDoc.id, uid, number, field, own.privateDoc[field]);
     }
 
+    async function joinFromGlint(uid, number) {
+      var glint = await social.glintFrom(session, uid).catch(function () {
+        return null;
+      });
+      if (!social.glintLive(glint)) return;
+      if (!own || !own.privateDoc) {
+        ui.setStatus(status, t("profile.needsMindset"), "error");
+        return;
+      }
+      var field = await ui.pickClosedField({
+        title: t("profile.joinTitle"),
+        hint: t("profile.joinHint"),
+        action: t("profile.joinSend"),
+        privateDoc: own.privateDoc
+      });
+      if (!field) return;
+      await social.requestSchool(session, own.publicDoc.id, uid, number, field, own.privateDoc[field]);
+      await load();
+    }
+
     document.querySelector("#gated").addEventListener("click", function (event) {
       var node = event.target.closest("[data-action]");
       if (!node) return;
@@ -299,6 +369,10 @@
       var uid = row.getAttribute("data-uid");
       var number = row.getAttribute("data-number");
       var action = node.getAttribute("data-action");
+      if (action === "review") {
+        joinFromGlint(uid, number).catch(fail);
+        return;
+      }
       node.disabled = true;
       var run;
       if (action === "shine") run = shine(uid, number);
@@ -315,11 +389,7 @@
     selectCurrentSection("everyone");
     ui.beginPageLoad();
     load()
-      .catch(function (error) {
-        var hero = document.querySelector("#hero");
-        if (hero && !document.querySelector("#gated").hidden) hero.hidden = false;
-        fail(error);
-      })
+      .catch(fail)
       .finally(function () {
         return ui.endPageLoad();
       });

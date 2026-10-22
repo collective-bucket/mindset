@@ -6,14 +6,19 @@
   <meta name="theme-color" content="#eafbf5" />
   <title>cast · Mindset Bucket</title>
   <meta name="description" content="Write your mindset. The reading stays in your browser." />
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvcpket3" />
-  <link rel="stylesheet" href="/assets/styles.css?v=mvcpket3" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjv24za" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvjv24za" />
 </head>
-<body data-tab="me" data-title="create.title" data-no-gamebar>
+<body data-tab="me" data-title="create.title" data-no-gamebar class="is-page-loading create-page">
   <main class="page">
     <section id="auth-wall" class="section auth-wall" hidden></section>
 
     <div id="gated" hidden>
+    <div class="page-body">
+      <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
+        <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjv24za" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
+      </div>
+
     <div class="head">
       <div class="head-main">
         <h1 id="heading" data-i18n="create.title">Dive in</h1>
@@ -29,7 +34,7 @@
     </nav>
 
     <form id="mindset-form" novalidate>
-      <section class="wizard-pane" data-step="0">
+      <section class="wizard-pane" data-step="0" hidden>
         <section class="section wizard-welcome">
           <h2 data-i18n="about.title">About and Ethics</h2>
           <p class="lead" data-i18n="about.goal">We are building a bucket of minds together. Analysis runs in your browser; what you write is never sent to a server and stays on your device.</p>
@@ -95,27 +100,50 @@
       </section>
 
       <section class="wizard-pane" data-step="3" hidden>
+        <div id="preview-loading" class="preview-loading" hidden>
+          <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjv24za" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
+        </div>
         <section class="section" id="preview-content" hidden>
           <div id="preview-entry" class="entry" hidden></div>
 
           <div class="preview-toolbar">
             <div class="tabs depth-tabs" role="tablist" aria-label="Preview">
-              <button type="button" id="tab-preview-radar" role="tab" aria-selected="true" aria-controls="pane-preview-radar" data-preview-tab="radar" data-i18n="create.tabRadar">Radar</button>
-              <button type="button" id="tab-preview-open" role="tab" aria-selected="false" aria-controls="pane-preview-open" data-preview-tab="open" data-i18n="create.openTitle">On your profile</button>
+              <button type="button" id="tab-preview-open" role="tab" aria-selected="true" aria-controls="pane-preview-open" data-preview-tab="open" data-i18n="create.openTitle">On your profile</button>
               <button type="button" id="tab-preview-closed" role="tab" aria-selected="false" aria-controls="pane-preview-closed" data-preview-tab="closed" data-i18n="create.privateTitle">Only for you</button>
             </div>
             <button type="button" id="preview-how-to" class="btn-round" data-i18n-aria="guide.howTo" aria-label="How should I read this?">?</button>
           </div>
 
-          <div id="pane-preview-radar" role="tabpanel" aria-labelledby="tab-preview-radar">
-            <div id="preview-radar"></div>
-          </div>
-          <div id="pane-preview-open" role="tabpanel" aria-labelledby="tab-preview-open" hidden>
-            <div id="preview-open"></div>
-          </div>
+          <div id="pane-preview-open" role="tabpanel" aria-labelledby="tab-preview-open">
+            <div id="preview-open-stage" class="reading-stage">
+              <div class="reading-switch" role="group" aria-label="On your profile">
+                <button type="button" class="btn-icon" data-view="radar" aria-pressed="true" data-i18n-aria="profile.slideRadar" aria-label="Radar"></button>
+                <button type="button" class="btn-icon" data-view="bars" aria-pressed="false" data-i18n-aria="profile.slideBars" aria-label="Bars"></button>
+              </div>
+              <div class="reading-view" data-view="radar">
+                <div id="preview-open-radar" class="radar-face"></div>
+              </div>
+                <div class="reading-view" data-view="bars" hidden>
+                  <div id="preview-open-bars" class="face-bars"></div>
+                </div>
+              </div>
+              <div id="preview-open-texts" class="posts reading-texts"></div>
+            </div>
           <div id="pane-preview-closed" role="tabpanel" aria-labelledby="tab-preview-closed" hidden>
-            <div id="preview-closed"></div>
-          </div>
+            <div id="preview-closed-stage" class="reading-stage">
+              <div class="reading-switch" role="group" aria-label="Only for you">
+                <button type="button" class="btn-icon" data-view="radar" aria-pressed="true" data-i18n-aria="profile.slideRadar" aria-label="Radar"></button>
+                <button type="button" class="btn-icon" data-view="bars" aria-pressed="false" data-i18n-aria="profile.slideBars" aria-label="Bars"></button>
+              </div>
+              <div class="reading-view" data-view="radar">
+                <div id="preview-closed-radar" class="radar-face"></div>
+              </div>
+                <div class="reading-view" data-view="bars" hidden>
+                  <div id="preview-closed-bars" class="face-bars"></div>
+                </div>
+              </div>
+              <div id="preview-closed-texts" class="posts reading-texts"></div>
+            </div>
         </section>
       </section>
 
@@ -128,6 +156,7 @@
           <p id="login-hint" hidden><a id="login-link" href="/login" data-i18n="create.signInToPublish">Sign in to publish</a></p>
         </div>
         <div class="actions-buttons">
+          <a id="skip-for-now" class="linkish" href="/me" data-i18n="create.skip">Skip for now</a>
           <button type="button" id="start" class="btn btn-primary" data-i18n="create.start">Start</button>
           <button type="button" id="back" class="btn" hidden data-i18n="create.back">Back</button>
           <button type="button" id="next" class="btn btn-primary" hidden data-i18n="create.next">Next</button>
@@ -135,6 +164,7 @@
         </div>
       </div>
     </form>
+    </div>
     </div>
   </main>
 
@@ -184,18 +214,20 @@
     </form>
   </dialog>
 
-  <script src="/assets/config.js?v=mvcpket3" defer></script>
-  <script src="/assets/i18n.js?v=mvcpket3" defer></script>
-  <script src="/assets/demographics.js?v=mvcpket3" defer></script>
-  <script src="/assets/lens-v2.js?v=mvcpket3" defer></script>
-  <script src="/assets/reading.js?v=mvcpket3" defer></script>
-  <script src="/assets/privacy.js?v=mvcpket3" defer></script>
-  <script src="/assets/firestore.js?v=mvcpket3" defer></script>
-  <script type="module" src="/assets/auth.js?v=mvcpket3"></script>
-  <script src="/assets/store.js?v=mvcpket3" defer></script>
-  <script src="/assets/social.js?v=mvcpket3" defer></script>
-  <script src="/assets/ui.js?v=mvcpket3" defer></script>
-  <script src="/assets/score.js?v=mvcpket3" defer></script>
-  <script src="/assets/edit.js?v=mvcpket3" defer></script>
+  <script src="/assets/config.js?v=mvjv24za" defer></script>
+  <script src="/assets/i18n.js?v=mvjv24za" defer></script>
+  <script src="/assets/demographics.js?v=mvjv24za" defer></script>
+  <script src="/assets/lens-v2.js?v=mvjv24za" defer></script>
+  <script src="/assets/reading.js?v=mvjv24za" defer></script>
+  <script src="/assets/privacy.js?v=mvjv24za" defer></script>
+  <script src="/assets/firestore.js?v=mvjv24za" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvjv24za"></script>
+  <script src="/assets/store.js?v=mvjv24za" defer></script>
+  <script src="/assets/social.js?v=mvjv24za" defer></script>
+  <script src="/assets/notices.js?v=mvjv24za" defer></script>
+  <script src="/assets/ui.js?v=mvjv24za" defer></script>
+  <script src="/assets/embed.js?v=mvjv24za" defer></script>
+  <script src="/assets/score.js?v=mvjv24za" defer></script>
+  <script src="/assets/edit.js?v=mvjv24za" defer></script>
 </body>
 </html>

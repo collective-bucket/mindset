@@ -22,10 +22,65 @@
     return window.MindsetAuth;
   }
 
+  var ACTING_KEY = "mindset.actingAs";
+
+  function readActingAs() {
+    try {
+      var raw = sessionStorage.getItem(ACTING_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || !/^sim[0-9]+$/.test(String(parsed.uid || ""))) return null;
+      return { uid: String(parsed.uid), number: Number(parsed.number) || 0 };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function getActingAs() {
+    return readActingAs();
+  }
+
+  function clearActingAs() {
+    try {
+      sessionStorage.removeItem(ACTING_KEY);
+    } catch (error) {}
+  }
+
+  async function setActingAs(uid, number) {
+    var auth = await waitForAuth();
+    var session = await auth.session(false);
+    if (!session) return null;
+    if (!uid) {
+      clearActingAs();
+      return null;
+    }
+    if (!/^sim[0-9]+$/.test(String(uid))) {
+      throw new Error("Only sim fish can be entered.");
+    }
+    var rootDoc = await db().get("mindsets/1", session.idToken);
+    if (!rootDoc || rootDoc.ownerUid !== session.uid) {
+      throw new Error("Only root can enter a sim mind.");
+    }
+    var as = { uid: String(uid), number: Number(number) || Number(String(uid).slice(3)) || 0 };
+    sessionStorage.setItem(ACTING_KEY, JSON.stringify(as));
+    return as;
+  }
+
+  function applyActingAs(session) {
+    if (!session) return null;
+    var out = Object.assign({}, session, { authUid: session.uid });
+    var as = readActingAs();
+    if (as) {
+      out.uid = as.uid;
+      out.actingAs = as;
+    }
+    return out;
+  }
+
   async function getOptionalSession() {
     try {
       var auth = await waitForAuth();
-      return await auth.session(false);
+      return applyActingAs(await auth.session(false));
     } catch (error) {
       return null;
     }
@@ -39,7 +94,7 @@
       error.code = "login_required";
       throw error;
     }
-    return session;
+    return applyActingAs(session);
   }
 
   async function bumpCounter(token, atLeast) {
@@ -103,7 +158,13 @@
   }
 
   async function findOwn(uid, token) {
-    var owner = await db().get("owners/" + uid, token);
+    var owner = null;
+    try {
+      owner = await db().get("owners/" + uid, token);
+    } catch (error) {
+      if (!db().isPermission(error)) throw error;
+      owner = null;
+    }
     if (owner && owner.number) {
       var owned = await db().get("mindsets/" + owner.number, token);
       if (owned && owned.ownerUid === uid) {
@@ -124,7 +185,9 @@
     if (!rows.length) return null;
     var publicDoc = rows[0];
     var privateDoc = await db().get("privateMindsets/" + publicDoc.id, token);
-    await ensureOwner(uid, Number(publicDoc.id), token);
+    if (!/^sim[0-9]+$/.test(String(uid))) {
+      await ensureOwner(uid, Number(publicDoc.id), token);
+    }
     return { publicDoc: publicDoc, privateDoc: privateDoc };
   }
 
@@ -280,6 +343,10 @@
     if (rows.length) return false;
     await writeVersion(publicDoc, token);
     return true;
+  }
+
+  async function removeVersion(number, id, token) {
+    await db().commit([db().writes.remove("mindsets/" + number + "/versions/" + id)], token);
   }
 
   async function removeVersions(number, token) {
@@ -439,12 +506,16 @@
   window.MindsetStore = {
     getOptionalSession: getOptionalSession,
     requireSession: requireSession,
+    getActingAs: getActingAs,
+    setActingAs: setActingAs,
+    clearActingAs: clearActingAs,
     findOwn: findOwn,
     publish: publish,
     setPublished: setPublished,
     setHistory: setHistory,
     versions: versions,
     ensureFirstVersion: ensureFirstVersion,
+    removeVersion: removeVersion,
     remove: remove,
     recent: recent,
     listPublic: listPublic,

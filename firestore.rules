@@ -328,7 +328,7 @@ service cloud.firestore {
     }
 
     match /owners/{uid} {
-      allow get: if isMindsetOwner(uid);
+      allow get: if isMindsetOwner(uid) || (isRoot() && isSim(uid));
       allow list: if false;
 
       allow create, update: if isMindsetOwner(uid)
@@ -491,7 +491,12 @@ service cloud.firestore {
           )
           || (isRoot() && (isSim(resource.data.from) || isSim(resource.data.to)))
         );
-      allow list: if signedIn() && resource.data.from == request.auth.uid;
+      allow list: if signedIn()
+        && (
+          resource.data.from == request.auth.uid
+          || resource.data.to == request.auth.uid
+          || isRoot()
+        );
 
       allow create, update: if signedIn()
         && (resource == null || actor(resource.data.from))
@@ -613,6 +618,24 @@ service cloud.firestore {
     // Root counts every school across the lake (only uid, number and date live here).
     match /{path=**}/members/{otherUid} {
       allow list: if isRoot();
+    }
+
+    // Handshake signals: decline / withdraw / pass — readable only by `to`.
+    match /signals/{signalId} {
+      allow get: if signedIn() && resource.data.to == request.auth.uid;
+      allow list: if signedIn() && resource.data.to == request.auth.uid;
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['to', 'from', 'fromNumber', 'kind', 'createdAt'])
+        && actor(request.resource.data.from)
+        && request.resource.data.to is string
+        && request.resource.data.to != request.resource.data.from
+        && request.resource.data.fromNumber is int
+        && request.resource.data.kind in ['requestDeclined', 'requestWithdrawn', 'joinPassed', 'distanced']
+        && isoTime(request.resource.data.createdAt);
+
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.to == request.auth.uid;
     }
 
     // Root-only: simulation state and the per-cycle log.

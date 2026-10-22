@@ -2,9 +2,10 @@
   "use strict";
 
   // Codebook. Academic names live in `code`; the UI only shows `label`.
-  // A pole is the mean embedding of all its EN and TR anchors. `calibration`
-  // holds the measured midpoint and half-gap of (cosHigh - cosLow) on held-out
-  // EN/TR examples, so clear examples land near 25 and 75.
+  // A pole is the mean embedding of all its EN and TR anchors (lite on-device
+  // embedder in public/assets/embed.js). `calibration` holds the measured
+  // midpoint and half-gap of (cosHigh - cosLow) on held-out EN/TR examples,
+  // so clear examples land near 25 and 75. Recompute with scripts/calibrate-lite.js.
   var lens = {
     version: "v2",
     maxChars: 1200,
@@ -96,7 +97,7 @@
         open: true,
         kind: "polarity",
         sources: ["currentPosition", "selfNarrative"],
-        calibration: { center: -0.0019, spread: 0.0094 },
+        calibration: { center: 0.0095, spread: 0.1868 },
         lowAnchors: {
           en: [
             "Things happen to me without my choice.",
@@ -143,7 +144,7 @@
         open: true,
         kind: "polarity",
         sources: ["selfNarrative", "personalCode"],
-        calibration: { center: 0.0075, spread: 0.0292 },
+        calibration: { center: -0.0688, spread: 0.3095 },
         lowAnchors: {
           en: [
             "I am alone.",
@@ -186,7 +187,7 @@
         open: true,
         kind: "polarity",
         sources: ["personalCode"],
-        calibration: { center: -0.0006, spread: 0.0083 },
+        calibration: { center: -0.0907, spread: 0.2880 },
         lowAnchors: {
           en: [
             "It depends on the situation.",
@@ -229,7 +230,7 @@
         open: true,
         kind: "polarity",
         sources: ["selfNarrative"],
-        calibration: { center: 0.0112, spread: 0.0163 },
+        calibration: { center: -0.0193, spread: 0.1710 },
         lowAnchors: {
           en: [
             "It was good, but it got worse.",
@@ -287,7 +288,7 @@
         open: false,
         kind: "polarity",
         sources: ["unsayableAttitude"],
-        calibration: { center: -0.008, spread: 0.0103 },
+        calibration: { center: -0.1343, spread: 0.2141 },
         lowAnchors: {
           en: [
             "Authority must always be questioned.",

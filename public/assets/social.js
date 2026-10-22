@@ -148,6 +148,18 @@
     );
   }
 
+  // Scales shown to me (recipient list; rules allow to == me).
+  function glintsToward(session) {
+    return db().runQuery(
+      {
+        from: [{ collectionId: "glints" }],
+        where: db().equals("to", session.uid),
+        limit: 300
+      },
+      session.idToken
+    );
+  }
+
   // ---- Step 3: school requests, with one sealed pledge. ----
 
   async function relation(session, otherUid) {
@@ -201,16 +213,75 @@
     }
   }
 
-  function cancel(session, toUid) {
-    var id = pairId(session.uid, toUid);
-    var writes = db().writes;
-    return db().commit([writes.remove("schoolRequests/" + id), writes.remove("seals/" + id)], session.idToken);
+  function signalId(from, to, kind) {
+    return from + "_" + to + "_" + kind + "_" + Date.now();
   }
 
-  function decline(session, fromUid) {
-    var id = pairId(fromUid, session.uid);
+  function signalWrite(from, to, fromNumber, kind) {
+    return db().writes.create("signals/" + signalId(from, to, kind), {
+      to: to,
+      from: from,
+      fromNumber: Number(fromNumber),
+      kind: kind,
+      createdAt: now()
+    });
+  }
+
+  async function cancel(session, toUid) {
+    var id = pairId(session.uid, toUid);
+    var request = await quietGet("schoolRequests/" + id, session.idToken);
     var writes = db().writes;
-    return db().commit([writes.remove("schoolRequests/" + id), writes.remove("seals/" + id)], session.idToken);
+    var ops = [writes.remove("schoolRequests/" + id), writes.remove("seals/" + id)];
+    if (request) {
+      ops.push(signalWrite(session.uid, toUid, request.fromNumber, "requestWithdrawn"));
+    }
+    return db().commit(ops, session.idToken);
+  }
+
+  async function decline(session, fromUid) {
+    var id = pairId(fromUid, session.uid);
+    var request = await quietGet("schoolRequests/" + id, session.idToken);
+    var writes = db().writes;
+    var ops = [writes.remove("schoolRequests/" + id), writes.remove("seals/" + id)];
+    if (request) {
+      ops.push(signalWrite(session.uid, fromUid, request.toNumber, "requestDeclined"));
+    }
+    return db().commit(ops, session.idToken);
+  }
+
+  // Trail fish passes on joining after a live scale (notifies the shiner).
+  function passJoin(session, myNumber, shinerUid) {
+    return db().commit(
+      [signalWrite(session.uid, shinerUid, myNumber, "joinPassed")],
+      session.idToken
+    );
+  }
+
+  async function distance(session, myNumber, otherUid) {
+    await Promise.all([
+      untail(session, otherUid).catch(function () {}),
+      dismissTail(session, otherUid).catch(function () {}),
+      withdrawGlint(session, otherUid).catch(function () {})
+    ]);
+    return db().commit(
+      [signalWrite(session.uid, otherUid, myNumber, "distanced")],
+      session.idToken
+    );
+  }
+
+  function signalsToward(session) {
+    return db().runQuery(
+      {
+        from: [{ collectionId: "signals" }],
+        where: db().equals("to", session.uid),
+        limit: 200
+      },
+      session.idToken
+    );
+  }
+
+  function clearSignal(session, id) {
+    return db().remove("signals/" + id, session.idToken);
   }
 
   async function accept(session, fromUid) {
@@ -423,11 +494,16 @@
     glintFrom: glintFrom,
     glintTo: glintTo,
     myGlints: myGlints,
+    glintsToward: glintsToward,
     relation: relation,
     requestSchool: requestSchool,
     accept: accept,
     decline: decline,
     cancel: cancel,
+    passJoin: passJoin,
+    distance: distance,
+    signalsToward: signalsToward,
+    clearSignal: clearSignal,
     leave: leave,
     exchanged: exchanged,
     deepReading: deepReading,

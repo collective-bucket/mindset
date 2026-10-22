@@ -31,13 +31,13 @@ lens.fields.concat(lens.axes).forEach(function (item) {
   assert.ok(item.label.en && item.label.tr, item.key + " label");
 });
 
-// Distance: identical 0, paraphrase low, unrelated 100.
+// Distance: identical 0, same-language paraphrase low, unrelated 100.
 assert.strictEqual(reading.distanceScore(1), 0);
-assert.strictEqual(reading.distanceScore(0.9), 0);
-assert.strictEqual(reading.distanceScore(0.78), 100);
+assert.strictEqual(reading.distanceScore(0.65), 0);
+assert.strictEqual(reading.distanceScore(0), 100);
 assert.strictEqual(reading.distanceScore(-1), 100);
-assert.ok(reading.distanceScore(0.87) <= 30, "paraphrase stays close");
-assert.ok(reading.distanceScore(0.837) >= 45, "code vs power reads apart");
+assert.ok(reading.distanceScore(0.55) <= 30, "paraphrase stays close");
+assert.ok(reading.distanceScore(0.2) >= 60, "unrelated fields read apart");
 
 assert.strictEqual(reading.quintileKey(-1), null);
 assert.strictEqual(reading.quintileKey(0), "b0");
@@ -269,7 +269,9 @@ assert.strictEqual(reading.parseNumber("42"), 42);
 assert.strictEqual(reading.parseNumber("#42"), 42);
 assert.strictEqual(reading.parseNumber("  #042  "), 42);
 assert.strictEqual(reading.parseNumber("/i/42"), 42);
+assert.strictEqual(reading.parseNumber("/fish/42"), 42);
 assert.strictEqual(reading.parseNumber("https://mindsetbucket.com/i/42"), 42);
+assert.strictEqual(reading.parseNumber("https://mindsetbucket.com/fish/42"), 42);
 assert.strictEqual(reading.parseNumber("https://mindsetbucket.com/i/42?x=1#y"), 42);
 assert.strictEqual(reading.parseNumber("mindsetbucket.com/i/99"), 99);
 assert.strictEqual(reading.parseNumber("0"), null);
