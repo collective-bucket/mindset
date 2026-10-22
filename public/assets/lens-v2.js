@@ -2,9 +2,10 @@
   "use strict";
 
   // Codebook. Academic names live in `code`; the UI only shows `label`.
-  // A pole is the mean embedding of all its EN and TR anchors. `calibration`
-  // holds the measured midpoint and half-gap of (cosHigh - cosLow) on held-out
-  // EN/TR examples, so clear examples land near 25 and 75.
+  // A pole is the mean embedding of all its EN and TR anchors (lite on-device
+  // embedder in public/assets/embed.js). `calibration` holds the measured
+  // midpoint and half-gap of (cosHigh - cosLow) on held-out EN/TR examples,
+  // so clear examples land near 25 and 75. Recompute with scripts/calibrate-lite.js.
   var lens = {
     version: "v2",
     maxChars: 1200,
