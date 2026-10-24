@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eafbf5" />
   <meta name="robots" content="noindex" />
   <title>root · Mindset Bucket</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjv24za" />
-  <link rel="stylesheet" href="/assets/styles.css?v=mvjv24za" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvmc9jch" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvmc9jch" />
 </head>
 <body data-tab="root" data-title="root.title" class="is-page-loading">
   <main class="page">
@@ -45,7 +45,7 @@
 
         <div class="page-body">
           <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
-            <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjv24za" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
+            <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvmc9jch" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
           </div>
           <p id="page-status" class="status" role="status" hidden></p>
           <div id="pane-root-lake" role="tabpanel" aria-labelledby="tab-root-lake">
@@ -82,6 +82,10 @@
                 <label class="field" for="cfg-seed"><span data-i18n="root.cfgSeed">Seed</span>
                   <input id="cfg-seed" type="number" min="0" max="1000000" step="1" inputmode="numeric" /></label>
                 <label class="check"><input id="cfg-includeRoot" type="checkbox" /> <span data-i18n="root.cfgRoot">Test fish may swim after root</span></label>
+                <label class="field" for="cfg-durationSec"><span data-i18n="root.cfgCallDuration">Broadcast length (seconds)</span>
+                  <input id="cfg-durationSec" type="number" min="15" max="600" step="15" inputmode="numeric" /></label>
+                <label class="field" for="cfg-cooldownSec"><span data-i18n="root.cfgCallGap">Wait before the next broadcast (seconds)</span>
+                  <input id="cfg-cooldownSec" type="number" min="0" max="86400" step="30" inputmode="numeric" /></label>
               </form>
               <div class="actions">
                 <button type="button" id="sim-reset" class="btn btn-quiet-danger" data-i18n="root.reset">Reset simulation</button>
@@ -107,16 +111,17 @@
     </div>
   </main>
 
-  <script src="/assets/config.js?v=mvjv24za" defer></script>
-  <script src="/assets/i18n.js?v=mvjv24za" defer></script>
-  <script src="/assets/demographics.js?v=mvjv24za" defer></script>
-  <script src="/assets/lens-v2.js?v=mvjv24za" defer></script>
-  <script src="/assets/reading.js?v=mvjv24za" defer></script>
-  <script src="/assets/firestore.js?v=mvjv24za" defer></script>
-  <script type="module" src="/assets/auth.js?v=mvjv24za"></script>
-  <script src="/assets/store.js?v=mvjv24za" defer></script>
-  <script src="/assets/sim.js?v=mvjv24za" defer></script>
-  <script src="/assets/ui.js?v=mvjv24za" defer></script>
-  <script src="/assets/root.js?v=mvjv24za" defer></script>
+  <script src="/assets/config.js?v=mvmc9jch" defer></script>
+  <script src="/assets/i18n.js?v=mvmc9jch" defer></script>
+  <script src="/assets/demographics.js?v=mvmc9jch" defer></script>
+  <script src="/assets/lens-v2.js?v=mvmc9jch" defer></script>
+  <script src="/assets/reading.js?v=mvmc9jch" defer></script>
+  <script src="/assets/firestore.js?v=mvmc9jch" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvmc9jch"></script>
+  <script src="/assets/store.js?v=mvmc9jch" defer></script>
+  <script src="/assets/sim.js?v=mvmc9jch" defer></script>
+  <script src="/assets/call.js?v=mvmc9jch" defer></script>
+  <script src="/assets/ui.js?v=mvmc9jch" defer></script>
+  <script src="/assets/root.js?v=mvmc9jch" defer></script>
 </body>
 </html>

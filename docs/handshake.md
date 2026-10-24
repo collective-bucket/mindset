@@ -70,6 +70,22 @@ members. On the profile it sits between Shine a scale and Join the school.
 `joinPassed`. No screen button calls it. A `joinPassed` signal is counted with
 withdrawn requests.
 
+## Broadcast
+
+A pul broadcast is a lake-wide shine. `callShows/{uid}` holds one closed field,
+copied verbatim, and strangers can read it only until `endsAt`. The call row
+itself stays free of that text.
+
+Anyone who is not already in that school, and has not already asked, can
+reply. The reply is `schoolRequests/{replier}_{broadcaster}` plus
+`seals/{replier}_{broadcaster}`. It does not need a tail or a pairwise glint.
+The request copies `shownField` and `shownText` from the live show. Decline
+and withdraw use the same signals as a profile request.
+
+Accept writes the school, then `glints/{broadcaster}_{replier}` from that
+copy, so both texts stay readable: the pledge on the seal, the broadcast on
+the glint. The profile path is unchanged.
+
 ## Profile
 
 The green handshake note and the action buttons live at the top of the first

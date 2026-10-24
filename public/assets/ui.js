@@ -93,6 +93,13 @@
         '<circle cx="12" cy="8" r="3.5"/>' +
         '<path d="M5.5 19.5c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/>'
     },
+    enter: {
+      box: "0 0 24 24",
+      body:
+        '<circle cx="15" cy="12" r="6"/>' +
+        '<path d="M3 12h8"/>' +
+        '<path d="M8 9l3 3-3 3"/>'
+    },
     guide: {
       box: "0 0 24 24",
       body:
@@ -119,6 +126,12 @@
       box: "0 0 24 24",
       body: '<circle cx="10.5" cy="10.5" r="6.2"/><path d="M15.2 15.2 20 20"/>'
     },
+    reply: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M9 8H6.2A5.8 5.8 0 1 0 12 16.5"/>' +
+        '<path d="M9 4.2V10L5.2 6.6"/>'
+    },
     shine: {
       box: "0 0 24 24",
       body:
@@ -137,6 +150,27 @@
       body:
         '<path d="M8.6 8.2H6a6.6 6.6 0 1 0 1.9 7.8"/>' +
         '<path d="M8.6 4v6.4L4.8 6.8"/>'
+    },
+    accept: {
+      box: "0 0 24 24",
+      body: '<path d="M5 12.5l4.2 4.2L19 7.2"/>'
+    },
+    decline: {
+      box: "0 0 24 24",
+      body: '<path d="M7 7l10 10M17 7L7 17"/>'
+    },
+    cancel: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M8.6 8.2H6a6.6 6.6 0 1 0 1.9 7.8"/>' +
+        '<path d="M8.6 4v6.4L4.8 6.8"/>'
+    },
+    remove: {
+      box: "0 0 24 24",
+      body:
+        '<path d="M10 7H6.5A2.5 2.5 0 0 0 4 9.5v5A2.5 2.5 0 0 0 6.5 17H10"/>' +
+        '<path d="M10 12h9"/>' +
+        '<path d="M16 8.5L19.5 12 16 15.5"/>'
     },
     stop: {
       box: "0 0 24 24",
@@ -174,12 +208,31 @@
       box: "0 0 24 24",
       body: '<path d="M9 7h11M9 12h11M9 17h11"/><path d="M4 7h1.2M4 12h1.2M4 17h1.2"/>'
     },
+    target: {
+      box: "0 0 24 24",
+      body:
+        '<circle cx="12" cy="12" r="7.5"/>' +
+        '<path d="M12 2.5v3.2M12 18.3v3.2M2.5 12h3.2M18.3 12h3.2"/>' +
+        '<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>'
+    },
     waves: {
       box: "0 0 24 24",
       body:
         '<path d="M3 8.5c2-1.6 3.5-1.6 5.2 0s3.2 1.6 5.2 0 3-1.2 5.1-.5"/>' +
         '<path d="M3 13c2-1.6 3.5-1.6 5.2 0s3.2 1.6 5.2 0 3-1.2 5.1-.5"/>' +
         '<path d="M3 17.5c2-1.6 3.5-1.6 5.2 0s3.2 1.6 5.2 0 3-1.2 5.1-.5"/>'
+    },
+    filter: {
+      box: "0 0 24 24",
+      body: '<path d="M3.5 5h17l-6.6 7.6v5.6l-3.8 1.9v-7.5z"/>'
+    },
+    fullscreen: {
+      box: "0 0 24 24",
+      body: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>'
+    },
+    fullscreenExit: {
+      box: "0 0 24 24",
+      body: '<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>'
     }
   };
 
@@ -544,13 +597,14 @@
       if (!existing) {
         existing = document.createElement("button");
         existing.type = "button";
-        existing.className = "dock-item";
+        existing.className = "btn-icon";
         existing.setAttribute("data-acting-exit", "");
+        existing.innerHTML = icon("close");
       }
-      var menu = dock.querySelector("[data-site-menu]");
-      if (menu) dock.insertBefore(existing, menu);
+      var langButton = dock.querySelector("[data-lang-menu]");
+      if (langButton) dock.insertBefore(existing, langButton);
       else dock.appendChild(existing);
-      existing.textContent = t("sim.exitMind");
+      existing.setAttribute("aria-label", t("sim.exitMind"));
     }
 
     paintActingExit();
@@ -570,7 +624,7 @@
       if (!event.target.closest("[data-acting-exit]")) return;
       window.MindsetStore.clearActingAs();
       paintActingExit();
-      window.location.assign("/root");
+      window.location.assign("/root#root-fish");
     });
 
     var nav = document.createElement("nav");

@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#eafbf5" />
   <title>lake · Mindset Bucket</title>
   <meta name="description" content="Minds swim in a lake. Narrow the scale, find yours, swim after them." />
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvjv24za" />
-  <link rel="stylesheet" href="/assets/styles.css?v=mvjv24za" />
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg?v=mvmc9jch" />
+  <link rel="stylesheet" href="/assets/styles.css?v=mvmc9jch" />
 </head>
 <body data-tab="lake" data-title="lake.title" class="is-page-loading">
   <main class="page page-lake">
@@ -44,17 +44,18 @@
 
     <div class="page-body">
       <div id="page-loading" class="page-loading" aria-busy="true" aria-live="polite">
-        <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvjv24za" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
+        <object class="page-loading-logo" type="image/svg+xml" data="/assets/logo-loading.svg?v=mvmc9jch" width="280" height="280" aria-hidden="true" tabindex="-1"></object>
       </div>
       <p id="page-status" class="status" role="status" hidden></p>
 
       <div id="pane-lake-map" role="tabpanel" aria-labelledby="tab-lake-map">
-      <section class="panel" id="panel">
-        <button type="button" id="panel-toggle" class="panel-handle" aria-expanded="false" aria-controls="panel-body">
-          <span data-i18n="lake.narrow">Narrow the scale</span>
-          <span id="panel-summary" class="hint"></span>
-        </button>
-        <div id="panel-body" hidden>
+      <div class="lake-tools">
+        <span id="lake-count" class="meta" aria-live="polite"></span>
+        <button type="button" id="zoom-reset" class="btn-icon" data-i18n-aria="lake.wholeLake" aria-label="Whole lake"></button>
+        <button type="button" id="view-lake" class="btn-icon" aria-pressed="true" data-i18n-aria="lake.asLake" aria-label="Show the lake"></button>
+        <button type="button" id="view-list" class="btn-icon" aria-pressed="false" data-i18n-aria="lake.asList" aria-label="Show as list"></button>
+        <button type="button" id="panel-toggle" class="btn-icon lake-filter" aria-expanded="false" aria-controls="panel-body" data-i18n-aria="lake.narrow" aria-label="Narrow the scale"><span id="panel-summary" class="lake-filter-count" hidden></span></button>
+        <div id="panel-body" class="lake-filter-panel" hidden>
           <label class="field" for="f-number"><span data-i18n="lake.number">Mindset number</span>
             <input id="f-number" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="12" /></label>
           <div class="demo-grid">
@@ -67,26 +68,29 @@
             <label class="field"><span data-i18n="demo.gender">Gender</span><select id="f-gender"></select></label>
             <label class="field"><span data-i18n="demo.country">Country</span><select id="f-country"></select></label>
           </div>
+          <label class="check"><input type="checkbox" id="f-sims" checked /> <span data-i18n="lake.showSims">Show sims</span></label>
+          <label class="check"><input type="checkbox" id="f-targets" /> <span data-i18n="lake.showTargets">Show targets</span></label>
           <label class="check"><input type="checkbox" id="f-uncaught" /> <span data-i18n="lake.untrailed">Only fish not on my trail</span></label>
           <div class="actions"><button type="button" id="f-clear" class="btn btn-small" data-i18n="lake.clear">Clear</button></div>
         </div>
-      </section>
-
-      <div class="lake-tools">
-        <span id="lake-count" class="meta" aria-live="polite"></span>
-        <button type="button" id="zoom-reset" class="btn-icon" data-i18n-aria="lake.wholeLake" aria-label="Whole lake"></button>
-        <button type="button" id="view-lake" class="btn-icon" aria-pressed="true" data-i18n-aria="lake.asLake" aria-label="Show the lake"></button>
-        <button type="button" id="view-list" class="btn-icon" aria-pressed="false" data-i18n-aria="lake.asList" aria-label="Show as list"></button>
       </div>
 
       <div class="lake-wrap">
-        <span class="lake-label lake-label-top" id="y-high"></span>
-        <span class="lake-side lake-side-left"><span id="x-low"></span></span>
-        <div class="lake" id="lake"></div>
-        <span class="lake-side lake-side-right"><span id="x-high"></span></span>
-        <span class="lake-label lake-label-bottom" id="y-low"></span>
+        <div class="lake" id="lake">
+          <button type="button" id="lake-targets" class="btn-icon lake-targets" aria-pressed="false" data-i18n-aria="lake.showTargets" aria-label="Show targets"></button>
+          <button type="button" id="lake-sims" class="btn-icon lake-sims" aria-pressed="true" data-i18n-aria="lake.hideSims" aria-label="Hide sims"></button>
+          <button type="button" id="lake-full" class="btn-icon lake-full" aria-pressed="false" data-i18n-aria="lake.fullscreen" aria-label="Full screen"></button>
+          <span class="lake-vector lake-vector-top" id="y-high"></span>
+          <span class="lake-vector lake-vector-left" id="x-low"></span>
+          <span class="lake-vector lake-vector-right" id="x-high"></span>
+          <span class="lake-vector lake-vector-bottom" id="y-low"></span>
+        </div>
       </div>
       <div id="fish-list" class="feed" hidden></div>
+      <div id="call-bar" class="call-bar" hidden>
+        <button type="button" id="call-open" class="btn btn-primary" data-i18n="lake.callOpen">Broadcast</button>
+        <p id="call-timer" class="call-timer" hidden aria-live="polite"></p>
+      </div>
       </div>
 
       <div id="pane-lake-stats" role="tabpanel" aria-labelledby="tab-lake-stats" hidden>
@@ -119,28 +123,57 @@
     </div>
   </main>
 
+  <dialog id="call-dialog" class="modal" aria-labelledby="call-dialog-title">
+    <h2 id="call-dialog-title" data-i18n="lake.callType">Broadcast type</h2>
+    <p class="hint" data-i18n="lake.callLead">For a short while your fish stands out on the lake. Call out with one line, or shine a scale and invite someone to your school.</p>
+    <div class="field">
+      <span data-i18n="lake.callOptions">Broadcast options</span>
+      <fieldset class="choices" id="call-kinds">
+        <legend class="visually-hidden" data-i18n="lake.callOptions">Broadcast options</legend>
+        <label><input type="radio" name="call-kind" id="call-kind-pul" value="pul" /> <span data-i18n="lake.callPul">Shine a scale</span></label>
+        <label><input type="radio" name="call-kind" id="call-kind-seslen" value="seslen" /> <span data-i18n="lake.callSeslen">Call out</span></label>
+      </fieldset>
+    </div>
+    <div id="call-pledge" class="field" hidden>
+      <span data-i18n="lake.callPledge">Closed text</span>
+      <fieldset class="choices" id="call-fields"></fieldset>
+      <p id="call-pledge-empty" class="empty" hidden data-i18n="profile.noClosed">You haven't written a hidden side yet. Add one when you edit your mindset.</p>
+    </div>
+    <div id="call-description" class="field" hidden>
+      <span data-i18n="lake.callDescription">Text</span>
+      <fieldset class="choices" id="call-lines">
+        <legend class="visually-hidden" data-i18n="lake.callDescription">Text</legend>
+        <label><input type="radio" name="call-line" data-line="hi" value="hi" /> <span data-i18n="lake.callLine.hi">Hello!</span></label>
+        <label><input type="radio" name="call-line" data-line="here" value="here" /> <span data-i18n="lake.callLine.here">I'm here!</span></label>
+        <label><input type="radio" name="call-line" data-line="hear" value="hear" /> <span data-i18n="lake.callLine.hear">Can anyone hear me?</span></label>
+      </fieldset>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="call-cancel" class="btn btn-small" data-i18n="common.cancel">Cancel</button>
+      <button type="button" id="call-start" class="btn btn-primary btn-small" disabled data-i18n="lake.callStart">Start broadcasting</button>
+    </div>
+  </dialog>
+
   <dialog id="fish-card" class="modal modal-sheet" aria-labelledby="card-number">
-    <div class="page-header profile-top">
-      <div class="profile-top-main">
-        <h2 id="card-number" class="profile-number"></h2>
+    <h2 id="card-number" class="profile-number"></h2>
+    <div class="profile-tools" role="group">
+      <button type="button" id="card-tail" class="btn-icon" aria-pressed="false" aria-label="Swim after"></button>
+      <button type="button" id="card-reply" class="btn-icon" hidden data-i18n-aria="lake.callReply" aria-label="Reply"></button>
+      <a id="card-view" class="btn-icon" href="/" data-i18n-aria="lake.view" aria-label="View"></a>
+      <button type="button" id="card-close" class="btn-icon" data-i18n-aria="common.close" aria-label="Close"></button>
+    </div>
+    <div class="card-body">
+      <div id="card-radar" class="radar-face"></div>
+      <div class="card-copy">
+        <p id="card-headline" class="entry-headline" hidden></p>
+        <p id="card-summary" class="summary"></p>
+        <p id="card-quote" class="quote"></p>
         <p class="head-meta">
           <span id="card-alias" class="alias" hidden></span>
           <span id="card-badges"></span>
           <span id="card-meta" class="card-when"></span>
         </p>
       </div>
-      <div class="profile-tools" role="group">
-        <button type="button" id="card-close" class="btn btn-small" data-i18n="common.close">Close</button>
-      </div>
-    </div>
-    <div id="card-radar" class="radar-face"></div>
-    <p id="card-headline" class="entry-headline" hidden></p>
-    <p id="card-summary" class="summary"></p>
-    <p id="card-quote" class="quote"></p>
-    <div class="actions">
-      <p id="card-status" class="status" role="status" hidden></p>
-      <button type="button" id="card-tail" class="btn btn-primary" aria-pressed="false" data-i18n="profile.tail">Swim after</button>
-      <a id="card-view" class="btn" href="/" data-i18n="lake.view">View</a>
     </div>
   </dialog>
 
@@ -154,17 +187,18 @@
     </form>
   </dialog>
 
-  <script src="/assets/config.js?v=mvjv24za" defer></script>
-  <script src="/assets/i18n.js?v=mvjv24za" defer></script>
-  <script src="/assets/demographics.js?v=mvjv24za" defer></script>
-  <script src="/assets/lens-v2.js?v=mvjv24za" defer></script>
-  <script src="/assets/reading.js?v=mvjv24za" defer></script>
-  <script src="/assets/firestore.js?v=mvjv24za" defer></script>
-  <script type="module" src="/assets/auth.js?v=mvjv24za"></script>
-  <script src="/assets/store.js?v=mvjv24za" defer></script>
-  <script src="/assets/social.js?v=mvjv24za" defer></script>
-  <script src="/assets/notices.js?v=mvjv24za" defer></script>
-  <script src="/assets/ui.js?v=mvjv24za" defer></script>
-  <script src="/assets/lake.js?v=mvjv24za" defer></script>
+  <script src="/assets/config.js?v=mvmc9jch" defer></script>
+  <script src="/assets/i18n.js?v=mvmc9jch" defer></script>
+  <script src="/assets/demographics.js?v=mvmc9jch" defer></script>
+  <script src="/assets/lens-v2.js?v=mvmc9jch" defer></script>
+  <script src="/assets/reading.js?v=mvmc9jch" defer></script>
+  <script src="/assets/firestore.js?v=mvmc9jch" defer></script>
+  <script type="module" src="/assets/auth.js?v=mvmc9jch"></script>
+  <script src="/assets/store.js?v=mvmc9jch" defer></script>
+  <script src="/assets/social.js?v=mvmc9jch" defer></script>
+  <script src="/assets/call.js?v=mvmc9jch" defer></script>
+  <script src="/assets/notices.js?v=mvmc9jch" defer></script>
+  <script src="/assets/ui.js?v=mvmc9jch" defer></script>
+  <script src="/assets/lake.js?v=mvmc9jch" defer></script>
 </body>
 </html>

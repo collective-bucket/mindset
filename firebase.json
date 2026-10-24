@@ -3,7 +3,8 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "hosting": {
+  "hosting": [
+  {
     "target": "mindset",
     "public": "public",
     "cleanUrls": true,
@@ -47,6 +48,51 @@
       }
     ]
   },
+  {
+    "target": "mindset-test",
+    "public": "public",
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "redirects": [
+      { "source": "/m/:number", "destination": "/i/:number", "type": 301 },
+      { "source": "/fish/:number", "destination": "/i/:number", "type": 301 },
+      { "source": "/yeni", "destination": "/new", "type": 301 },
+      { "source": "/liste", "destination": "/lake", "type": 301 },
+      { "source": "/explore", "destination": "/lake", "type": 301 },
+      { "source": "/hunt", "destination": "/lake", "type": 301 },
+      { "source": "/tribe", "destination": "/school", "type": 301 },
+      { "source": "/following", "destination": "/", "type": 301 },
+      { "source": "/flow", "destination": "/", "type": 301 },
+      { "source": "/ben", "destination": "/me", "type": 301 }
+    ],
+    "rewrites": [
+      { "source": "/i/**", "destination": "/profile.html" },
+      { "source": "/a/**", "destination": "/profile.html" }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|json|html)",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      },
+      {
+        "source": "**/*.@(png|svg|jpg|jpeg|webp|ico)",
+        "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
+      },
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" }
+        ]
+      }
+    ]
+  }
+  ],
   "emulators": {
     "hosting": { "port": 5055 },
     "firestore": { "port": 8085 },

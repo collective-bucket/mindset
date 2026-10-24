@@ -13,6 +13,7 @@
   --accent-pastel: #8fe3cb;
   --warn: #8a5300;
   --danger: #b3261e;
+  --signal: #e0a800;
   --stroke: 1.5px;
   --bar-space: calc(64px + env(safe-area-inset-bottom));
   color-scheme: light;
@@ -526,6 +527,22 @@ body.is-page-loading .notice-dock {
 
 .notice-dock .status.error {
   border-color: var(--danger);
+}
+
+.notice-dock:popover-open {
+  position: fixed;
+  inset: unset;
+  top: calc(56px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  margin: 0 auto;
+  padding: 0 20px;
+  border: 0;
+  background: transparent;
+  overflow: visible;
 }
 
 @keyframes notice-drop {
@@ -1819,17 +1836,12 @@ body[data-tab="school"] .person-tools .btn {
 /* ---- Hunt ---- */
 
 .lake-wrap {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) 18px;
-  column-gap: 6px;
-  align-items: center;
+  position: relative;
   margin: 4px 0 8px;
 }
 
 .lake {
   position: relative;
-  grid-column: 2;
-  grid-row: 2;
   width: 100%;
   aspect-ratio: 1 / 1;
   border: var(--stroke) solid var(--accent-mid);
@@ -1847,6 +1859,29 @@ body[data-tab="school"] .person-tools .btn {
   height: 100%;
 }
 
+.lake-targets,
+.lake-sims {
+  position: absolute;
+  left: 8px;
+  z-index: 2;
+  background: var(--paper);
+  border: 1px solid var(--hair);
+}
+
+.lake-targets {
+  top: 8px;
+}
+
+.lake-sims {
+  top: 52px;
+}
+
+.lake-targets[aria-pressed="true"],
+.lake-sims[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
 .wave {
   fill: none;
   stroke: #b8c8e4;
@@ -1861,57 +1896,91 @@ body[data-tab="school"] .person-tools .btn {
   vector-effect: non-scaling-stroke;
 }
 
-.lake-label {
-  display: block;
-  grid-column: 2;
-  text-align: center;
-  font-size: 12px;
-  color: var(--muted);
-  margin: 4px 0;
-}
-
-.lake-label-top {
-  grid-row: 1;
-}
-
-.lake-side {
-  position: relative;
-  grid-row: 2;
-  align-self: stretch;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.lake-side-left {
-  grid-column: 1;
-}
-
-.lake-side-right {
-  grid-column: 3;
-}
-
-.lake-label-bottom {
-  grid-row: 3;
-  transform: rotate(180deg);
-}
-
-.lake-side span {
+.lake-full {
   position: absolute;
-  left: 50%;
-  top: 50%;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  background: var(--paper);
+  border: 1px solid var(--hair);
+}
+
+.lake-vector {
+  position: absolute;
+  z-index: 1;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--accent-deep);
+  font-size: 12px;
+  line-height: 18px;
   white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.35s ease, translate 0.35s ease;
 }
 
-.lake-side-left span {
+.lake-vector-top {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  translate: 0 12px;
+}
+
+.lake-vector-bottom {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+  translate: 0 -12px;
+}
+
+.lake-vector-left {
+  top: 50%;
+  left: 21px;
   transform: translate(-50%, -50%) rotate(-90deg);
+  translate: 12px 0;
 }
 
-.lake-side-right span {
+.lake-vector-right {
+  top: 50%;
+  left: calc(100% - 21px);
   transform: translate(-50%, -50%) rotate(90deg);
+  translate: -12px 0;
+}
+
+.lake-vector.is-on {
+  opacity: 1;
+  translate: 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lake-vector {
+    translate: 0 0;
+    transition: opacity 0.2s ease;
+  }
+}
+
+.lake-wrap.is-full {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: auto;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--paper);
+}
+
+.lake-wrap.is-full .lake {
+  height: 100%;
+  border: 0;
+}
+
+body.is-lake-full {
+  overflow: hidden;
 }
 
 .lake-tools {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1935,10 +2004,33 @@ body[data-tab="school"] .person-tools .btn {
   color: var(--accent-strong);
 }
 
-.lake-wrap.is-collapsed .lake,
-.lake-wrap.is-collapsed .lake-label,
-.lake-wrap.is-collapsed .lake-side {
+.lake-wrap.is-collapsed .lake {
   display: none;
+}
+
+.lake-filter {
+  position: relative;
+}
+
+.lake-tools .lake-filter[aria-expanded="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.lake-filter-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent-strong);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
 }
 
 .fish {
@@ -1962,40 +2054,153 @@ body[data-tab="school"] .person-tools .btn {
 }
 
 .fish-me {
-  fill: #141414;
-  stroke: none;
+  fill: var(--signal);
+  stroke: var(--signal);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.fish-sonar {
+  display: none;
+  pointer-events: none;
+}
+
+.fish.is-calling .fish-sonar {
+  display: block;
+}
+
+.sonar-ring {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sonar 1.8s ease-out infinite;
+}
+
+.sonar-late {
+  animation-delay: 0.9s;
+}
+
+@keyframes sonar {
+  0% {
+    transform: scale(0.35);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sonar-ring {
+    animation: none;
+    opacity: 0.85;
+    transform: scale(1.4);
+  }
+
+  .sonar-late {
+    display: none;
+  }
+}
+
+.fish-bang {
+  visibility: hidden;
+  fill: var(--signal);
+  font-size: 13px;
+  font-weight: 800;
+  font-family: inherit;
+  pointer-events: none;
+}
+
+.fish.is-attention .fish-bang {
+  visibility: visible;
+}
+
+.fish-bubble {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  max-width: 190px;
+  padding: 8px 28px 8px 10px;
+  border: var(--stroke) solid var(--signal);
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.fish-bubble-close {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--signal);
+  cursor: pointer;
+}
+
+.fish-bubble-close:hover {
+  background: transparent;
+  color: var(--signal);
+}
+
+.fish-bubble-close .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.fish-bubble p {
+  margin: 0;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.fish-bubble .btn {
+  margin-top: 8px;
+}
+
+.call-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.call-bar > .btn {
+  width: 100%;
+}
+
+.call-timer {
+  margin: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: #8a6400;
 }
 
 .fish.is-real .fish-body,
-.fish.is-real .fish-fin {
-  fill: transparent;
-  stroke: var(--accent);
-}
-
+.fish.is-real .fish-fin,
 .fish.is-real .fish-eye {
   fill: var(--accent);
+  stroke: var(--accent);
 }
 
 .fish.is-sim .fish-body,
-.fish.is-sim .fish-fin {
-  fill: transparent;
-  stroke: var(--danger);
-}
-
+.fish.is-sim .fish-fin,
 .fish.is-sim .fish-eye {
-  fill: var(--danger);
-}
-
-.fish.is-fresh.is-real .fish-body,
-.fish.is-fresh.is-real .fish-fin,
-.fish.is-fresh.is-real .fish-eye {
-  fill: var(--accent);
-  stroke: var(--accent);
-}
-
-.fish.is-fresh.is-sim .fish-body,
-.fish.is-fresh.is-sim .fish-fin,
-.fish.is-fresh.is-sim .fish-eye {
   fill: var(--danger);
   stroke: var(--danger);
 }
@@ -2004,36 +2209,24 @@ body[data-tab="school"] .person-tools .btn {
 .fish.is-real:hover .fish-fin,
 .fish.is-real:focus-visible .fish-body,
 .fish.is-real:focus-visible .fish-fin,
-.fish.is-mine:hover .fish-body,
-.fish.is-mine:hover .fish-fin,
-.fish.is-mine:focus-visible .fish-body,
-.fish.is-mine:focus-visible .fish-fin {
-  fill: transparent;
-  stroke: var(--accent);
-}
-
-.fish.is-fresh.is-real:hover .fish-body,
-.fish.is-fresh.is-real:hover .fish-fin,
-.fish.is-fresh.is-real:focus-visible .fish-body,
-.fish.is-fresh.is-real:focus-visible .fish-fin {
-  fill: var(--accent-soft);
-  stroke: var(--accent);
+.fish.is-mine.is-real:hover .fish-body,
+.fish.is-mine.is-real:hover .fish-fin,
+.fish.is-mine.is-real:focus-visible .fish-body,
+.fish.is-mine.is-real:focus-visible .fish-fin {
+  fill: var(--accent);
+  stroke: var(--accent-deep);
 }
 
 .fish.is-sim:hover .fish-body,
 .fish.is-sim:hover .fish-fin,
 .fish.is-sim:focus-visible .fish-body,
-.fish.is-sim:focus-visible .fish-fin {
-  fill: transparent;
-  stroke: var(--danger);
-}
-
-.fish.is-fresh.is-sim:hover .fish-body,
-.fish.is-fresh.is-sim:hover .fish-fin,
-.fish.is-fresh.is-sim:focus-visible .fish-body,
-.fish.is-fresh.is-sim:focus-visible .fish-fin {
+.fish.is-sim:focus-visible .fish-fin,
+.fish.is-mine.is-sim:hover .fish-body,
+.fish.is-mine.is-sim:hover .fish-fin,
+.fish.is-mine.is-sim:focus-visible .fish-body,
+.fish.is-mine.is-sim:focus-visible .fish-fin {
   fill: var(--danger);
-  stroke: var(--paper);
+  stroke: var(--ink);
 }
 
 .fish.is-faded {
@@ -2045,6 +2238,7 @@ body[data-tab="school"] .person-tools .btn {
   transform-box: fill-box;
   transform-origin: center;
   animation: sway 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 1px 1px rgba(20, 20, 20, 0.22));
 }
 
 @keyframes sway {
@@ -2103,10 +2297,18 @@ body[data-tab="school"] .person-tools .btn {
 }
 
 #panel-body {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 6;
+  width: min(100%, 380px);
+  max-height: 70dvh;
+  overflow-y: auto;
   border: var(--stroke) solid var(--accent);
-  border-top: 0;
-  border-radius: 0 0 16px 16px;
+  border-radius: 16px;
+  background: var(--paper);
   padding: 6px 16px 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
 }
 
 .tabs {
@@ -2501,6 +2703,24 @@ body[data-tab="school"] .person-tools .btn {
   background: var(--paper);
 }
 
+#call-dialog {
+  max-height: min(640px, calc(100vh - 32px));
+  overflow: auto;
+}
+
+#call-dialog .choices label {
+  align-items: flex-start;
+}
+
+#call-dialog .choices input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+#call-dialog .choices label span {
+  min-width: 0;
+}
+
 .modal::backdrop {
   background: rgba(20, 20, 20, 0.35);
 }
@@ -2520,14 +2740,18 @@ body[data-tab="school"] .person-tools .btn {
   align-items: flex-start;
 }
 
-#fish-card .profile-top {
-  margin: 0 0 12px;
-  padding: 0 0 1lh;
+#fish-card {
+  overflow: visible;
 }
 
-#fish-card .profile-top-main .profile-number {
-  min-height: 36px;
-  line-height: 36px;
+#fish-card:has(#card-reply:not([hidden])) #card-number {
+  margin-right: 180px;
+}
+
+#card-number {
+  margin: calc(-20px - var(--stroke) - 6px) 136px 8px 0;
+  min-height: 0;
+  line-height: 1;
 }
 
 #card-number .mindset-id {
@@ -2540,39 +2764,58 @@ body[data-tab="school"] .person-tools .btn {
   margin-bottom: -16px;
 }
 
+#fish-card .profile-tools {
+  top: 8px;
+  right: 8px;
+}
+
+#fish-card .btn-icon[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+#fish-card .card-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+#fish-card .card-copy {
+  flex: 1;
+  min-width: 0;
+}
+
 #fish-card .entry-headline {
   margin: 0;
+  font-size: 15px;
 }
 
 #fish-card .summary {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.45;
   margin: 8px 0 0;
 }
 
-#fish-card .actions {
-  justify-content: flex-end;
-  flex-wrap: nowrap;
-  align-items: center;
+#fish-card .quote {
+  margin: 14px 0;
 }
 
-#fish-card .actions .btn {
-  flex-shrink: 0;
-}
-
-#fish-card .actions .status {
-  margin: 0;
-  margin-inline-end: auto;
-  min-width: 0;
+#fish-card .head-meta {
+  margin: 8px 0 0;
+  font-size: 12px;
 }
 
 #fish-card .radar-face {
-  margin: 4px 0 16px;
+  flex: 0 0 80px;
+  width: 80px;
+  margin: 0;
+  justify-content: flex-start;
 }
 
 #fish-card .radar-face .radar {
-  max-width: 260px;
+  width: 80px;
+  max-width: 80px;
 }
 
 .dialog-actions {
@@ -2672,6 +2915,20 @@ body[data-tab="school"] .person-tools .btn {
   justify-content: center;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.lang .btn-icon[data-acting-exit] {
+  align-self: stretch;
+  width: 36px;
+  height: auto;
+  border-radius: 0;
+  border-right: 1px solid var(--hair);
+  color: var(--muted);
+}
+
+.lang .btn-icon[data-acting-exit]:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
 .lang .dock-item[data-lang-menu] {
@@ -3973,7 +4230,7 @@ body[data-tab="root"].is-page-loading #root-body {
 }
 
 #sim-fish .person {
-  align-items: center;
+  align-items: flex-start;
 }
 
 #sim-fish .person-body {
@@ -3982,7 +4239,8 @@ body[data-tab="root"].is-page-loading #root-body {
 
 #sim-fish .person-tools {
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
+  align-self: flex-start;
   max-width: none;
 }
 

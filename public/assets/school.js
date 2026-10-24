@@ -10,12 +10,12 @@
   function personChip(tool) {
     if (!tool || !tool.label || !tool.id) return "";
     return (
-      '<button type="button" class="btn btn-small' +
-      (tool.open ? " btn-primary" : "") +
-      '" data-action="' +
+      '<button type="button" class="btn-icon" data-action="' +
       tool.id +
-      '">' +
+      '" aria-label="' +
       ui.escapeHtml(tool.label) +
+      '">' +
+      ui.icon(tool.id) +
       "</button>"
     );
   }
@@ -39,10 +39,9 @@
     var statuses = [];
     var tools = [];
     (actions || []).forEach(function (action) {
-      tools.push({
+        tools.push({
         id: action.id,
-        label: t(action.label),
-        open: Boolean(action.primary)
+        label: t(action.label)
       });
     });
     var when = since ? ui.formatWhen(since) : "";
@@ -104,6 +103,14 @@
     var session = null;
     var ownDoc = null;
 
+    function schoolSectionName() {
+      var hash = String(location.hash || "").replace(/^#/, "");
+      if (hash === "school-incoming" || hash === "school-members" || hash === "school-outgoing") {
+        return hash.slice("school-".length);
+      }
+      return "members";
+    }
+
     function selectSchoolSection(name) {
       var panes = {
         incoming: document.querySelector("#pane-school-incoming"),
@@ -134,7 +141,10 @@
     document.querySelector(".school-stick .depth-tabs").addEventListener("click", function (event) {
       var tab = event.target.closest("[data-school-section]");
       if (!tab) return;
-      selectSchoolSection(tab.getAttribute("data-school-section"));
+      var name = tab.getAttribute("data-school-section");
+      selectSchoolSection(name);
+      var next = "#school-" + name;
+      if (location.hash !== next) history.replaceState(null, "", next);
     });
 
     var tabsHelp = document.querySelector("#tabs-help-dialog");
@@ -281,7 +291,10 @@
         });
     });
 
-    selectSchoolSection("members");
+    selectSchoolSection(schoolSectionName());
+    window.addEventListener("hashchange", function () {
+      selectSchoolSection(schoolSectionName());
+    });
     ui.requireAuth().then(function (next) {
       session = next;
       if (!session) {

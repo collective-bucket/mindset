@@ -13,6 +13,8 @@
   var MIN_GROUP = 5;
   var FULL = { x: -6, y: -6, w: 112, h: 112 };
   var MIN_SPAN = 18;
+  var FOCUS_SPAN = 48;
+  var PAN_LIMIT = 90;
   var SVG_NS = "http://www.w3.org/2000/svg";
 
   function openAxes() {
@@ -354,8 +356,10 @@
     var lake = document.querySelector("#lake");
     var list = document.querySelector("#fish-list");
     var card = document.querySelector("#fish-card");
-    var cardStatus = document.querySelector("#card-status");
     var tailButton = document.querySelector("#card-tail");
+    var replyButton = document.querySelector("#card-reply");
+    var viewLink = document.querySelector("#card-view");
+    var closeButton = document.querySelector("#card-close");
 
     var pool = [];
     var session = null;
@@ -368,7 +372,22 @@
       ui.shareMindset(ownDoc, status);
     });
     var axes = { x: "agency", y: "redemption" };
-    var view = Object.assign({}, FULL);
+    var view = { x: 0, y: 0, w: FOCUS_SPAN, h: FOCUS_SPAN };
+    var pan = { x: 0, y: 0 };
+    var lastPanX = 0;
+    var mineFacing = 0;
+    var calls = {};
+    var shows = {};
+    var asked = {};
+    var attention = {};
+    var ownCall = null;
+    var ownPrivate = null;
+    var broadcast = window.MindsetCall.configOf({});
+    var chosenKind = "";
+    var chosenLine = "";
+    var chosenField = "";
+    var bubbleFor = "";
+    var bubbleClosed = "";
     var filters = blankFilters();
     var nodes = {};
     var matches = [];
@@ -379,7 +398,16 @@
       math.OPEN_KEYS.forEach(function (key) {
         ranges[key] = [0, 100];
       });
-      return { ranges: ranges, number: "", ageBand: "", gender: "", country: "", untrailed: false };
+      return {
+        ranges: ranges,
+        number: "",
+        ageBand: "",
+        gender: "",
+        country: "",
+        untrailed: false,
+        hideSims: false,
+        showTargets: false
+      };
     }
 
     // ---- SVG lake ----
@@ -398,42 +426,77 @@
       '<g id="school"></g>';
     lake.appendChild(svg);
     var school = svg.querySelector("#school");
+    var vectors = {
+      up: document.querySelector("#y-high"),
+      down: document.querySelector("#y-low"),
+      left: document.querySelector("#x-low"),
+      right: document.querySelector("#x-high")
+    };
+    var ALL_VECTORS = ["up", "down", "left", "right"];
+    var vectorTimer = 0;
+    var lastPanY = 0;
+
+    function showVectors(dirs, linger) {
+      Object.keys(vectors).forEach(function (dir) {
+        vectors[dir].classList.toggle("is-on", dirs.indexOf(dir) >= 0);
+      });
+      clearTimeout(vectorTimer);
+      if (dirs.length) {
+        vectorTimer = setTimeout(function () {
+          showVectors([]);
+        }, linger || 1400);
+      }
+    }
+    var bubble = document.createElement("div");
+    bubble.id = "fish-bubble";
+    bubble.className = "fish-bubble";
+    bubble.hidden = true;
+    bubble.innerHTML =
+      '<button type="button" id="fish-bubble-close" class="fish-bubble-close" aria-label="' +
+      ui.escapeHtml(t("common.close")) +
+      '">' +
+      ui.icon("close") +
+      "</button>" +
+      '<p id="fish-bubble-text"></p><a id="fish-bubble-go" class="btn btn-small"></a>';
+    lake.appendChild(bubble);
+    document.querySelector("#fish-bubble-close").addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      dismissBubble();
+    });
+
+    function focusSpot() {
+      if (ownDoc && nodes[ownDoc.id]) return nodes[ownDoc.id].spot;
+      return { x: 50, y: 50 };
+    }
+
+    function clampPan(next) {
+      return {
+        x: clamp(next.x, -PAN_LIMIT, PAN_LIMIT),
+        y: clamp(next.y, -PAN_LIMIT, PAN_LIMIT)
+      };
+    }
+
+    function viewCenter() {
+      var spot = focusSpot();
+      return { x: spot.x + pan.x, y: spot.y + pan.y };
+    }
 
     function applyView() {
+      var center = viewCenter();
+      view.x = center.x - view.w / 2;
+      view.y = center.y - view.h / 2;
+      view.h = view.w;
       svg.setAttribute("viewBox", [view.x, view.y, view.w, view.h].map(function (n) {
         return n.toFixed(2);
       }).join(" "));
       placeFish();
     }
 
-    function animateView(target) {
-      var from = Object.assign({}, view);
-      if (ui.prefersReducedMotion()) {
-        view = target;
-        applyView();
-        return;
-      }
-      var start = performance.now();
-      function frame(now) {
-        var progress = Math.min(1, (now - start) / 380);
-        var eased = 1 - Math.pow(1 - progress, 3);
-        ["x", "y", "w", "h"].forEach(function (key) {
-          view[key] = from[key] + (target[key] - from[key]) * eased;
-        });
-        applyView();
-        if (progress < 1) requestAnimationFrame(frame);
-      }
-      requestAnimationFrame(frame);
-    }
-
-    function clampView(next) {
-      var span = clamp(next.w, MIN_SPAN, FULL.w);
-      return {
-        x: clamp(next.x, FULL.x - span / 2, FULL.x + FULL.w - span / 2),
-        y: clamp(next.y, FULL.y - span / 2, FULL.y + FULL.h - span / 2),
-        w: span,
-        h: span
-      };
+    function setSpan(span) {
+      view.w = clamp(span, MIN_SPAN, FULL.w);
+      view.h = view.w;
+      applyView();
     }
 
     function position(doc) {
@@ -482,7 +545,12 @@
         group.setAttribute("aria-label", fishLabel(doc));
         var mine = ownDoc && doc.id === ownDoc.id;
         group.innerHTML =
-          (mine ? '<path class="fish-me" d="M1.6 -6.2 L4.8 -10.6 L-1.6 -10.6 Z"/>' : "") +
+          '<g class="fish-sonar" aria-hidden="true">' +
+          '<circle class="sonar-ring" cx="0" cy="0" r="10"/>' +
+          '<circle class="sonar-ring sonar-late" cx="0" cy="0" r="10"/>' +
+          "</g>" +
+          (mine ? '<path class="fish-me" d="M0.8 -7 L4.8 -13 L-3.2 -13 Z"/>' : "") +
+          '<text class="fish-bang" x="0" y="-11" text-anchor="middle" aria-hidden="true">!</text>' +
           '<g class="fish-sway" style="animation-delay:' + (-(Number(doc.id) % 7) * 0.4).toFixed(1) + 's">' +
           ui.fishMark() +
           "</g>";
@@ -494,18 +562,42 @@
     }
 
     function placeFish() {
+      var dx = pan.x - lastPanX;
+      var dy = pan.y - lastPanY;
+      if (Math.abs(dx) > 0.02) mineFacing = dx < 0 ? -1 : 1;
+      lastPanX = pan.x;
+      lastPanY = pan.y;
+      var heading = [];
+      if (Math.abs(dx) > 0.02) heading.push(dx < 0 ? "left" : "right");
+      if (Math.abs(dy) > 0.02) heading.push(dy < 0 ? "up" : "down");
+      if (heading.length) showVectors(heading);
       var zoom = view.w / FULL.w;
+      var center = viewCenter();
+      var mineId = ownDoc && ownDoc.id;
       Object.keys(nodes).forEach(function (id) {
         var node = nodes[id];
+        var at = mineId && id === mineId ? center : node.spot;
+        var facing = node.spot.facing;
+        if (mineId && id === mineId) {
+          if (!mineFacing) mineFacing = facing || 1;
+          facing = mineFacing;
+        }
         var scale = 0.34 * node.size * zoom;
         node.el.setAttribute(
           "transform",
-          "translate(" + node.spot.x.toFixed(2) + " " + node.spot.y.toFixed(2) + ") scale(" +
-            (scale * node.spot.facing).toFixed(3) + " " + scale.toFixed(3) + ")"
+          "translate(" + at.x.toFixed(2) + " " + at.y.toFixed(2) + ") scale(" +
+            (scale * facing).toFixed(3) + " " + scale.toFixed(3) + ")"
         );
+        var flip = facing < 0 ? "scale(-1 1)" : "";
         var arrow = node.el.querySelector(".fish-me");
-        if (arrow) arrow.setAttribute("transform", node.spot.facing < 0 ? "scale(-1 1)" : "");
+        if (arrow) arrow.setAttribute("transform", flip);
+        var bang = node.el.querySelector(".fish-bang");
+        if (bang) bang.setAttribute("transform", flip);
+        var flags = signalState(node.doc);
+        node.el.classList.toggle("is-attention", flags.attention);
+        node.el.classList.toggle("is-calling", flags.calling);
       });
+      placeBubble();
     }
 
     // ---- Filtering ----
@@ -523,6 +615,9 @@
       if (filters.gender && doc.gender !== filters.gender) return false;
       if (filters.country && doc.country !== filters.country) return false;
       if (filters.untrailed && (onTrail[doc.id] || inSchool[doc.id])) return false;
+      var mine = ownDoc && String(doc.id) === String(ownDoc.id);
+      if (!mine && filters.hideSims && ui.isSimOwner(doc.ownerUid)) return false;
+      if (!mine && filters.showTargets && !signalState(doc).attention) return false;
       return true;
     }
 
@@ -531,13 +626,13 @@
         var range = filters.ranges[key];
         return range[0] > 0 || range[1] < 100;
       }).length;
-      ["number", "ageBand", "gender", "country", "untrailed"].forEach(function (key) {
+      ["number", "ageBand", "gender", "country", "untrailed", "hideSims", "showTargets"].forEach(function (key) {
         if (filters[key]) countActive += 1;
       });
       return countActive;
     }
 
-    function refresh(zoomToFit) {
+    function refresh() {
       matches = pool.filter(matchesFilters);
       var visible = {};
       matches.forEach(function (doc) {
@@ -545,19 +640,19 @@
       });
       Object.keys(nodes).forEach(function (id) {
         var node = nodes[id];
-        var on = visible[id] || (ownDoc && id === ownDoc.id);
+        var keepMine = ownDoc && id === ownDoc.id;
+        var on = visible[id] || keepMine;
         node.el.classList.toggle("is-faded", !on);
         node.el.setAttribute("tabindex", on ? "0" : "-1");
         node.el.setAttribute("aria-hidden", on ? "false" : "true");
       });
-      var placed = matches.filter(function (doc) {
-        return nodes[doc.id];
-      });
       document.querySelector("#lake-count").textContent = t("lake.count", { n: matches.length, total: pool.length });
       var active = activeFilterCount();
-      document.querySelector("#panel-summary").textContent = active ? t("lake.active", { n: active }) : "";
+      var summary = document.querySelector("#panel-summary");
+      summary.textContent = active ? String(active) : "";
+      summary.hidden = !active;
+      document.querySelector("#panel-toggle").title = active ? t("lake.active", { n: active }) : "";
       if (!list.hidden) ui.renderCards(list, matches, "lake.none", optionsFor);
-      if (zoomToFit) fitTo(active ? placed : []);
       renderAxisCharts(document.querySelector("#axis-chart"), stats, sliceField(), filters[sliceField()]);
     }
 
@@ -566,28 +661,6 @@
       if (filters.gender) return "gender";
       if (filters.country) return "country";
       return "";
-    }
-
-    function fitTo(docs) {
-      if (!docs.length) {
-        animateView(Object.assign({}, FULL));
-        return;
-      }
-      var xs = docs.map(function (doc) { return nodes[doc.id].spot.x; });
-      var ys = docs.map(function (doc) { return nodes[doc.id].spot.y; });
-      var minX = Math.min.apply(null, xs);
-      var maxX = Math.max.apply(null, xs);
-      var minY = Math.min.apply(null, ys);
-      var maxY = Math.max.apply(null, ys);
-      var span = Math.max(maxX - minX, maxY - minY) + 16;
-      animateView(
-        clampView({
-          x: (minX + maxX) / 2 - span / 2,
-          y: (minY + maxY) / 2 - span / 2,
-          w: span,
-          h: span
-        })
-      );
     }
 
     function optionsFor(doc) {
@@ -691,14 +764,24 @@
       }
       filters.ranges[key] = [low, high];
       box.querySelector(".range-value").textContent = low + "–" + high;
-      refresh(true);
+      refresh();
     });
 
     ["ageBand", "gender", "country"].forEach(function (key) {
       document.querySelector("#f-" + key).addEventListener("change", function (event) {
         filters[key] = event.target.value;
-        refresh(true);
+        refresh();
       });
+    });
+
+    document.querySelector("#f-sims").addEventListener("change", function (event) {
+      filters.hideSims = !event.target.checked;
+      paintSims();
+      refresh();
+    });
+
+    document.querySelector("#f-targets").addEventListener("change", function (event) {
+      setShowTargets(event.target.checked);
     });
 
     document.querySelector("#f-uncaught").addEventListener("change", function (event) {
@@ -708,17 +791,19 @@
         return;
       }
       filters.untrailed = event.target.checked;
-      refresh(true);
+      refresh();
     });
 
     document.querySelector("#f-number").addEventListener("input", function (event) {
       var digits = String(event.target.value || "").replace(/\D/g, "");
       if (event.target.value !== digits) event.target.value = digits;
       filters.number = digits;
-      refresh(true);
+      refresh();
     });
 
     document.querySelector("#f-clear").addEventListener("click", function () {
+      var framed = filters.showTargets ? savedView : null;
+      savedView = null;
       filters = blankFilters();
       renderRanges();
       document.querySelector("#f-number").value = "";
@@ -726,7 +811,15 @@
         document.querySelector("#f-" + key).value = "";
       });
       document.querySelector("#f-uncaught").checked = false;
-      refresh(true);
+      document.querySelector("#f-sims").checked = true;
+      document.querySelector("#f-targets").checked = false;
+      paintSims();
+      paintTargets();
+      refresh();
+      if (framed) {
+        pan = framed.pan;
+        setSpan(framed.span);
+      }
     });
 
     ["x", "y"].forEach(function (which) {
@@ -734,14 +827,110 @@
         axes[which] = event.target.value;
         axisLabels();
         buildFish();
-        refresh(true);
+        refresh();
+        showVectors(ALL_VECTORS, 2200);
       });
     });
 
     var zoomReset = document.querySelector("#zoom-reset");
+    var panelToggle = document.querySelector("#panel-toggle");
     zoomReset.innerHTML = ui.icon("whole");
+
+    var targetButton = document.querySelector("#lake-targets");
+    targetButton.innerHTML = ui.icon("target");
+    var savedView = null;
+
+    function paintTargets() {
+      var on = Boolean(filters.showTargets);
+      targetButton.setAttribute("aria-pressed", String(on));
+      targetButton.setAttribute("aria-label", t(on ? "lake.hideTargets" : "lake.showTargets"));
+      document.querySelector("#f-targets").checked = on;
+    }
+
+    function setShowTargets(on) {
+      on = Boolean(on);
+      if (on === Boolean(filters.showTargets)) {
+        paintTargets();
+        return;
+      }
+      filters.showTargets = on;
+      paintTargets();
+      refresh();
+      if (on) {
+        savedView = { pan: { x: pan.x, y: pan.y }, span: view.w };
+        if (!frameTargets()) savedView = null;
+        return;
+      }
+      if (!savedView) return;
+      var back = savedView;
+      savedView = null;
+      pan = back.pan;
+      setSpan(back.span);
+    }
+
+    function attentionSpots() {
+      var spots = [];
+      Object.keys(nodes).forEach(function (id) {
+        var node = nodes[id];
+        if (!node || !node.spot || !signalState(node.doc).attention) return;
+        spots.push(node.spot);
+      });
+      return spots;
+    }
+
+    function frameTargets() {
+      var spots = attentionSpots();
+      if (!spots.length) {
+        ui.setStatus(status, t("lake.noTargets"));
+        return false;
+      }
+      var minX = spots[0].x;
+      var maxX = spots[0].x;
+      var minY = spots[0].y;
+      var maxY = spots[0].y;
+      spots.forEach(function (spot) {
+        minX = Math.min(minX, spot.x);
+        maxX = Math.max(maxX, spot.x);
+        minY = Math.min(minY, spot.y);
+        maxY = Math.max(maxY, spot.y);
+      });
+      var focus = focusSpot();
+      pan = clampPan({
+        x: (minX + maxX) / 2 - focus.x,
+        y: (minY + maxY) / 2 - focus.y
+      });
+      setSpan(Math.max(maxX - minX, maxY - minY) + 10);
+      return true;
+    }
+
+    targetButton.addEventListener("click", function () {
+      setShowTargets(!filters.showTargets);
+    });
+
+    paintTargets();
+
+    var simsButton = document.querySelector("#lake-sims");
+    simsButton.innerHTML = ui.icon("fish");
+
+    function paintSims() {
+      var shown = !filters.hideSims;
+      simsButton.setAttribute("aria-pressed", String(shown));
+      simsButton.setAttribute("aria-label", t(shown ? "lake.hideSims" : "lake.showSims"));
+      document.querySelector("#f-sims").checked = shown;
+    }
+
+    simsButton.addEventListener("click", function () {
+      filters.hideSims = !filters.hideSims;
+      paintSims();
+      refresh();
+    });
+
+    paintSims();
+
     zoomReset.addEventListener("click", function () {
-      animateView(Object.assign({}, FULL));
+      savedView = null;
+      pan = { x: 0, y: 0 };
+      setSpan(FULL.w);
     });
 
     var viewList = document.querySelector("#view-list");
@@ -765,12 +954,58 @@
       showView("lake");
     });
 
-    var panelToggle = document.querySelector("#panel-toggle");
-    panelToggle.addEventListener("click", function () {
-      var open = panelToggle.getAttribute("aria-expanded") !== "true";
+    var panelBody = document.querySelector("#panel-body");
+    panelToggle.insertAdjacentHTML("afterbegin", ui.icon("filter"));
+
+    function setPanel(open) {
       panelToggle.setAttribute("aria-expanded", String(open));
-      document.querySelector("#panel-body").hidden = !open;
+      panelBody.hidden = !open;
+    }
+    panelToggle.addEventListener("click", function () {
+      setPanel(panelToggle.getAttribute("aria-expanded") !== "true");
     });
+    document.addEventListener("click", function (event) {
+      if (panelBody.hidden) return;
+      if (panelBody.contains(event.target) || panelToggle.contains(event.target)) return;
+      setPanel(false);
+    });
+
+    var lakeWrap = document.querySelector(".lake-wrap");
+    var fullButton = document.querySelector("#lake-full");
+
+    function paintFull(on) {
+      fullButton.innerHTML = ui.icon(on ? "fullscreenExit" : "fullscreen");
+      fullButton.setAttribute("aria-pressed", String(on));
+      fullButton.setAttribute("aria-label", t(on ? "lake.exitFullscreen" : "lake.fullscreen"));
+    }
+
+    function setFull(on) {
+      lakeWrap.classList.toggle("is-full", on);
+      document.body.classList.toggle("is-lake-full", on);
+      paintFull(on);
+      var root = document.documentElement;
+      if (on && root.requestFullscreen && !document.fullscreenElement) {
+        root.requestFullscreen().catch(function () {});
+      } else if (!on && document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(function () {});
+      }
+    }
+    fullButton.addEventListener("click", function () {
+      setFull(!lakeWrap.classList.contains("is-full"));
+    });
+    document.addEventListener("fullscreenchange", function () {
+      if (!document.fullscreenElement && lakeWrap.classList.contains("is-full")) setFull(false);
+    });
+    document.addEventListener("keydown", function (event) {
+      if (event.key !== "Escape" || document.querySelector("dialog[open]")) return;
+      if (!panelBody.hidden) {
+        setPanel(false);
+        panelToggle.focus();
+      } else if (lakeWrap.classList.contains("is-full")) {
+        setFull(false);
+      }
+    });
+    paintFull(false);
 
     function selectTab(which) {
       var mapOn = which === "map";
@@ -830,7 +1065,8 @@
     svg.addEventListener("pointerdown", function (event) {
       pointers[event.pointerId] = { x: event.clientX, y: event.clientY };
       gesture = {
-        view: Object.assign({}, view),
+        span: view.w,
+        pan: Object.assign({}, pan),
         start: Object.assign({}, pointers[event.pointerId]),
         spread: spread(),
         time: Date.now()
@@ -845,30 +1081,20 @@
       var ids = Object.keys(pointers);
       if (ids.length >= 2 && gesture.spread) {
         var ratio = gesture.spread / Math.max(1, spread());
-        var span = gesture.view.w * ratio;
-        var cx = gesture.view.x + gesture.view.w / 2;
-        var cy = gesture.view.y + gesture.view.h / 2;
-        view = clampView({ x: cx - span / 2, y: cy - span / 2, w: span, h: span });
+        view.w = clamp(gesture.span * ratio, MIN_SPAN, FULL.w);
+        view.h = view.w;
         moved = true;
       } else if (ids.length === 1) {
         var rawX = event.clientX - gesture.start.x;
         var rawY = event.clientY - gesture.start.y;
-        var horizontal = Math.abs(rawX) > Math.abs(rawY) * 1.4;
-        if (gesture.hold) return;
-        if (horizontal && Date.now() - gesture.time < 420) {
-          if (Math.abs(rawX) >= 56) gesture.hold = true;
-          return;
-        }
         var delta = toLake(rawX, rawY);
         if (Math.abs(rawX) + Math.abs(rawY) > 6) moved = true;
         if (!moved) return;
         svg.setAttribute("data-panned", "1");
         if (!svg.hasPointerCapture(event.pointerId)) svg.setPointerCapture(event.pointerId);
-        view = clampView({
-          x: gesture.view.x - delta.x,
-          y: gesture.view.y - delta.y,
-          w: gesture.view.w,
-          h: gesture.view.h
+        pan = clampPan({
+          x: gesture.pan.x - delta.x,
+          y: gesture.pan.y - delta.y
         });
       }
       applyView();
@@ -887,14 +1113,27 @@
       function (event) {
         event.preventDefault();
         var factor = event.deltaY > 0 ? 1.12 : 1 / 1.12;
-        var span = view.w * factor;
-        var cx = view.x + view.w / 2;
-        var cy = view.y + view.h / 2;
-        view = clampView({ x: cx - span / 2, y: cy - span / 2, w: span, h: span });
-        applyView();
+        setSpan(view.w * factor);
       },
       { passive: false }
     );
+
+    document.addEventListener("keydown", function (event) {
+      if (document.querySelector("#pane-lake-map").hidden) return;
+      if (document.querySelector("dialog[open]")) return;
+      var tag = event.target && event.target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (event.target && event.target.isContentEditable)) return;
+      var step = Math.max(4, view.w * 0.12);
+      var next = null;
+      if (event.key === "ArrowLeft") next = { x: pan.x - step, y: pan.y };
+      else if (event.key === "ArrowRight") next = { x: pan.x + step, y: pan.y };
+      else if (event.key === "ArrowUp") next = { x: pan.x, y: pan.y - step };
+      else if (event.key === "ArrowDown") next = { x: pan.x, y: pan.y + step };
+      if (!next) return;
+      event.preventDefault();
+      pan = clampPan(next);
+      applyView();
+    });
 
     function fishFromEvent(event) {
       var target = event.target.closest && event.target.closest(".fish");
@@ -905,7 +1144,15 @@
     svg.addEventListener("click", function (event) {
       if (moved) return;
       var node = fishFromEvent(event);
-      if (node) openCard(node.doc);
+      if (!node) {
+        if (!livePulHolding()) hideBubble();
+        revealOwnPul();
+        return;
+      }
+      dismissBang(node.doc);
+      if (!openBroadcast(node.doc) && !livePulHolding()) hideBubble();
+      revealOwnPul();
+      openCard(node.doc);
     });
 
     svg.addEventListener("keydown", function (event) {
@@ -913,20 +1160,51 @@
       var node = fishFromEvent(event);
       if (!node) return;
       event.preventDefault();
+      dismissBang(node.doc);
+      if (!openBroadcast(node.doc) && !livePulHolding()) hideBubble();
+      revealOwnPul();
       openCard(node.doc);
     });
 
     // ---- Fish card ----
 
     ui.closeOnBackdrop(card);
-    document.querySelector("#card-close").addEventListener("click", function () {
+    tailButton.innerHTML = ui.icon("fish");
+    replyButton.innerHTML = ui.icon("reply");
+    viewLink.innerHTML = ui.icon("preview");
+    closeButton.innerHTML = ui.icon("close");
+    closeButton.addEventListener("click", function () {
       card.close();
+    });
+
+    function noticeDock() {
+      return document.querySelector(".notice-dock");
+    }
+
+    function liftNotice(message) {
+      var dock = noticeDock();
+      if (!dock || !dock.showPopover) return;
+      if (message && card.open) {
+        dock.setAttribute("popover", "manual");
+        if (!dock.matches(":popover-open")) dock.showPopover();
+      } else if (dock.matches(":popover-open")) {
+        dock.hidePopover();
+      }
+    }
+
+    function cardNotice(message, kind) {
+      ui.setStatus(status, message, kind);
+      liftNotice(message);
+    }
+
+    card.addEventListener("close", function () {
+      var dock = noticeDock();
+      if (dock && dock.matches(":popover-open")) dock.hidePopover();
     });
 
     function renderTail() {
       var tailing = Boolean(onTrail[cardDoc.id]);
-      tailButton.textContent = t(tailing ? "profile.tailing" : "profile.tail");
-      tailButton.className = "btn " + (tailing ? "" : "btn-primary");
+      tailButton.setAttribute("aria-label", t(tailing ? "profile.tailing" : "profile.tail"));
       tailButton.setAttribute("aria-pressed", String(tailing));
     }
 
@@ -945,15 +1223,29 @@
       var code = String(doc.personalCode || "").trim();
       cardSummary.textContent = code || ui.plainSummary(doc);
       cardSummary.hidden = !cardSummary.textContent;
-      document.querySelector("#card-quote").textContent = "";
-      document.querySelector("#card-view").href = "/i/" + doc.id;
-      ui.renderRadar(document.querySelector("#card-radar"), math.scoresOf(doc), null);
+      viewLink.href = "/i/" + doc.id;
+      ui.renderRadar(document.querySelector("#card-radar"), math.scoresOf(doc), null, { compact: true });
       var aliasNode = document.querySelector("#card-alias");
       aliasNode.hidden = true;
-      ui.setStatus(cardStatus, "");
+      var trailed = !mine && !inSchool[doc.id] && Boolean(onTrail[doc.id]);
       tailButton.hidden = mine || Boolean(inSchool[doc.id]);
-      if (!mine) renderTail();
+      paintPulCard(doc);
+      if (!tailButton.hidden) renderTail();
       card.showModal();
+      cardNotice(trailed ? t("profile.tailing") : "");
+      var row = liveCall(doc.id);
+      if (session && row && row.kind === "pul" && !pulShow(doc.id) && row.from) {
+        var fetched = await ensureShow(doc.id, row.from);
+        if (cardDoc !== doc) return;
+        if (fetched && bubbleFor === String(doc.id)) {
+          var node = nodes[doc.id];
+          if (node) showBubble(node.doc, row);
+        } else if (!fetched && bubbleFor === String(doc.id)) {
+          bubbleFor = "";
+          revealOwnPul();
+        }
+        paintPulCard(doc);
+      }
       if (!session || mine || !inSchool[doc.id]) return;
       var entry = await social.aliasOf(doc.id, session.idToken);
       if (entry && entry.alias && cardDoc === doc) {
@@ -968,6 +1260,47 @@
       node.el.classList.toggle("is-trail", Boolean(onTrail[doc.id]) && !inSchool[doc.id]);
       node.el.setAttribute("aria-label", fishLabel(doc));
     }
+
+    replyButton.addEventListener("click", async function () {
+      if (!session || !cardDoc) return;
+      if (!ownDoc || !ownPrivate) {
+        window.location.assign("/me");
+        return;
+      }
+      var show = shows[String(cardDoc.id)];
+      if (!show || !show.field || !show.text) return;
+      var doc = cardDoc;
+      var field = await ui.pickClosedField({
+        title: t("lake.callReplyTitle"),
+        hint: t("lake.callReplyHint"),
+        action: t("lake.callReplySend"),
+        privateDoc: ownPrivate
+      });
+      if (!field || !ownPrivate[field]) return;
+      replyButton.disabled = true;
+      social
+        .replyToCall(
+          session,
+          ownDoc.id,
+          doc.ownerUid,
+          doc.id,
+          field,
+          ownPrivate[field],
+          show.field,
+          show.text
+        )
+        .then(function () {
+          asked[doc.ownerUid] = true;
+          replyButton.hidden = true;
+          cardNotice(t("lake.callReplied"));
+        })
+        .catch(function (error) {
+          cardNotice(ui.errorText(error), "error");
+        })
+        .then(function () {
+          replyButton.disabled = false;
+        });
+    });
 
     tailButton.addEventListener("click", function () {
       if (!session) {
@@ -989,16 +1322,498 @@
         : social.untail(session, doc.ownerUid)
       )
         .then(function () {
-          ui.setStatus(cardStatus, tailing ? "" : t("lake.released"));
+          cardNotice(tailing ? t("profile.tailing") : t("lake.released"));
         })
         .catch(function (error) {
           if (tailing) delete onTrail[doc.id];
           else onTrail[doc.id] = true;
           renderTail();
           markNode(doc);
-          ui.setStatus(cardStatus, ui.errorText(error), "error");
+          cardNotice(ui.errorText(error), "error");
         });
     });
+
+    // ---- Broadcasts and attention marks ----
+
+    function seenKey() {
+      return "mindset.seenAttention." + (session && session.uid ? session.uid : "");
+    }
+
+    function seenAttention() {
+      try {
+        return JSON.parse(sessionStorage.getItem(seenKey()) || "{}") || {};
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function attentionStamp(doc) {
+      var id = String(doc.id);
+      var bits = [];
+      if (attention[id]) bits.push(String(attention[id]));
+      var row = calls[id];
+      if (row && window.MindsetCall.isLive(row, Date.now())) bits.push("call:" + row.endsAt);
+      if (doc.createdAt && doc.updatedAt && doc.createdAt !== doc.updatedAt) bits.push("fresh:" + doc.updatedAt);
+      return bits.join("|");
+    }
+
+    function dismissBang(doc) {
+      var stamp = attentionStamp(doc);
+      if (!stamp) return;
+      var id = String(doc.id);
+      var map = seenAttention();
+      if (map[id] === stamp) return;
+      map[id] = stamp;
+      try {
+        sessionStorage.setItem(seenKey(), JSON.stringify(map));
+      } catch (error) {
+        /* ignore quota */
+      }
+      placeFish();
+    }
+
+    function signalState(doc) {
+      var id = String(doc.id);
+      var mine = ownDoc && String(ownDoc.id) === id;
+      var stamp = attentionStamp(doc);
+      var row = calls[id];
+      var live = row && window.MindsetCall.isLive(row, Date.now());
+      return {
+        attention: !mine && Boolean(stamp) && seenAttention()[id] !== stamp,
+        calling: Boolean(mine && live)
+      };
+    }
+
+    function hideBubble() {
+      bubbleFor = "";
+      bubble.hidden = true;
+    }
+
+    function broadcastKey(row) {
+      if (!row) return "";
+      return String(row.fromNumber || "") + ":" + String(row.endsAt || "");
+    }
+
+    function dismissBubble() {
+      bubbleClosed = broadcastKey(liveCall(bubbleFor));
+      hideBubble();
+    }
+
+    function liveCall(id) {
+      var row = calls[String(id)];
+      if (!row || !window.MindsetCall.isLive(row, Date.now())) return null;
+      return row;
+    }
+
+    function pulShow(id) {
+      var show = shows[String(id)];
+      if (!show || !show.text) return null;
+      var ends = Date.parse(show.endsAt);
+      if (isFinite(ends) && Date.now() >= ends) return null;
+      return show;
+    }
+
+    function livePulHolding() {
+      var row = liveCall(bubbleFor);
+      return Boolean(row && row.kind === "pul");
+    }
+
+    function paintPulCard(doc) {
+      if (!doc || cardDoc !== doc) return;
+      var mine = ownDoc && String(ownDoc.id) === String(doc.id);
+      var row = liveCall(doc.id);
+      var show = row && row.kind === "pul" ? pulShow(doc.id) : null;
+      document.querySelector("#card-quote").textContent = show ? show.text : "";
+      replyButton.hidden = !show || mine || Boolean(inSchool[doc.id]) || Boolean(asked[doc.ownerUid]);
+    }
+
+    async function ensureShow(number, uid) {
+      var id = String(number);
+      var existing = pulShow(id);
+      if (existing) return existing;
+      if (!session || !uid) return null;
+      var row = null;
+      try {
+        row = await social.callShow(session, uid);
+      } catch (error) {
+        return null;
+      }
+      if (!row || !row.text) return null;
+      var ends = Date.parse(row.endsAt);
+      if (isFinite(ends) && Date.now() >= ends) return null;
+      if (!row.fromNumber) row.fromNumber = Number(number);
+      shows[id] = row;
+      return row;
+    }
+
+    async function backfillShows() {
+      var pending = [];
+      Object.keys(calls).forEach(function (id) {
+        var row = liveCall(id);
+        if (!row || row.kind !== "pul" || pulShow(id) || !row.from) return;
+        pending.push(ensureShow(id, row.from));
+      });
+      if (pending.length) await Promise.all(pending);
+    }
+
+    function showBubble(doc, row) {
+      var text = document.querySelector("#fish-bubble-text");
+      var go = document.querySelector("#fish-bubble-go");
+      bubbleFor = String(doc.id);
+      go.hidden = true;
+      go.removeAttribute("href");
+      if (row.kind === "pul") {
+        var show = pulShow(doc.id);
+        if (!show) {
+          bubble.hidden = true;
+          return;
+        }
+        text.textContent = show.text;
+      } else {
+        text.textContent = t("lake.callLine." + row.line);
+      }
+      bubble.hidden = false;
+      placeBubble();
+    }
+
+    function placeBubble() {
+      if (!bubbleFor || bubble.hidden) return;
+      var node = nodes[bubbleFor];
+      if (!node || !liveCall(bubbleFor)) {
+        hideBubble();
+        return;
+      }
+      var host = lake.getBoundingClientRect();
+      var mark = node.el.querySelector(".fish-sway") || node.el;
+      var ctm = node.el.getScreenCTM();
+      var svg = node.el.ownerSVGElement;
+      var attention = node.el.classList.contains("is-attention");
+      var box = mark.getBBox();
+      var crownY = box.y;
+      var gap = 14;
+      if (attention) {
+        var bang = node.el.querySelector(".fish-bang");
+        if (bang) crownY = Math.min(crownY, bang.getBBox().y);
+        gap = 8;
+      } else {
+        var arrow = node.el.querySelector(".fish-me");
+        if (arrow) crownY = Math.min(crownY, arrow.getBBox().y);
+      }
+      var centerPoint = svg.createSVGPoint();
+      var topPoint = svg.createSVGPoint();
+      centerPoint.x = box.x + box.width / 2;
+      centerPoint.y = box.y + box.height / 2;
+      topPoint.x = centerPoint.x;
+      topPoint.y = crownY;
+      var center = ctm ? centerPoint.matrixTransform(ctm) : null;
+      var crown = ctm ? topPoint.matrixTransform(ctm) : null;
+      if (!center || !crown) {
+        var fallback = mark.getBoundingClientRect();
+        center = { x: fallback.left + fallback.width / 2, y: fallback.top + fallback.height / 2 };
+        crown = { x: center.x, y: fallback.top };
+      }
+      var pad = 8;
+      var text = document.querySelector("#fish-bubble-text");
+      bubble.style.transform = "none";
+      bubble.style.maxWidth = Math.max(96, Math.min(190, host.width - pad * 2)) + "px";
+      text.style.maxHeight = Math.max(32, host.height - pad * 2 - 16) + "px";
+      var width = bubble.offsetWidth;
+      var height = bubble.offsetHeight;
+      var left = center.x - host.left - width / 2;
+      var top = crown.y - host.top - gap - height;
+      if (left < pad) left = pad;
+      if (left + width > host.width - pad) left = Math.max(pad, host.width - pad - width);
+      bubble.style.left = left + "px";
+      bubble.style.top = top + "px";
+    }
+
+    function openBroadcast(doc) {
+      var row = liveCall(doc.id);
+      if (!row) return false;
+      if (broadcastKey(row) === bubbleClosed) bubbleClosed = "";
+      showBubble(doc, row);
+      return true;
+    }
+
+    function revealOwnPul() {
+      if (!ownDoc) return;
+      var id = String(ownDoc.id);
+      var row = liveCall(id);
+      if (!row || row.kind !== "pul" || !pulShow(id)) return;
+      if (broadcastKey(row) === bubbleClosed) return;
+      if (bubbleFor && bubbleFor !== id && liveCall(bubbleFor)) return;
+      var node = nodes[id];
+      if (!node) return;
+      if (bubbleFor === id && !bubble.hidden) {
+        placeBubble();
+        return;
+      }
+      showBubble(node.doc, row);
+    }
+
+    function indexCalls(rows, mine) {
+      calls = {};
+      var now = Date.now();
+      (rows || []).forEach(function (row) {
+        if (!row || !row.fromNumber || !window.MindsetCall.isLive(row, now)) return;
+        calls[String(row.fromNumber)] = row;
+      });
+      ownCall = mine || null;
+      if (ownCall && ownCall.fromNumber && window.MindsetCall.isLive(ownCall, now)) {
+        calls[String(ownCall.fromNumber)] = ownCall;
+      }
+    }
+
+    function indexShows(rows) {
+      shows = {};
+      var now = Date.now();
+      (rows || []).forEach(function (row) {
+        if (!row || !row.fromNumber || !row.text) return;
+        var ends = Date.parse(row.endsAt);
+        if (!isFinite(ends) || now >= ends) return;
+        shows[String(row.fromNumber)] = row;
+      });
+    }
+
+    function noteAttention(requests, glints, trailRows, memberRows) {
+      attention = {};
+      var members = {};
+      (memberRows || []).forEach(function (row) {
+        members[row.uid || row.id] = true;
+      });
+      var trail = {};
+      (trailRows || []).forEach(function (row) {
+        if (row.to && !members[row.to]) trail[row.to] = true;
+      });
+      (requests || []).forEach(function (row) {
+        if (!row.fromNumber) return;
+        var id = String(row.fromNumber);
+        var stamp = "req:" + (row.createdAt || row.id || "1");
+        attention[id] = attention[id] ? attention[id] + "|" + stamp : stamp;
+      });
+      (glints || []).forEach(function (row) {
+        if (!social.glintLive(row) || !row.from || !trail[row.from] || !row.fromNumber) return;
+        var stamp = String(row.createdAt || row.expiresAt || row.from);
+        if (window.MindsetNotices && window.MindsetNotices.isPassedGlint(session.uid, row.from, stamp)) return;
+        var id = String(row.fromNumber);
+        var bit = "glint:" + stamp;
+        attention[id] = attention[id] ? attention[id] + "|" + bit : bit;
+      });
+    }
+
+    async function ensureNumbers(numbers) {
+      var missing = numbers.filter(function (n) {
+        return n > 0 && !pool.some(function (doc) { return String(doc.id) === String(n); });
+      });
+      if (!missing.length) return false;
+      var extra = await store.byNumbers(missing, session.idToken);
+      var added = false;
+      extra.forEach(function (doc) {
+        if (pool.some(function (row) { return row.id === doc.id; })) return;
+        pool.push(doc);
+        added = true;
+      });
+      return added;
+    }
+
+    function paintCall() {
+      var bar = document.querySelector("#call-bar");
+      var open = document.querySelector("#call-open");
+      var timer = document.querySelector("#call-timer");
+      var dialog = document.querySelector("#call-dialog");
+      if (!ownDoc) {
+        bar.hidden = true;
+        if (dialog.open) dialog.close();
+        return;
+      }
+      bar.hidden = false;
+      var state = window.MindsetCall.phase(ownCall, broadcast, Date.now());
+      timer.hidden = true;
+      if (state.name === "idle") {
+        open.textContent = t("lake.callOpen");
+        open.disabled = false;
+        return;
+      }
+      if (dialog.open) dialog.close();
+      open.disabled = true;
+      open.textContent = window.MindsetCall.formatRemain(state.remainMs);
+    }
+
+    function renderPledge() {
+      var host = document.querySelector("#call-fields");
+      var empty = document.querySelector("#call-pledge-empty");
+      var fields = window.MindsetLens.fields.filter(function (field) {
+        return !field.open && ownPrivate && String(ownPrivate[field.key] || "").trim();
+      });
+      if (!fields.length) {
+        host.innerHTML = "";
+        empty.hidden = false;
+        return;
+      }
+      empty.hidden = true;
+      host.innerHTML =
+        '<legend class="visually-hidden">' +
+        ui.escapeHtml(t("lake.callPledge")) +
+        "</legend>" +
+        fields
+          .map(function (field) {
+            var text = String(ownPrivate[field.key] || "").trim();
+            return (
+              '<label><input type="radio" name="call-field" value="' +
+              field.key +
+              '"' +
+              (chosenField === field.key ? " checked" : "") +
+              " /> <span>" +
+              ui.escapeHtml(text) +
+              "</span></label>"
+            );
+          })
+          .join("");
+    }
+
+    function syncStart() {
+      var ready = (chosenKind === "pul" && chosenField) || (chosenKind === "seslen" && chosenLine);
+      document.querySelector("#call-start").disabled = !ready;
+      document.querySelector("#call-description").hidden = chosenKind !== "seslen";
+      document.querySelector("#call-pledge").hidden = chosenKind !== "pul";
+      document.querySelector("#call-kind-seslen").checked = chosenKind === "seslen";
+      document.querySelector("#call-kind-pul").checked = chosenKind === "pul";
+      document.querySelectorAll("#call-lines input").forEach(function (box) {
+        box.checked = box.getAttribute("data-line") === chosenLine;
+      });
+      if (chosenKind === "pul") renderPledge();
+    }
+
+    function openSetup() {
+      var state = window.MindsetCall.phase(ownCall, broadcast, Date.now());
+      if (state.name !== "idle") return;
+      chosenKind = "";
+      chosenLine = "";
+      chosenField = "";
+      syncStart();
+      var dialog = document.querySelector("#call-dialog");
+      if (!dialog.open) dialog.showModal();
+    }
+
+    function closeSetup() {
+      var dialog = document.querySelector("#call-dialog");
+      if (dialog.open) dialog.close();
+    }
+
+    document.querySelector("#call-dialog").addEventListener("close", function () {
+      chosenKind = "";
+      chosenLine = "";
+      chosenField = "";
+      paintCall();
+    });
+
+    document.querySelector("#call-open").addEventListener("click", openSetup);
+    document.querySelector("#call-cancel").addEventListener("click", closeSetup);
+    document.querySelector("#call-kinds").addEventListener("change", function (event) {
+      var box = event.target.closest("input");
+      if (!box || !box.checked) return;
+      chosenKind = box.value;
+      if (chosenKind === "pul") chosenLine = "";
+      syncStart();
+    });
+    document.querySelector("#call-lines").addEventListener("change", function (event) {
+      var box = event.target.closest("[data-line]");
+      if (!box || !box.checked) return;
+      chosenLine = box.getAttribute("data-line");
+      syncStart();
+    });
+    document.querySelector("#call-fields").addEventListener("change", function (event) {
+      var box = event.target.closest('input[name="call-field"]');
+      if (!box || !box.checked) return;
+      chosenField = box.value;
+      syncStart();
+    });
+    document.querySelector("#call-start").addEventListener("click", function () {
+      if (!session || !ownDoc) return;
+      var kind = chosenKind;
+      var line = kind === "seslen" ? chosenLine : "";
+      var field = kind === "pul" ? chosenField : "";
+      var text = field && ownPrivate ? String(ownPrivate[field] || "") : "";
+      if (kind !== "pul" && kind !== "seslen") return;
+      if (kind === "seslen" && window.MindsetCall.LINES.indexOf(line) < 0) return;
+      if (kind === "pul" && (!field || !text.trim())) return;
+      var started = new Date();
+      var ends = new Date(started.getTime() + broadcast.durationSec * 1000);
+      document.querySelector("#call-start").disabled = true;
+      social
+        .startCall(session, ownDoc.id, {
+          kind: kind,
+          line: line,
+          field: field,
+          text: text,
+          startedAt: started,
+          endsAt: ends
+        })
+        .then(function () {
+          ownCall = {
+            from: session.uid,
+            fromNumber: Number(ownDoc.id),
+            kind: kind,
+            line: line,
+            startedAt: started.toISOString(),
+            endsAt: ends.toISOString()
+          };
+          calls[String(ownDoc.id)] = ownCall;
+          if (kind === "pul") {
+            shows[String(ownDoc.id)] = {
+              from: session.uid,
+              fromNumber: Number(ownDoc.id),
+              field: field,
+              text: text,
+              endsAt: ends.toISOString()
+            };
+          }
+          closeSetup();
+          placeFish();
+          revealOwnPul();
+        })
+        .catch(function (error) {
+          ui.setStatus(status, ui.errorText(error), "error");
+          syncStart();
+        });
+    });
+
+    var polling = false;
+    async function refreshCalls() {
+      if (polling || !session) return;
+      polling = true;
+      try {
+        var rows = await Promise.all([
+          social.liveCalls(session).catch(function () { return []; }),
+          social.ownCall(session).catch(function () { return null; }),
+          social.liveShows(session).catch(function () { return null; })
+        ]);
+        indexCalls(rows[0], rows[1]);
+        if (rows[2]) indexShows(rows[2]);
+        var added = await ensureNumbers(Object.keys(calls).map(Number));
+        await backfillShows();
+        if (added) buildFish();
+        else placeFish();
+        if (bubbleFor && !liveCall(bubbleFor)) hideBubble();
+        revealOwnPul();
+        if (card.open && cardDoc) paintPulCard(cardDoc);
+        paintCall();
+      } finally {
+        polling = false;
+      }
+    }
+
+    var ticks = 0;
+    window.setInterval(function () {
+      if (!session) return;
+      ticks += 1;
+      paintCall();
+      if (bubbleFor && !liveCall(bubbleFor)) hideBubble();
+      revealOwnPul();
+      placeBubble();
+      if (card.open && cardDoc) paintPulCard(cardDoc);
+      if (ticks % 20 === 0) refreshCalls();
+    }, 1000);
 
     // ---- Load ----
 
@@ -1016,19 +1831,36 @@
         ]);
         pool = loaded[0];
         stats = loaded[1];
-        var social3 = await Promise.all([
+        var socialRows = await Promise.all([
           store.findOwn(session.uid, session.idToken).catch(function () { return null; }),
-          social.trailNumbers(session).catch(function () { return []; }),
-          social.members(session).catch(function () { return []; })
+          social.trailOf(session).catch(function () { return []; }),
+          social.members(session).catch(function () { return []; }),
+          social.incoming(session).catch(function () { return []; }),
+          social.glintsToward(session).catch(function () { return []; }),
+          social.liveCalls(session).catch(function () { return []; }),
+          social.ownCall(session).catch(function () { return null; }),
+          social.broadcastConfig(session.idToken).catch(function () { return null; }),
+          social.outgoing(session).catch(function () { return []; }),
+          social.liveShows(session).catch(function () { return null; })
         ]);
-        ownDoc = social3[0] && social3[0].publicDoc;
-        social3[1].forEach(function (number) {
-          onTrail[number] = true;
+        ownDoc = socialRows[0] && socialRows[0].publicDoc;
+        ownPrivate = socialRows[0] && socialRows[0].privateDoc;
+        socialRows[1].forEach(function (row) {
+          if (row.toNumber) onTrail[row.toNumber] = true;
         });
-        social3[2].forEach(function (row) {
+        socialRows[2].forEach(function (row) {
           if (row.number) inSchool[row.number] = true;
         });
+        noteAttention(socialRows[3], socialRows[4], socialRows[1], socialRows[2]);
+        broadcast = window.MindsetCall.configOf(socialRows[7]);
+        (socialRows[8] || []).forEach(function (row) {
+          if (row.to) asked[row.to] = true;
+        });
+        indexCalls(socialRows[5], socialRows[6]);
+        if (socialRows[9]) indexShows(socialRows[9]);
         if (ownDoc && !pool.some(function (doc) { return doc.id === ownDoc.id; })) pool.push(ownDoc);
+        await ensureNumbers(Object.keys(attention).concat(Object.keys(calls)).map(Number));
+        await backfillShows();
         if (ownDoc) {
           var aliasEntry = await social.aliasOf(ownDoc.id, session.idToken).catch(function () {
             return null;
@@ -1044,12 +1876,15 @@
         fillAxisSelect(document.querySelector("#axis-x"), axes.x);
         fillAxisSelect(document.querySelector("#axis-y"), axes.y);
         axisLabels();
+        showVectors(ALL_VECTORS, 2200);
         renderRanges();
         fillDemoFilters();
         renderDemoCharts(stats);
         buildFish();
-        applyView();
-        refresh(false);
+        setSpan(FOCUS_SPAN);
+        refresh();
+        revealOwnPul();
+        paintCall();
         var hidden = pool.length - Object.keys(nodes).length;
         ui.setStatus(status, hidden > 0 ? t("lake.unplaced", { n: hidden }) : "");
       } finally {

@@ -7,6 +7,9 @@
       "hosting": {
         "mindset": [
           "cbucket-mindset"
+        ],
+        "mindset-test": [
+          "cbucket-mindset-test"
         ]
       }
     }

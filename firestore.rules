@@ -509,12 +509,24 @@ service cloud.firestore {
         && request.resource.data.fromNumber is int
         && request.resource.data.toNumber is int
         && ownsMindsetFor(request.resource.data.from, request.resource.data.fromNumber)
-        && exists(docPath('tails', request.resource.data.to + '_' + request.resource.data.from))
         && closedField(request.resource.data.field)
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 1200
-        && request.resource.data.text == ownClosedText(request.resource.data.fromNumber, request.resource.data.field)
+        && (
+          (
+            exists(docPath('tails', request.resource.data.to + '_' + request.resource.data.from))
+            && request.resource.data.text == ownClosedText(request.resource.data.fromNumber, request.resource.data.field)
+          )
+          || (
+            exists(docPath('schoolRequests', request.resource.data.to + '_' + request.resource.data.from))
+            && get(docPath('schoolRequests', request.resource.data.to + '_' + request.resource.data.from)).data.shownField == request.resource.data.field
+            && get(docPath('schoolRequests', request.resource.data.to + '_' + request.resource.data.from)).data.shownText == request.resource.data.text
+            && get(docPath('schoolRequests', request.resource.data.to + '_' + request.resource.data.from)).data.from == request.resource.data.to
+            && get(docPath('schoolRequests', request.resource.data.to + '_' + request.resource.data.from)).data.to == request.resource.data.from
+            && existsAfter(/databases/$(database)/documents/schools/$(request.resource.data.from)/members/$(request.resource.data.to))
+          )
+        )
         && isoTime(request.resource.data.createdAt)
         && request.resource.data.expiresAt is timestamp
         && request.resource.data.expiresAt > request.time
@@ -564,7 +576,6 @@ service cloud.firestore {
         && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid || isRoot());
 
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'field', 'createdAt'])
         && actor(request.resource.data.from)
         && request.resource.data.to is string
         && request.resource.data.to != request.resource.data.from
@@ -574,12 +585,29 @@ service cloud.firestore {
         && ownsMindsetFor(request.resource.data.from, request.resource.data.fromNumber)
         && get(docPath('mindsets', string(request.resource.data.toNumber))).data.ownerUid == request.resource.data.to
         && closedField(request.resource.data.field)
-        && exists(docPath('glints', request.resource.data.to + '_' + request.resource.data.from))
-        && get(docPath('glints', request.resource.data.to + '_' + request.resource.data.from)).data.expiresAt > request.time
         && existsAfter(docPath('seals', requestId))
         && getAfter(docPath('seals', requestId)).data.field == request.resource.data.field
         && !exists(/databases/$(database)/documents/schools/$(request.resource.data.from)/members/$(request.resource.data.to))
-        && isoTime(request.resource.data.createdAt);
+        && isoTime(request.resource.data.createdAt)
+        && (
+          (
+            request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'field', 'createdAt'])
+            && exists(docPath('glints', request.resource.data.to + '_' + request.resource.data.from))
+            && get(docPath('glints', request.resource.data.to + '_' + request.resource.data.from)).data.expiresAt > request.time
+          )
+          || (
+            request.resource.data.keys().hasOnly(['from', 'to', 'fromNumber', 'toNumber', 'field', 'createdAt', 'shownField', 'shownText'])
+            && closedField(request.resource.data.shownField)
+            && request.resource.data.shownText is string
+            && request.resource.data.shownText.size() > 0
+            && request.resource.data.shownText.size() <= 1200
+            && exists(docPath('callShows', request.resource.data.to))
+            && get(docPath('callShows', request.resource.data.to)).data.endsAt > request.time
+            && get(docPath('callShows', request.resource.data.to)).data.from == request.resource.data.to
+            && get(docPath('callShows', request.resource.data.to)).data.field == request.resource.data.shownField
+            && get(docPath('callShows', request.resource.data.to)).data.text == request.resource.data.shownText
+          )
+        );
 
       allow update: if false;
       allow delete: if pairTouchesMe(requestId) || rootTouchesSim(requestId);
@@ -636,6 +664,90 @@ service cloud.firestore {
 
       allow update: if false;
       allow delete: if signedIn() && resource.data.to == request.auth.uid;
+    }
+
+    function callSpan() {
+      return exists(docPath('lakeConfig', 'broadcast'))
+        ? duration.value(get(docPath('lakeConfig', 'broadcast')).data.durationSec, 's')
+        : duration.value(60, 's');
+    }
+
+    function callGap() {
+      return exists(docPath('lakeConfig', 'broadcast'))
+        ? duration.value(get(docPath('lakeConfig', 'broadcast')).data.cooldownSec, 's')
+        : duration.value(300, 's');
+    }
+
+    // How long a lake broadcast lasts, and how long until the next one. Root writes, every signed-in fish reads.
+    match /lakeConfig/{id} {
+      allow get: if signedIn() && id == 'broadcast';
+      allow list: if false;
+
+      allow create, update: if isRoot()
+        && id == 'broadcast'
+        && request.resource.data.keys().hasOnly(['durationSec', 'cooldownSec'])
+        && request.resource.data.durationSec is int
+        && request.resource.data.durationSec >= 15
+        && request.resource.data.durationSec <= 600
+        && request.resource.data.cooldownSec is int
+        && request.resource.data.cooldownSec >= 0
+        && request.resource.data.cooldownSec <= 86400;
+
+      allow delete: if false;
+    }
+
+    // One live call per fish. Expired rows stay so the gap can be enforced.
+    match /calls/{uid} {
+      allow get: if signedIn();
+      allow list: if signedIn();
+
+      allow create, update: if actor(uid)
+        && request.resource.data.keys().hasOnly(['from', 'fromNumber', 'kind', 'line', 'startedAt', 'endsAt'])
+        && request.resource.data.from == uid
+        && request.resource.data.fromNumber is int
+        && ownsMindsetFor(uid, request.resource.data.fromNumber)
+        && request.resource.data.kind in ['seslen', 'pul']
+        && (
+          (request.resource.data.kind == 'seslen' && request.resource.data.line in ['hi', 'here', 'hear'])
+          || (request.resource.data.kind == 'pul' && request.resource.data.line == '')
+        )
+        && request.resource.data.startedAt is timestamp
+        && request.resource.data.endsAt is timestamp
+        && request.resource.data.startedAt > request.time - duration.value(2, 'm')
+        && request.resource.data.startedAt < request.time + duration.value(1, 'm')
+        && request.resource.data.endsAt > request.resource.data.startedAt
+        && request.resource.data.endsAt - request.resource.data.startedAt <= callSpan()
+        && (resource == null || request.time >= resource.data.endsAt + callGap());
+
+      allow delete: if false;
+    }
+
+    // The closed text a pul broadcast shows on the lake. Strangers can read it only while it is live.
+    match /callShows/{uid} {
+      allow get: if signedIn()
+        && (resource.data.endsAt > request.time || resource.data.from == request.auth.uid);
+      allow list: if signedIn() && resource.data.endsAt > request.time;
+
+      allow create, update: if actor(uid)
+        && (resource == null || request.time >= resource.data.endsAt)
+        && request.resource.data.keys().hasOnly(['from', 'fromNumber', 'field', 'text', 'endsAt'])
+        && request.resource.data.from == uid
+        && request.resource.data.fromNumber is int
+        && ownsMindsetFor(uid, request.resource.data.fromNumber)
+        && closedField(request.resource.data.field)
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1200
+        && request.resource.data.text == ownClosedText(request.resource.data.fromNumber, request.resource.data.field)
+        && request.resource.data.endsAt is timestamp
+        && request.resource.data.endsAt > request.time
+        && request.resource.data.endsAt <= request.time + callSpan()
+        && existsAfter(docPath('calls', uid))
+        && getAfter(docPath('calls', uid)).data.kind == 'pul'
+        && getAfter(docPath('calls', uid)).data.from == uid
+        && getAfter(docPath('calls', uid)).data.endsAt == request.resource.data.endsAt;
+
+      allow delete: if false;
     }
 
     // Root-only: simulation state and the per-cycle log.

@@ -17,6 +17,12 @@ Three steps, pair id `{from}_{to}`:
    B reads the seal only after accept. Accept writes both
    `schools/{uid}/members/{other}` with the same `since`.
 
+A pul broadcast writes `callShows/{uid}` with one closed field. Others can read
+it only until `endsAt`. Replying writes the request and seal without a tail or
+a pairwise glint, and copies `shownField` / `shownText` from that live show.
+Accept also writes `glints/{broadcaster}_{replier}` from the copy. The profile
+handshake is unchanged.
+
 Step away (`social.distance`) is not a member action. It untails, dismisses
 their tail, withdraws the scale this side shone, then writes `signals` kind
 `distanced` to the other uid. It does not remove a request or a seal.
@@ -76,6 +82,9 @@ file is pushed.
 "yayınla" means, from the repo root: `npm run check && npm run stamp && npm run deploy`.
 That deploys hosting target `mindset`, Firestore rules, and indexes to
 `collective-bucket`. Pushing `main` does the same through GitHub Actions.
+The test site is hosting target `mindset-test` (`cbucket-mindset-test`,
+https://test.mindsetbucket.com). `npm run deploy:test` and a push to
+`simulation` publish only that hosting site. "yayınla" is still production.
 README and `docs/` are not on the hosting site (`public/` only).
 
 `firebase` is not on the shell PATH. It is the local `firebase-tools`

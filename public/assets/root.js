@@ -5,6 +5,7 @@
   var fs = window.MindsetFirestore;
   var store = window.MindsetStore;
   var sim = window.MindsetSim;
+  var call = window.MindsetCall;
   var t = window.MindsetI18n.t;
 
   var PARALLEL = 6;
@@ -275,6 +276,7 @@
     var session = null;
     var rootOwnerUid = "";
     var state = { tick: 0, config: sim.configOf({}) };
+    var broadcast = call.configOf({});
     var busy = false;
     var simQuery = "";
 
@@ -385,6 +387,18 @@
       });
     }
 
+    function fillBroadcast(config) {
+      document.querySelector("#cfg-durationSec").value = config.durationSec;
+      document.querySelector("#cfg-cooldownSec").value = config.cooldownSec;
+    }
+
+    function readBroadcast() {
+      return call.configOf({
+        durationSec: document.querySelector("#cfg-durationSec").value,
+        cooldownSec: document.querySelector("#cfg-cooldownSec").value
+      });
+    }
+
     function readConfig() {
       var raw = {};
       Object.keys(sim.DEFAULTS).forEach(function (key) {
@@ -444,6 +458,8 @@
         config: sim.configOf(doc && doc.config)
       };
       fillConfig(state.config);
+      broadcast = call.configOf(await softGet("lakeConfig/broadcast", session.idToken));
+      fillBroadcast(broadcast);
       renderTick();
     }
 
@@ -530,9 +546,18 @@
       setBusy(true);
       try {
         var config = readConfig();
-        await fs.commit([fs.writes.set("sim/state", stateDoc(state.tick, config))], session.idToken);
+        var nextBroadcast = readBroadcast();
+        await fs.commit(
+          [
+            fs.writes.set("sim/state", stateDoc(state.tick, config)),
+            fs.writes.set("lakeConfig/broadcast", nextBroadcast)
+          ],
+          session.idToken
+        );
         state.config = config;
+        broadcast = nextBroadcast;
         fillConfig(config);
+        fillBroadcast(broadcast);
         ui.setStatus(simStatus, t("root.cfgSaved"));
       } catch (error) {
         ui.setStatus(simStatus, rootNotice(error), "error");
@@ -711,7 +736,7 @@
             '</div><div class="person-tools"><button type="button" class="btn-icon" data-enter-mind aria-label="' +
             ui.escapeHtml(t("root.enterMind")) +
             '">' +
-            ui.icon("profile") +
+            ui.icon("enter") +
             "</button></div></div>"
           );
         })

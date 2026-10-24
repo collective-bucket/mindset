@@ -8,6 +8,7 @@
     "serve": "firebase emulators:start --only hosting",
     "emulators": "firebase emulators:start --only hosting,firestore",
     "deploy": "firebase deploy --only hosting:mindset,firestore:rules,firestore:indexes",
+    "deploy:test": "npm run check && npm run stamp && firebase deploy --only hosting:mindset-test",
     "stamp": "node scripts/stamp-assets.js",
     "check": "node scripts/check.js",
     "test:rules": "firebase emulators:exec --only firestore \"node tests/rules.emulator.js && node tests/sim.emulator.js\""

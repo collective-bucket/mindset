@@ -173,6 +173,16 @@
     };
   }
 
+  function above(field, value) {
+    return {
+      fieldFilter: {
+        field: { fieldPath: field },
+        op: "GREATER_THAN",
+        value: encodeValue(value)
+      }
+    };
+  }
+
   function atLeast(field, value) {
     return {
       fieldFilter: {
@@ -259,6 +269,7 @@
     runQuery: runQuery,
     equals: equals,
     inList: inList,
+    above: above,
     atLeast: atLeast,
     where: where,
     create: create,

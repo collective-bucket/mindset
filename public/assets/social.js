@@ -187,6 +187,35 @@
     };
   }
 
+  async function replyToCall(session, myNumber, otherUid, otherNumber, field, text, shownField, shownText) {
+    var id = pairId(session.uid, otherUid);
+    var created = now();
+    var pledge = {
+      from: session.uid,
+      to: otherUid,
+      fromNumber: Number(myNumber),
+      toNumber: Number(otherNumber),
+      field: field,
+      createdAt: created
+    };
+    var writes = db().writes;
+    try {
+      await db().commit(
+        [
+          writes.set("seals/" + id, Object.assign({ text: text }, pledge)),
+          writes.create(
+            "schoolRequests/" + id,
+            Object.assign({ shownField: shownField, shownText: shownText }, pledge)
+          )
+        ],
+        session.idToken
+      );
+    } catch (error) {
+      if (db().isPermission(error)) throw aliasError("common.permission");
+      throw error;
+    }
+  }
+
   async function requestSchool(session, myNumber, otherUid, otherNumber, field, text) {
     var id = pairId(session.uid, otherUid);
     var created = now();
@@ -292,24 +321,38 @@
     var since = now();
     var writes = db().writes;
     var reverse = pairId(session.uid, fromUid);
-    await db().commit(
-      [
-        writes.create("schools/" + session.uid + "/members/" + fromUid, {
-          uid: fromUid,
-          number: request.fromNumber,
-          since: since
-        }),
-        writes.create("schools/" + fromUid + "/members/" + session.uid, {
-          uid: session.uid,
-          number: request.toNumber,
-          since: since
-        }),
-        writes.remove("schoolRequests/" + id),
-        writes.remove("schoolRequests/" + reverse),
-        writes.remove("seals/" + reverse)
-      ],
-      token
-    );
+    var ops = [
+      writes.create("schools/" + session.uid + "/members/" + fromUid, {
+        uid: fromUid,
+        number: request.fromNumber,
+        since: since
+      }),
+      writes.create("schools/" + fromUid + "/members/" + session.uid, {
+        uid: session.uid,
+        number: request.toNumber,
+        since: since
+      }),
+      writes.remove("schoolRequests/" + id),
+      writes.remove("schoolRequests/" + reverse),
+      writes.remove("seals/" + reverse)
+    ];
+    if (request.shownText && request.shownField) {
+      var created = new Date();
+      var expires = new Date(created.getTime() + GLINT_DAYS * 24 * 3600 * 1000 - 60 * 1000);
+      ops.push(
+        writes.set("glints/" + reverse, {
+          from: session.uid,
+          to: fromUid,
+          fromNumber: Number(request.toNumber),
+          toNumber: Number(request.fromNumber),
+          field: request.shownField,
+          text: request.shownText,
+          createdAt: created.toISOString(),
+          expiresAt: expires
+        })
+      );
+    }
+    await db().commit(ops, token);
   }
 
   function pairLeftovers(me, other) {
@@ -379,6 +422,66 @@
 
   function aliasOf(number, token) {
     return quietGet("aliasOf/" + number, token);
+  }
+
+  function broadcastConfig(token) {
+    return quietGet("lakeConfig/broadcast", token);
+  }
+
+  function ownCall(session) {
+    return quietGet("calls/" + session.uid, session.idToken);
+  }
+
+  function liveCalls(session) {
+    return db().runQuery(
+      {
+        from: [{ collectionId: "calls" }],
+        where: db().above("endsAt", new Date()),
+        limit: 100
+      },
+      session.idToken
+    );
+  }
+
+  function liveShows(session) {
+    return db().runQuery(
+      {
+        from: [{ collectionId: "callShows" }],
+        where: db().above("endsAt", new Date()),
+        limit: 100
+      },
+      session.idToken
+    );
+  }
+
+  function callShow(session, uid) {
+    if (!uid) return Promise.resolve(null);
+    return quietGet("callShows/" + uid, session.idToken);
+  }
+
+  function startCall(session, myNumber, call) {
+    var writes = [
+      db().writes.set("calls/" + session.uid, {
+        from: session.uid,
+        fromNumber: Number(myNumber),
+        kind: call.kind,
+        line: call.line || "",
+        startedAt: call.startedAt,
+        endsAt: call.endsAt
+      })
+    ];
+    if (call.kind === "pul") {
+      writes.push(
+        db().writes.set("callShows/" + session.uid, {
+          from: session.uid,
+          fromNumber: Number(myNumber),
+          field: call.field,
+          text: call.text,
+          endsAt: call.endsAt
+        })
+      );
+    }
+    return db().commit(writes, session.idToken);
   }
 
   function resolveAlias(alias, token) {
@@ -497,6 +600,7 @@
     glintsToward: glintsToward,
     relation: relation,
     requestSchool: requestSchool,
+    replyToCall: replyToCall,
     accept: accept,
     decline: decline,
     cancel: cancel,
@@ -512,6 +616,12 @@
     members: members,
     membersOf: membersOf,
     aliasOf: aliasOf,
+    broadcastConfig: broadcastConfig,
+    ownCall: ownCall,
+    liveCalls: liveCalls,
+    liveShows: liveShows,
+    callShow: callShow,
+    startCall: startCall,
     resolveAlias: resolveAlias,
     cleanAlias: cleanAlias,
     aliasFree: aliasFree,

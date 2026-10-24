@@ -301,6 +301,10 @@ function setWrite(path, data) {
   };
 }
 
+function deleteWrite(path) {
+  return { delete: DOC_PREFIX + path };
+}
+
 function incrementWrite(deltas) {
   var transforms = deltas.map(function (item) {
     return {
@@ -431,16 +435,94 @@ async function takenNumbers(token) {
   return taken;
 }
 
+// One lake name per sim number, starting at FIRST. Stable so a fish keeps its alias.
+var SIM_ALIASES = [
+  "derin", "kiyi", "yanki", "puslu", "sisli", "dalga", "mercan", "yosun", "kabuk", "inci",
+  "fener", "pusula", "liman", "iskele", "kayik", "yelken", "rota", "gelgit", "resif", "lagun",
+  "koy", "burun", "atol", "bogaz", "delta", "menderes", "caglayan", "pinar", "golge", "ayna",
+  "kuyruk", "solungac", "yuzgec", "kabarcik", "kopuk", "cereyan", "akinti", "girdap", "esinti", "ufuk",
+  "sahil", "kumsal", "midye", "istiridye", "ahtapot", "yunus", "orkinos", "hamsi", "levrek", "cipura",
+  "kefal", "palamut", "barbun", "tekir", "mezgit", "kalkan", "sessiz", "duru", "berrak", "bulut",
+  "damla", "yagmur", "camur", "dere", "irmak", "nehir", "kaynak", "sarnic", "gececi", "kiyici",
+  "derinci", "yankici", "pusluca", "sislica", "dalgaci", "mercanci", "yosuncu", "kabukcu", "incici", "fenerci",
+  "limanci", "iskeleci", "kayikci", "yelkenci", "rotaci", "resifci", "laguncu", "koycu", "burnucu", "atolcu",
+  "bogazci", "deltaci", "pinarci", "golgeci", "aynaci", "kuyrukcu", "akintici", "girdapci", "esintici", "ufukcu"
+];
+
 function aliasFor(n) {
-  return "sim" + n;
+  var index = n - FIRST;
+  if (index >= 0 && index < SIM_ALIASES.length) return SIM_ALIASES[index];
+  return ("balik" + n).slice(0, 20);
 }
 
 function simUid(n) {
   return "sim" + n;
 }
 
+async function listMindsets(token) {
+  var rows = [];
+  var pageToken = null;
+  for (;;) {
+    var url = DB + "/mindsets?pageSize=300" + (pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "");
+    var page = await http(url, { headers: adminHeaders(token) });
+    (page.documents || []).forEach(function (raw) {
+      var doc = decodeDocument(raw);
+      if (doc) rows.push(doc);
+    });
+    if (!page.nextPageToken) break;
+    pageToken = page.nextPageToken;
+  }
+  return rows;
+}
+
+async function chosenAlias(token, num, uid) {
+  var want = aliasFor(num);
+  var holder = await getDoc("aliases/" + want, token);
+  if (holder && String(holder.ownerUid) !== uid) return (want + num).slice(0, 20);
+  return want;
+}
+
+async function ensureAlias(token, num, uid) {
+  var alias = await chosenAlias(token, num, uid);
+  var current = await getDoc("aliasOf/" + num, token);
+  if (current && current.alias === alias && current.ownerUid === uid) return { alias: alias, changed: false };
+  var writes = [];
+  if (current && current.alias && current.alias !== alias) {
+    var old = await getDoc("aliases/" + current.alias, token);
+    if (old && String(old.ownerUid) === uid) writes.push(deleteWrite("aliases/" + current.alias));
+  }
+  writes.push(
+    setWrite("aliases/" + alias, { ownerUid: uid, number: num }),
+    setWrite("aliasOf/" + num, { ownerUid: uid, alias: alias })
+  );
+  await commit(writes, token);
+  return { alias: alias, changed: true };
+}
+
+async function backfillAliases(token) {
+  var rows = await listMindsets(token);
+  var updated = 0;
+  var kept = 0;
+  for (var i = 0; i < rows.length; i += 1) {
+    var doc = rows[i];
+    if (doc.seed !== true || !/^sim[0-9]+$/.test(String(doc.ownerUid || ""))) continue;
+    var num = Number(doc.number || doc.id);
+    if (!num) continue;
+    var result = await ensureAlias(token, num, String(doc.ownerUid));
+    if (result.changed) {
+      updated += 1;
+      console.log("alias #" + num, "@" + result.alias);
+    } else {
+      kept += 1;
+    }
+    await sleep(40);
+  }
+  console.log("aliases updated", updated, "already set", kept);
+}
+
 async function main() {
   var token = adminToken();
+  await backfillAliases(token);
   var taken = await takenNumbers(token);
   var numbers = [];
   for (var n = FIRST; numbers.length < TARGET; n += 1) {
@@ -488,7 +570,7 @@ async function main() {
     var num = numbers[j];
     maxNumber = Math.max(maxNumber, num);
     var uid = simUid(num);
-    var alias = aliasFor(num);
+    var alias = await chosenAlias(token, num, uid);
     var person = personas[num];
     var scores = cache.scores[String(num)];
     try {
