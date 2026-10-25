@@ -167,9 +167,11 @@ for people aged 18 and over.
 | `sim/state`, `simTicks/{n}` | root | simulation settings, cycle number and log |
 | `stats/public` | everyone | histogram counts per axis, age range, gender, country, city |
 
-Rules live in [`firestore.rules`](firestore.rules). The project shares one
-Firestore database with other Collective Bucket apps, so the file keeps their
-`ads` and `trips` rules first and unchanged.
+Rules and indexes live in
+[collective-bucket/firestore](https://github.com/collective-bucket/firestore)
+(`rules/20-mindset.rules`). The project shares one Firestore database with
+other Collective Bucket apps, so only that repo deploys rules; this repo
+deploys hosting only.
 
 ## Sign-in
 
@@ -192,7 +194,7 @@ use it. Reused texts, icons and buttons are listed at `/theme`
 npm install
 npm run check        # syntax, unit tests, i18n parity, rules allowlists
 npm run serve        # hosting emulator on http://127.0.0.1:5055
-npm run test:rules   # Firestore rules and the simulation against the emulator (needs Java)
+npm run test:rules   # rules and simulation on the emulator, from a sibling ../firestore checkout (needs Java)
 ```
 
 Scripts in [`scripts/`](scripts):
@@ -207,7 +209,7 @@ Scripts in [`scripts/`](scripts):
 
 ## Deploy
 
-Pushing to `main` deploys hosting, rules and indexes through GitHub Actions
+Pushing to `main` deploys hosting through GitHub Actions
 (Workload Identity, service account `github-actions-deployer`). Firebase project
 `collective-bucket`, hosting site `cbucket-mindset`, target `mindset`.
 
