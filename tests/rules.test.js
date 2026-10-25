@@ -7,7 +7,13 @@ var fs = require("fs");
 var path = require("path");
 var reading = require("../public/assets/reading.js");
 
-var rules = fs.readFileSync(path.join(__dirname, "..", "firestore.rules"), "utf8");
+// Rules live in collective-bucket/firestore; its CI passes RULES_FILE.
+var rulesFile = process.env.RULES_FILE || path.join(__dirname, "..", "..", "firestore", "firestore.rules");
+if (!fs.existsSync(rulesFile)) {
+  console.log("rules.test.js skipped: no " + rulesFile);
+  process.exit(0);
+}
+var rules = fs.readFileSync(rulesFile, "utf8");
 
 function allowlist(functionName) {
   var start = rules.indexOf("function " + functionName + "(");

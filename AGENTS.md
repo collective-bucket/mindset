@@ -80,8 +80,9 @@ file is pushed.
 ## Deploy
 
 "yayınla" means, from the repo root: `npm run check && npm run stamp && npm run deploy`.
-That deploys hosting target `mindset`, Firestore rules, and indexes to
-`collective-bucket`. Pushing `main` does the same through GitHub Actions.
+That deploys hosting target `mindset` to `collective-bucket`. Firestore rules
+and indexes are deployed only from collective-bucket/firestore
+(`rules/20-mindset.rules`); a rule change here is a PR there. Pushing `main` does the same through GitHub Actions.
 The test site is hosting target `mindset-test` (`cbucket-mindset-test`,
 https://test.mindsetbucket.com). `npm run deploy:test` and a push to
 `simulation` publish only that hosting site. "yayınla" is still production.

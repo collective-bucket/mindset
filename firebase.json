@@ -1,8 +1,4 @@
 {
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
   "hosting": [
   {
     "target": "mindset",
@@ -95,7 +91,6 @@
   ],
   "emulators": {
     "hosting": { "port": 5055 },
-    "firestore": { "port": 8085 },
     "ui": { "enabled": false }
   }
 }
